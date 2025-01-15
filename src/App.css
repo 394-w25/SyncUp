@@ -1,42 +1,210 @@
-.App {
-  text-align: center;
+/* General Reset */
+body {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  background-color: #f7f8fa;
+  color: #333;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.group-availability {
   display: flex;
   flex-direction: column;
+  gap: 5px;
+  width: 300px;
+  font-family: Arial, sans-serif;
+}
+
+.availability-item {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
+  padding: 10px;
+  border-radius: 5px;
+  color: white;
+  font-size: 14px;
+}
+
+.red {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.light-red {
+  background-color: #f5c6cb;
+  color: #721c24;
+}
+
+.yellow {
+  background-color: #ffeeba;
+  color: #856404;
+}
+
+.green {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.dark-green {
+  background-color: #c3e6cb;
+  color: #155724;
+}
+
+.availability-text {
+  font-weight: bold;
+}
+
+.user-count {
+  display: flex;
+  gap: 5px;
+}
+
+.user-icon {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background-color: #ccc;
+}
+
+.App {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* Header Section */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+header h1 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+header .date-selector {
+  display: flex;
+  align-items: center;
+}
+
+header .date-selector button {
+  background-color: transparent;
+  border: none;
+  font-size: 1rem;
+  color: #3498db;
+  cursor: pointer;
+}
+
+header .date-selector button:hover {
+  text-decoration: underline;
+}
+
+/* Main Content */
+main {
+  display: flex;
+  flex: 1;
+  padding: 1rem;
+}
+
+/* Left Panel: Calendar */
+.calendar-container {
+  width: 60%;
+  padding: 1rem;
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+}
+
+.calendar-container h2 {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.event {
+  margin: 0.5rem 0;
+  padding: 0.75rem;
+  border: 1px solid #dfe6e9;
+  border-radius: 8px;
+  background-color: #dfe6e9;
+}
+
+.event.highlight {
+  background-color: #74b9ff;
+  border-color: #74b9ff;
   color: white;
 }
 
-.App-link {
-  color: #61dafb;
+/* Right Panel: Group Availability */
+.availability-container {
+  width: 40%;
+  margin-left: 1rem;
+  padding: 1rem;
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.availability-container h2 {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
 }
 
-button {
-  font-size: calc(10px + 2vmin);
+.group-availability {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-gap: 0.5rem;
+}
+
+.time-slot {
+  height: 40px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: bold;
+  color: white;
+}
+
+.time-slot.green {
+  background-color: #00b894;
+}
+
+.time-slot.yellow {
+  background-color: #fdcb6e;
+}
+
+.time-slot.red {
+  background-color: #d63031;
+}
+
+/* Footer: SyncUp Button */
+footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: #ffffff;
+  border-top: 1px solid #e0e0e0;
+}
+
+footer button {
+  background-color: #00b894;
+  border: none;
+  color: white;
+  font-size: 1rem;
+  font-weight: bold;
+  padding: 0.75rem 1.5rem;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+footer button:hover {
+  background-color: #009975;
 }
