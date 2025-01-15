@@ -47,7 +47,7 @@ button {
 
 .grid-container {
   display: grid;
-  grid-template-columns: 40% 60%;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
   gap: 20px;
 }
 
@@ -63,3 +63,5 @@ button {
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
+
+

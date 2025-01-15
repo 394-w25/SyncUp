@@ -5,6 +5,8 @@ import GroupAvailability from './GroupAvailability';
 import IndividualAvailability from './IndividualAvailability';
 import "./GroupAvailability.css";
 import "./App.css"; // Import the new CSS file
+import MeetingInfo from './meetingInfo';
+import AvailabilityStatus from './AvailabilityStatus';
 
 const CLIENT_ID = '308692654908-c3sb5qvhs1nhc8t3lju2n1lqsem6123q.apps.googleusercontent.com'; // Replace with your client ID
 const API_KEY = 'AIzaSyALwmIcPkkZnfIXKwbMQa0DBtQ-iqv6bho'; 
@@ -66,18 +68,35 @@ const App = () => {
     }
   };
 
+  const participants = [
+    { name: 'Alice', attending: true },
+    { name: 'Bob', attending: false },
+    { name: 'Charlie', attending: true },
+  ];
+
   return (
     <div className="app-container">
       <CalendarHeader />
-
       <div className="grid-container">
-        <IndividualAvailability
-          isAuthenticated={isAuthenticated}
-          handleAuth={handleAuth}
-          handleGetEvents={handleGetEvents}
-          events={events}
+        <div className="calendar-containter">
+          <IndividualAvailability
+            isAuthenticated={isAuthenticated}
+            handleAuth={handleAuth}
+            handleGetEvents={handleGetEvents}
+            events={events}
+          />
+        </div>
+        <div className="group-avaibility">
+          <GroupAvailability />
+        </div>
+
+        <AvailabilityStatus />
+
+        <MeetingInfo 
+          meetingId="3xfd1" 
+          event="394 Weekly" 
+          participants={participants} 
         />
-        <GroupAvailability />
       </div>
     </div>
   );
