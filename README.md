@@ -1,6 +1,6 @@
 # SyncUp
 
-## A mobile/web application that helps you and your team plan meeting times with ease and efficiency
+**A mobile/web application that helps you and your team plan meeting times with ease and efficiency**
 
 Features:
 - Sync your schedule with Google Calendar
