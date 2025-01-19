@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { gapi } from 'gapi-script';
-import CalendarHeader from './CalendarHeader';
-import GroupAvailability from './GroupAvailability';
-import IndividualAvailability from './IndividualAvailability';
-import "./GroupAvailability.css";
-import "./App.css"; // Import the new CSS file
-import MeetingInfo from './meetingInfo';
-import AvailabilityStatus from './AvailabilityStatus';
+
+import '../styles/globals.css';
+
+import CalendarHeader from '../components/CalendarHeader'
+import GroupAvailability from '../components/GroupAvailability';
+import IndividualAvailability from '../components/IndividualAvailability';
+// import "./App.css"; // Import the new CSS file
+import MeetingInfo from '../components/meetingInfo';
+import AvailabilityStatus from '../components/AvailabilityStatus';
 
 const CLIENT_ID = '308692654908-c3sb5qvhs1nhc8t3lju2n1lqsem6123q.apps.googleusercontent.com'; // Replace with your client ID
 const API_KEY = 'AIzaSyALwmIcPkkZnfIXKwbMQa0DBtQ-iqv6bho'; 
@@ -75,7 +77,7 @@ const App = () => {
   ];
 
   return (
-    <div className="app-container">
+    <div className="app-container w-full">
       <CalendarHeader />
       <div className="grid-container">
         <div className="calendar-containter">
