@@ -10,40 +10,52 @@
   .availability-item {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    border-radius: 5px;
-    color: white;
+    padding: 15px;
+    border-radius: 8px;
+    border: 2px;
+    border-style: solid;
     font-size: 14px;
   }
   
-  .red {
-    background-color: #ffdee2;
-    color: #721c24;
+  .very-low-availability {
+    background-color: #F4B8BC;
+    color: #7E131A;
+    border-color: #7E131A;
+    opacity: 40%;
   }
   
-  .light-red {
-    background-color: #f6bdc2;
-    color: #721c24;
+  .low-availability {
+    background-color: #FACDA7;
+    color: #E57414;
+    border-color: #E57414;
+    opacity: 50%;
   }
   
-  .yellow {
-    background-color: #ffeeba;
-    color: #856404;
+  .med-availability {
+    background-color: #FFE291;
+    color: #DFA400;
+    border-color: #DFA400;
+    opacity: 80%;
   }
   
-  .green {
-    background-color: #d4edda;
-    color: #155724;
+  .high-availability {
+    background-color: #ABCF8E;
+    color: #43840F;
+    border-color: #43840F;
+    opacity: 80%;
+    font-weight: bold;
   }
-  
-  .dark-green {
-    background-color: #c3e6cb;
-    color: #155724;
+
+  .full-availability {
+    background-color: #57BB8A;
+    color: #00582D;
+    border-color: #00582D;
+    opacity: 100%;
+    font-weight: bold;
   }
   
   .availability-text {
-    font-weight: bold;
+    /* font-weight: bold; */
   }
   
   .user-count {
