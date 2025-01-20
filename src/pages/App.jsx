@@ -10,7 +10,8 @@ import IndividualAvailability from '../components/IndividualAvailability';
 import MeetingInfo from '../components/meetingInfo';
 import AvailabilityStatus from '../components/AvailabilityStatus';
 import Legend from '../components/Legend';
-import Calendar from '../components/Calender';
+import Calendar from '../components/Calendar';
+import { Group } from '@mui/icons-material';
 
 const CLIENT_ID = '308692654908-c3sb5qvhs1nhc8t3lju2n1lqsem6123q.apps.googleusercontent.com'; // Replace with your client ID
 const API_KEY = 'AIzaSyALwmIcPkkZnfIXKwbMQa0DBtQ-iqv6bho'; 

@@ -1,5 +1,5 @@
 import React from "react";
-import './CalenderEvents.css';
+import './CalendarEvents.css';
 
 const CalendarEvents = ({ events }) => {
   const calculatePosition = (dateTime) => {

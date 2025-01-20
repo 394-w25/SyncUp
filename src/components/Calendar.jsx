@@ -4,7 +4,7 @@ import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import Button from '@mui/material/Button';
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import Box from '@mui/material/Box';
-import CalendarEvents from './CalenderEvents';
+import CalendarEvents from './CalendarEvents';
 import IndividualAvailability from './IndividualAvailability';
 import TimeSchedule from './CalendarBackground';
 
