@@ -60,6 +60,11 @@ const App = () => {
 
   const handleGetEvents = async () => {
     try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('User is not authenticated');
+      }
+
       const response = await gapi.client.calendar.events.list({
         calendarId: CALENDAR_ID,
         timeMin: new Date().toISOString(),
@@ -67,22 +72,22 @@ const App = () => {
         singleEvents: true,
         orderBy: 'startTime',
       });
+
       const data = response.result.items;
-  
+
       if (data.length) {
         console.log('Events JSON:', JSON.stringify(data, null, 2));
         setEvents(data); // Set events in state
-  
+
         // Process and store availability in Firestore
-        const user = auth.currentUser;
         const userId = user.uid;
         const availabilityByDate = {};
-  
+
         data.forEach(event => {
           const eventStart = new Date(event.start.dateTime);
           const eventEnd = new Date(event.end.dateTime);
           const date = eventStart.toISOString().split('T')[0];
-  
+
           // Define the base availability range (8:00 AM to 10:00 PM)
           if (!availabilityByDate[date]) {
             const startOfDay = new Date(date);
@@ -91,7 +96,7 @@ const App = () => {
             endOfDay.setHours(22, 0, 0, 0);
             availabilityByDate[date] = [{ start: startOfDay, end: endOfDay }];
           }
-  
+
           // Update availability by subtracting event times
           availabilityByDate[date] = availabilityByDate[date].flatMap(slot => {
             if (eventStart >= slot.end || eventEnd <= slot.start) {
@@ -115,7 +120,7 @@ const App = () => {
             }
           });
         });
-  
+
         // Save to Firestore
         for (const [date, slots] of Object.entries(availabilityByDate)) {
           await setDoc(doc(db, "availability", `${userId}_${date}`), {
@@ -129,7 +134,7 @@ const App = () => {
             lastUpdate: new Date(),
           });
         }
-  
+
         console.log('Availability stored in Firestore');
       } else {
         console.log('No events found');
@@ -141,7 +146,6 @@ const App = () => {
       }
     }
   };
-  
 
   const participants = [
     { name: 'Alice', attending: true },
