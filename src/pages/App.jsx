@@ -107,9 +107,9 @@ const App = () => {
           handleGetEvents={handleGetEvents}
           events={events}
         /> */}
-        <GroupAvailability />
+        {/* <GroupAvailability /> */}
 
-        <AvailabilityStatus />
+        {/* <AvailabilityStatus /> */}
 
         {/* <MeetingInfo 
           meetingId="3xfd1" 
