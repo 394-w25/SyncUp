@@ -3,9 +3,7 @@
   height: 100%;
   width: 100%;
   margin: 0 auto;
-  font-family: Arial, sans-serif;
-  background-color: #f8f9fa;
-  border: 1px solid #ddd;
+  font-family: 'Nunito', sans-serif;
   border-radius: 8px;
   overflow: hidden;
 }

@@ -16,7 +16,7 @@ const MeetingInfo = ({ meetingId, event, participants }) => {
               className="w-8 h-8 rounded-full mr-2"
             />
             <span className="text-gray-700 mr-2">{participant.name}</span>
-            {participant.attending ? (
+            {participant.status ? (
               <span className="text-green-500">✅</span>
             ) : (
               <span className="text-red-500">❌</span>

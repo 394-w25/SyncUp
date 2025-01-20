@@ -9,6 +9,8 @@ import IndividualAvailability from '../components/IndividualAvailability';
 // import "./App.css"; // Import the new CSS file
 import MeetingInfo from '../components/meetingInfo';
 import AvailabilityStatus from '../components/AvailabilityStatus';
+import Legend from '../components/Legend';
+import Calendar from '../components/Calender';
 
 const CLIENT_ID = '308692654908-c3sb5qvhs1nhc8t3lju2n1lqsem6123q.apps.googleusercontent.com'; // Replace with your client ID
 const API_KEY = 'AIzaSyALwmIcPkkZnfIXKwbMQa0DBtQ-iqv6bho'; 
@@ -71,34 +73,49 @@ const App = () => {
   };
 
   const participants = [
-    { name: 'Alice', attending: true },
-    { name: 'Bob', attending: false },
-    { name: 'Charlie', attending: true },
+    { name: "Alice", status: true },
+    { name: "Bob", status: false },
+    { name: "Charlie", status: true },
+    { name: "Devin", status: true },
+    { name: "Ellie", status: false },
+    { name: "Ferris", status: false },
   ];
 
   return (
-    <div className="app-container w-full">
-      <CalendarHeader />
-      <div className="grid-container">
-        <div className="calendar-containter">
-          <IndividualAvailability
+    <div className="app-container w-full flex flex-col gap-4 pb-4">
+      {/* top row, header and legend */}
+      <div className='flex gap-4'>
+        <div className='w-[70%] h-full'>
+          <Calendar 
             isAuthenticated={isAuthenticated}
             handleAuth={handleAuth}
             handleGetEvents={handleGetEvents}
             events={events}
+            startDate="2025-01-13"
+            endDate="2025-01-20"
           />
         </div>
-        <div className="group-avaibility">
-          <GroupAvailability />
+        <div className='w-[30%] h-full'>
+          <Legend meetingID={'rewnd7'} eventName={'394 meeting'} participants={participants}/>
         </div>
+      </div>
+      
+      <div className="grid-container px-4">
+        {/* <IndividualAvailability
+          isAuthenticated={isAuthenticated}
+          handleAuth={handleAuth}
+          handleGetEvents={handleGetEvents}
+          events={events}
+        /> */}
+        <GroupAvailability />
 
         <AvailabilityStatus />
 
-        <MeetingInfo 
+        {/* <MeetingInfo 
           meetingId="3xfd1" 
           event="394 Weekly" 
           participants={participants} 
-        />
+        /> */}
       </div>
     </div>
   );

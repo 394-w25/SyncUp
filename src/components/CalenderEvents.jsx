@@ -14,7 +14,7 @@ const CalendarEvents = ({ events }) => {
       <div className="calendar-grid">
         {Array.from({ length: 24 }).map((_, index) => (
           <div key={index} className="hour-block">
-            {index}:00
+            {index+1}:00
           </div>
         ))}
       </div>
