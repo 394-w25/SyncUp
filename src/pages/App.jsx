@@ -96,8 +96,9 @@ const App = () => {
             endDate="2025-01-20"
           />
         </div>
-        <div className='w-[30%] h-full'>
-          <Legend meetingID={'rewnd7'} eventName={'394 meeting'} participants={participants}/>
+        <div className='w-[30%] h-full flex flex-col gap-4 mr-4'>
+          <Legend meetingID={'rewnd7'} eventName={'394 meeting'} participants={participants}/>  
+          <GroupAvailability />
         </div>
       </div>
       
