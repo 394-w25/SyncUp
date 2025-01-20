@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import CalendarEvents from './CalenderEvents';
+import CalendarEvents from './CalendarEvents';
 
 const IndividualAvailability = ({ isAuthenticated, handleAuth, handleGetEvents, events }) => {
   return (
