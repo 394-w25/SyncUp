@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { gapi } from 'gapi-script';
+import { handleAuth as googleHandleAuth } from '../services/googleAuth';
+import { initializeGAPIClient } from '../services/googleCalender';
+import { importEvents } from '../utils/importEvents';
+import { calculateAvailability } from '../utils/availability';
+import "./App.css"; // Import the new CSS file
 
 import '../styles/globals.css';
 
@@ -13,66 +18,60 @@ import Legend from '../components/Legend';
 import Calendar from '../components/Calendar';
 import { Group } from '@mui/icons-material';
 
-const CLIENT_ID = '308692654908-c3sb5qvhs1nhc8t3lju2n1lqsem6123q.apps.googleusercontent.com'; // Replace with your client ID
-const API_KEY = 'AIzaSyALwmIcPkkZnfIXKwbMQa0DBtQ-iqv6bho'; 
-const CALENDAR_ID = 'primary'; // Use 'primary' to access the user's primary calendar
-const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly';
-
 const App = () => {
-  const [events, setEvents] = useState([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [events, setEvents] = useState([]);
+  const [availability, setAvailability] = useState([]);
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
-    const initClient = () => {
-      gapi.client.init({
-        apiKey: API_KEY,
-        clientId: CLIENT_ID,
-        scope: SCOPES,
-        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
-      }).then(() => {
+    const initClient = async () => {
+      try {
+        await initializeGAPIClient();
         const storedAuth = localStorage.getItem('google-auth');
-        if (storedAuth === 'true') {
+        const storedUserId = localStorage.getItem('user-id');
+        if (storedAuth === 'true' && storedUserId) {
           setIsAuthenticated(true);
+          setUserId(storedUserId);
+          console.log('Stored user ID:', storedUserId); // Debugging log
         }
-      });
+      } catch (error) {
+        console.error('Error initializing GAPI client:', error);
+      }
     };
 
     gapi.load('client:auth2', initClient);
   }, []);
 
-  const handleAuth = async () => {
+  const handleGoogleAuth = async () => {
     try {
-      await gapi.auth2.getAuthInstance().signIn();
-      localStorage.setItem('google-auth', 'true');
-      setIsAuthenticated(true);
-      console.log('User signed in');
+      const user = await googleHandleAuth(setIsAuthenticated);
+      setUserId(user.uid);
+      localStorage.setItem('user-id', user.uid);
+      console.log('User ID set:', user.uid); // Debugging log
     } catch (error) {
-      console.error('Error signing in:', error);
+      console.error('Error during authentication:', error);
     }
   };
 
-  const handleGetEvents = async () => {
+  const handleImportEvents = async () => {
     try {
-      const response = await gapi.client.calendar.events.list({
-        calendarId: CALENDAR_ID,
-        timeMin: new Date().toISOString(),
-        maxResults: 10,
-        singleEvents: true,
-        orderBy: 'startTime',
-      });
-      const data = response.result.items;
-
-      if (data.length) {
-        console.log('Events JSON:', JSON.stringify(data, null, 2));
-        setEvents(data);  // Set events in state
-      } else {
-        console.log('No events found');
+      console.log('Importing events for user ID:', userId); // Debugging log
+      if (!userId) {
+        throw new Error('User ID is null or undefined');
       }
+      const events = await importEvents(userId);
+      setEvents(events);
+      const availability = calculateAvailability(events);
+      setAvailability(availability);
     } catch (error) {
-      console.error('Error fetching events:', error);
+      console.error('Error importing events:', error);
     }
   };
 
+  useEffect(() => {
+    console.log('User ID updated:', userId); // Debugging log
+  }, [userId]);
   const participants = [
     { name: "Alice", status: true },
     { name: "Bob", status: false },
@@ -89,8 +88,8 @@ const App = () => {
         <div className='w-[70%] h-full'>
           <Calendar 
             isAuthenticated={isAuthenticated}
-            handleAuth={handleAuth}
-            handleGetEvents={handleGetEvents}
+            handleAuth={handleGoogleAuth}
+            handleGetEvents={handleImportEvents}
             events={events}
             startDate="2025-01-13"
             endDate="2025-01-20"
@@ -118,6 +117,47 @@ const App = () => {
           event="394 Weekly" 
           participants={participants} 
         /> */}
+        {!isAuthenticated ? (
+          <button onClick={handleGoogleAuth}>Sign in with Google</button>
+        ) : (
+          <>
+            <button onClick={handleImportEvents}>Import Events from Google Calendar</button>
+            <div>
+              {events.length > 0 ? (
+                <ul>
+                  {events.map((event) => (
+                    <li key={event.id}>
+                      {event.summary} - {new Date(event.start.dateTime).toLocaleString()} to {new Date(event.end.dateTime).toLocaleString()}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No events imported</p>
+              )}
+            </div>
+            <div>
+              <h2>Availability</h2>
+              {availability.length > 0 ? (
+                <ul>
+                  {availability.map((day) => (
+                    <li key={day.date}>
+                      {day.date}
+                      <ul>
+                        {day.slots.map((slot, index) => (
+                          <li key={index}>
+                            {new Date(slot.start).toLocaleTimeString()} - {new Date(slot.end).toLocaleTimeString()}
+                          </li>
+                        ))}
+                      </ul>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No availability calculated</p>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
