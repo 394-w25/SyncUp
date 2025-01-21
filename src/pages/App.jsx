@@ -8,21 +8,17 @@ import "./App.css"; // Import the new CSS file
 
 import '../styles/globals.css';
 
-import CalendarHeader from '../components/CalendarHeader'
 import GroupAvailability from '../components/GroupAvailability';
-import IndividualAvailability from '../components/IndividualAvailability';
-// import "./App.css"; // Import the new CSS file
-import MeetingInfo from '../components/meetingInfo';
-import AvailabilityStatus from '../components/AvailabilityStatus';
 import Legend from '../components/Legend';
 import Calendar from '../components/Calendar';
-import { Group } from '@mui/icons-material';
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [events, setEvents] = useState([]);
-  const [availability, setAvailability] = useState([]);
   const [userId, setUserId] = useState(null);
+  const [startDate, setStartDate] = useState("2025-01-19");
+  const [endDate, setEndDate] = useState("2025-01-25");
+  const [startTime, setStartTime] = useState(9);
+  const [endTime, setEndTime] = useState(21);
 
   useEffect(() => {
     const initClient = async () => {
@@ -54,21 +50,6 @@ const App = () => {
     }
   };
 
-  const handleImportEvents = async () => {
-    try {
-      console.log('Importing events for user ID:', userId); // Debugging log
-      if (!userId) {
-        throw new Error('User ID is null or undefined');
-      }
-      const events = await importEvents(userId);
-      setEvents(events);
-      const availability = calculateAvailability(events);
-      setAvailability(availability);
-    } catch (error) {
-      console.error('Error importing events:', error);
-    }
-  };
-
   useEffect(() => {
     console.log('User ID updated:', userId); // Debugging log
   }, [userId]);
@@ -89,10 +70,11 @@ const App = () => {
           <Calendar 
             isAuthenticated={isAuthenticated}
             handleAuth={handleGoogleAuth}
-            handleGetEvents={handleImportEvents}
-            events={events}
-            startDate="2025-01-13"
-            endDate="2025-01-20"
+            startDate={startDate}
+            endDate={endDate}
+            userId={userId}
+            startTime={startTime}
+            endTime={endTime}
           />
         </div>
         <div className='w-[30%] h-full flex flex-col gap-4 mr-4'>
@@ -101,40 +83,42 @@ const App = () => {
         </div>
       </div>
       
-      <div className="grid-container px-4">
-        {/* <IndividualAvailability
-          isAuthenticated={isAuthenticated}
-          handleAuth={handleAuth}
-          handleGetEvents={handleGetEvents}
-          events={events}
-        /> */}
-        {/* <GroupAvailability /> */}
-
-        {/* <AvailabilityStatus /> */}
-
-        {/* <MeetingInfo 
-          meetingId="3xfd1" 
-          event="394 Weekly" 
-          participants={participants} 
-        /> */}
+      {/* <div className="grid-container px-4">
         {!isAuthenticated ? (
           <button onClick={handleGoogleAuth}>Sign in with Google</button>
         ) : (
           <>
-            <button onClick={handleImportEvents}>Import Events from Google Calendar</button>
-            <div>
-              {events.length > 0 ? (
-                <ul>
-                  {events.map((event) => (
-                    <li key={event.id}>
-                      {event.summary} - {new Date(event.start.dateTime).toLocaleString()} to {new Date(event.end.dateTime).toLocaleString()}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p>No events imported</p>
-              )}
-            </div>
+            {events.length > 0 ? (
+              <div className="events-list">
+                <h2 className="text-xl font-semibold mb-4">Imported Events</h2>
+                <div className="space-y-2">
+                  {events.map((event) => {
+                    const startTime = new Date(event.start.dateTime).toLocaleString([], {
+                      weekday: 'short',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    });
+                    const endTime = new Date(event.end.dateTime).toLocaleString([], {
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    });
+                    
+                    return (
+                      <div key={event.id} className="p-3 bg-gray-100 rounded-lg">
+                        <div className="font-medium">{event.summary}</div>
+                        <div className="text-gray-600 text-sm">
+                          {startTime} - {endTime}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <p>No events imported</p>
+            )}
             <div>
               <h2>Availability</h2>
               {availability.length > 0 ? (
@@ -158,7 +142,7 @@ const App = () => {
             </div>
           </>
         )}
-      </div>
+      </div> */}
     </div>
   );
 };

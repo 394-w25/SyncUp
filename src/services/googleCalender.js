@@ -15,11 +15,22 @@ export const initializeGAPIClient = async () => {
   };
 
   
-export const getGoogleCalendarEvents = async () => {
+export const getGoogleCalendarEvents = async (startDate, endDate) => {
     try {
+      // Ensure we have valid Date objects
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      // Set start time to beginning of day (00:00:00)
+      start.setHours(0, 0, 0, 0);
+      
+      // Set end time to end of day (23:59:59)
+      end.setHours(23, 59, 59, 999);
+
       const response = await gapi.client.calendar.events.list({
         calendarId: 'primary',
-        timeMin: new Date().toISOString(), // Only future events
+        timeMin: start.toISOString(),
+        timeMax: end.toISOString(),
         maxResults: 100,
         singleEvents: true,
         orderBy: 'startTime',

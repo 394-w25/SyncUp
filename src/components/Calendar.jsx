@@ -1,16 +1,11 @@
-import React from 'react';
-import CalendarHeader from './CalendarHeader';
+import React, { useState } from 'react';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import Button from '@mui/material/Button';
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import Box from '@mui/material/Box';
-import CalendarEvents from './CalendarEvents';
-import IndividualAvailability from './IndividualAvailability';
 import TimeSchedule from './CalendarBackground';
-
-const importClick = () => {
-  alert('clicked');
-}
+import { importEvents } from '../utils/importEvents';
+import { calculateAvailability } from '../utils/availability';
 
 const buttonTheme = createTheme({
   palette: {
@@ -52,7 +47,33 @@ function dateParse(dateString) {
   return new Date(year, month, date);
 }
 
-const Calendar = ({ isAuthenticated, handleAuth, handleGetEvents, events, startDate, endDate, startTime, endTime}) => {
+const Calendar = ({ 
+  isAuthenticated, 
+  handleAuth, 
+  startDate, 
+  endDate,
+  startTime,
+  endTime,
+  userId
+}) => {
+  const [events, setEvents] = useState([]);
+  const [availability, setAvailability] = useState([]);
+
+  const handleImportEvents = async () => {
+    try {
+      console.log('Importing events for user ID:', userId); // Debugging log
+      if (!userId) {
+        throw new Error('User ID is null or undefined');
+      }
+      const events = await importEvents(userId, startDate, endDate);
+      setEvents(events);
+      const availability = calculateAvailability(events);
+      setAvailability(availability);
+    } catch (error) {
+      console.error('Error importing events:', error);
+    }
+  };
+
   const generateDateRange = (startDate, endDate) => {
     
     const start = dateParse(startDate);
@@ -63,7 +84,7 @@ const Calendar = ({ isAuthenticated, handleAuth, handleGetEvents, events, startD
 
     while (start <= end) {
       dates.push(start.getDate());
-      console.log(dates)
+      // console.log(dates)
       days.push(
         new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(start)
       );
@@ -90,16 +111,29 @@ const Calendar = ({ isAuthenticated, handleAuth, handleGetEvents, events, startD
         </div>
 
         <div className='row-button flex justify-between'>
-          <ThemeProvider theme={buttonTheme}>
-            <Button 
-            variant='outlined' 
-            color='secondary'
-            onClick={importClick}
-            style={{textTransform: 'none'}}
-            startIcon={<SystemUpdateAltIcon />}>
-              Import Calendar
-            </Button>
-          </ThemeProvider>
+          {!isAuthenticated ? (
+            <ThemeProvider theme={buttonTheme}>
+              <Button 
+              variant='outlined' 
+              color='secondary'
+              onClick={handleAuth}
+              style={{textTransform: 'none'}}
+              startIcon={<SystemUpdateAltIcon />}>
+                Sign in with Google
+              </Button>
+            </ThemeProvider>
+          ) : (
+            <ThemeProvider theme={buttonTheme}>
+              <Button 
+              variant='outlined' 
+              color='secondary'
+              onClick={handleImportEvents}
+              style={{textTransform: 'none'}}
+              startIcon={<SystemUpdateAltIcon />}>
+                Import Events
+              </Button>
+            </ThemeProvider>
+          )}
 
           <div className='flex gap-8'>
             <div className='flex gap-2 items-center'>
@@ -113,7 +147,13 @@ const Calendar = ({ isAuthenticated, handleAuth, handleGetEvents, events, startD
           </div>
         </div>
 
-        <TimeSchedule startTime={9} endTime={21} startDate={startDate} endDate={endDate}/>
+        <TimeSchedule 
+          startTime={startTime} 
+          endTime={endTime} 
+          startDate={startDate} 
+          endDate={endDate}
+          events={events}
+        />
 
       </div>
     </div>

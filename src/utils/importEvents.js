@@ -2,15 +2,19 @@ import { getGoogleCalendarEvents } from '../services/googleCalender';
 import { setDoc, doc } from "firebase/firestore";
 import { db } from '../firebase'; // Assuming you have a firebase.js file for Firestore
 
-export const importEvents = async (userId) => {
+export const importEvents = async (userId, startDate, endDate) => {
   try {
     console.log('Received user ID:', userId); // Debugging log
     if (!userId) {
       throw new Error('User ID is null or undefined');
     }
+    if (!startDate || !endDate) {
+      throw new Error('Start date and end date are required');
+    }
 
-    const events = await getGoogleCalendarEvents();
-    const limitedEvents = events.slice(0, 5); // Limit to 5 events
+    const events = await getGoogleCalendarEvents(startDate, endDate);
+    const limitedEvents = events;
+    // const limitedEvents = events.slice(0, 5); // Limit to 5 events
     const eventsByDate = {};
 
     // Organize events by date

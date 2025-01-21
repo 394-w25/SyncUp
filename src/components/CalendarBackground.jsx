@@ -3,14 +3,13 @@ import React from "react";
 function dateParse(dateString) {
   const dateArray = dateString.split("-");
   const year = parseInt(dateArray[0], 10);
-  const month = parseInt(dateArray[1], 10) - 1; // Month is 0-based in JavaScript
+  const month = parseInt(dateArray[1], 10) - 1;
   const date = parseInt(dateArray[2], 10);
 
   return new Date(year, month, date);
 }
 
-const TimeSchedule = ({ startTime, endTime, startDate, endDate }) => {
-  // Function to generate date range
+const TimeSchedule = ({ startTime, endTime, startDate, endDate, events }) => {
   const generateDateRange = (startDate, endDate) => {
     const start = dateParse(startDate);
     const end = dateParse(endDate);
@@ -19,7 +18,7 @@ const TimeSchedule = ({ startTime, endTime, startDate, endDate }) => {
     const days = [];
 
     while (start <= end) {
-      dates.push(new Date(start)); // Push the full date object for later use
+      dates.push(new Date(start));
       days.push(
         new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(start)
       );
@@ -31,20 +30,70 @@ const TimeSchedule = ({ startTime, endTime, startDate, endDate }) => {
 
   const { dates } = generateDateRange(startDate, endDate);
 
-  // Function to format time (e.g., 9 AM, 10 PM)
   const formatTime = (hour) => {
     const period = hour >= 12 ? "PM" : "AM";
     const formattedHour = hour % 12 === 0 ? 12 : hour % 12;
     return `${formattedHour} ${period}`;
   };
 
-  // Generate an array of times from startTime to endTime
   const times = [];
   for (let hour = startTime; hour <= endTime; hour++) {
     times.push(formatTime(hour));
   }
 
-    const dateColumnWidth = `${(100 / (dates.length))}%`; // Include the time column
+  const dateColumnWidth = `${(100 / (dates.length))}%`;
+
+  const renderEvents = (date) => {
+    const dateStr = date.toISOString().split('T')[0];
+
+    const dayEvents = events?.filter(event => {
+      const eventStart = event.start?.dateTime || event.start?.date;
+      if (!eventStart) return false;
+      const eventDate = new Date(eventStart).toISOString().split('T')[0];
+      return eventDate === dateStr;
+    });
+
+    return dayEvents?.map((event, index) => {
+      const startDateTime = event.start?.dateTime;
+      const endDateTime = event.end?.dateTime;
+      
+      if (!startDateTime || !endDateTime) return null;
+      
+      const eventStartTime = new Date(startDateTime);
+      const eventEndTime = new Date(endDateTime);
+      
+      const eventStartHour = eventStartTime.getHours() + (eventStartTime.getMinutes() / 60);
+      const eventEndHour = eventEndTime.getHours() + (eventEndTime.getMinutes() / 60);
+      const duration = eventEndHour - eventStartHour;
+      
+      const totalVisibleHours = endTime - startTime;
+      const startPercentage = ((eventStartHour - startTime + 1) / totalVisibleHours) * 100;
+      const heightPercentage = (duration / totalVisibleHours) * 100;
+
+      console.log('Event:', event.summary, {
+        eventStartHour, 
+        eventEndHour,
+        duration,
+        startPercentage,
+        heightPercentage
+      });
+
+      return (
+        <div
+          key={index}
+          className="absolute left-0 right-0 mr-1 rounded bg-neutral-200 border border-neutral-400 border-l-2 p-1 overflow-hidden"
+          style={{
+            top: `${startPercentage}%`,
+            height: `${heightPercentage}%`,
+            zIndex: 10
+          }}
+        >
+          <p className="text-xs truncate">{event.summary || event.title}</p>
+          <p className="text-xs truncate">{eventStartTime.toLocaleTimeString()}</p>
+        </div>
+      );
+    });
+  };
 
   return (
     <div className="w-full flex flex-col mt-8 border-neutral-400 rounded-lg">
@@ -61,7 +110,6 @@ const TimeSchedule = ({ startTime, endTime, startDate, endDate }) => {
             day: "numeric",
           }).format(date);
 
-          // Check if the day is a weekend (Saturday or Sunday)
           const isWeekend = date.getDay() === 0 || date.getDay() === 6;
 
           return (
@@ -81,41 +129,46 @@ const TimeSchedule = ({ startTime, endTime, startDate, endDate }) => {
       <div className="w-full flex">
         {/* Time Column Body */}
         <div 
-            className="w-[10%] text-nowrap bg-neutral-100">
+            className="w-[10%] text-nowrap bg-neutral-100 relative">
           {times.map((time, index) => (
             <div
               key={index}
-              className="border-neutral-400 h-12 flex items-center justify-center"
+              className="absolute w-full"
+              style={{ top: `${(index + 1) * 48}px`, transform: 'translateY(-50%)' }}
             >
-              <p className="text-sm text-neutral-800">{time}</p>
+              <p className="text-sm text-neutral-800 text-center">{time}</p>
             </div>
+          ))}
+          {times.map((_, idx) => (
+            <div
+              key={idx}
+              className="h-12  border-neutral-300"
+            />
           ))}
         </div>
 
         {/* Date Columns Body */}
-        {dates.map((date, index) => {
-          // Check if the day is a weekend
-          const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-
-          return (
-            <div
-              key={index}
-                style={{ width: dateColumnWidth }}
-              className={` bg-neutral-100 `}
-            >
-              {times.map((_, idx) => (
-                <div
-                  key={idx}
-                  className={`h-12 ${
-                    idx !== times.length - 1 ? "border-b" : ""
-                  } ${
-                    index !== dates.length - 1 ? "border-r" : ""
-                  } border-neutral-300`}
-                ></div>
-              ))}
-            </div>
-          );
-        })}
+        {dates.map((date, index) => (
+          <div
+            key={index}
+            style={{ width: dateColumnWidth }}
+            className="relative bg-neutral-100"
+          >
+            {times.map((_, idx) => (
+              <div
+                key={idx}
+                className={`h-12 border-b
+                  ${
+                  idx !== times.length - 1 ? "border-b" : ""
+                  } 
+                ${
+                  index !== dates.length - 1 ? "border-r" : ""
+                } border-neutral-300`}
+              ></div>
+            ))}
+            {renderEvents(date)}
+          </div>
+        ))}
       </div>
     </div>
   );
