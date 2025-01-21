@@ -3,7 +3,7 @@ import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import Button from '@mui/material/Button';
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import Box from '@mui/material/Box';
-import TimeSchedule from './CalendarBackground';
+import TimeSchedule from './CalendarEvents';
 import { importEvents } from '../utils/importEvents';
 import { calculateAvailability } from '../utils/availability';
 
@@ -58,10 +58,12 @@ const Calendar = ({
 }) => {
   const [events, setEvents] = useState([]);
   const [availability, setAvailability] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleImportEvents = async () => {
     try {
-      console.log('Importing events for user ID:', userId); // Debugging log
+      setIsLoading(true);
+      console.log('Importing events for user ID:', userId);
       if (!userId) {
         throw new Error('User ID is null or undefined');
       }
@@ -71,6 +73,8 @@ const Calendar = ({
       setAvailability(availability);
     } catch (error) {
       console.error('Error importing events:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -128,9 +132,10 @@ const Calendar = ({
               variant='outlined' 
               color='secondary'
               onClick={handleImportEvents}
+              disabled={isLoading}
               style={{textTransform: 'none'}}
               startIcon={<SystemUpdateAltIcon />}>
-                Import Events
+                {isLoading ? 'Importing...' : 'Import Events'}
               </Button>
             </ThemeProvider>
           )}
