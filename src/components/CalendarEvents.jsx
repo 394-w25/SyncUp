@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from "react";
-import { doc, setDoc } from 'firebase/firestore';
+import React, { useState, useMemo, useEffect } from "react";
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
 const pixelsPerHour = 48;
@@ -8,8 +8,8 @@ const pixelsPer30Min = 24;
 export default function CalendarEvents({
   startTime = 8,
   endTime = 18,
-  startDate = "2025-01-01",
-  endDate = "2025-01-07",
+  startDate,
+  endDate,
   events = [],
 }) {
   const [highlightBlocks, setHighlightBlocks] = useState([]);
@@ -91,6 +91,30 @@ export default function CalendarEvents({
     return Math.round(pixels / pixelsPerIncrement) * pixelsPerIncrement;
   };
 
+  // Load the user's saved availability from Firestore (no change even after refresh)
+  useEffect(() => {
+    if (!userId) return; // If there's no user, skip loading
+
+    async function fetchAvailability() {
+      try {
+        const docRef = doc(db, "availability", userId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          // Make sure the document has blocks
+          if (data.blocks) {
+            // Set them to our highlightBlocks state
+            setHighlightBlocks(data.blocks);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user availability:", error);
+      }
+    }
+
+    fetchAvailability();
+  }, [userId, startDate, endDate]);
+
   const handleSave = async () => {
     if (!userId) {
       alert('Please sign in to save your availability');
@@ -99,46 +123,21 @@ export default function CalendarEvents({
 
     setIsSaving(true);
     try {
-      const availabilityByDate = {};
-      
-      highlightBlocks.forEach(block => {
-        const date = new Date(startDate);
-        date.setDate(date.getDate() + block.dayIndex);
-        const dateString = date.toISOString().split('T')[0];
-        
-        if (!availabilityByDate[dateString]) {
-          availabilityByDate[dateString] = new Array((endTime - startTime) * 4).fill(0);
-        }
-        
-        const startSlot = Math.floor(block.top / 12);
-        const endSlot = Math.floor((block.top + block.height) / 12);
-        
-        for (let i = startSlot; i < endSlot; i++) {
-          if (i < availabilityByDate[dateString].length) {
-            availabilityByDate[dateString][i] = 1;
-          }
-        }
-      });
-
-      const availabilityCollection = {};
-      Object.entries(availabilityByDate).forEach(([date, slots]) => {
-        availabilityCollection[date] = {
-          date: date,
-          startTime: new Date(date + 'T' + startTime.toString().padStart(2, '0') + ':00:00'),
-          endTime: new Date(date + 'T' + endTime.toString().padStart(2, '0') + ':00:00'),
-          intervalMins: 15,
-          data: {
-            data: slots
-          }
-        };
-      });
-
-      const availabilityDoc = {
+      const availabilityData = {
         userId,
-        availability: availabilityCollection,
+        startDate,
+        endDate,
+        blocks: highlightBlocks.map(block => ({
+          dayIndex: block.dayIndex,
+          top: block.top,
+          height: block.height,
+          startTime: pixelsToTime(block.top),
+          endTime: pixelsToTime(block.top + block.height)
+        })),
+        lastUpdated: new Date()
       };
-
-      await setDoc(doc(db, "availability", userId), availabilityDoc);
+      
+      await setDoc(doc(db, "availability", userId), availabilityData);
       setHasUnsavedChanges(false);
       alert('Availability saved successfully!');
     } catch (error) {
@@ -318,7 +317,7 @@ export default function CalendarEvents({
               .map((block) => (
                 <div
                   key={block.id}
-                  className="absolute mr-1 rounded  border-l-4 p-1 w-full cursor-pointer transition-colors bg-blue-100 border-2 border-blue-500 hover:bg-blue-200"
+                  className="absolute mr-1 rounded border-l-4 p-1 w-full cursor-pointer transition-colors bg-blue-100 border-2 border-blue-500 hover:bg-blue-200"
                   style={{
                     top: `${block.top}px`,
                     height: `${block.height}px`,
