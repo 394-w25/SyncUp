@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { gapi } from 'gapi-script';
-import { handleAuth as googleHandleAuth } from '../services/googleAuth';
+import { handleAuth as googleHandleAuth, signOut } from '../services/googleAuth';
 import { initializeGAPIClient } from '../services/googleCalender';
 import { importEvents } from '../utils/importEvents';
 import { calculateAvailability } from '../utils/availability';
@@ -39,6 +39,8 @@ const App = () => {
     gapi.load('client:auth2', initClient);
   }, []);
 
+  // Push availability data to Firestore
+
   const handleGoogleAuth = async () => {
     try {
       const user = await googleHandleAuth(setIsAuthenticated);
@@ -49,6 +51,10 @@ const App = () => {
       console.error('Error during authentication:', error);
     }
   };
+
+  const handleSignOut = async () => {
+    await signOut(setIsAuthenticated, setUserId);
+  }
 
   useEffect(() => {
     console.log('User ID updated:', userId); // Debugging log
@@ -66,6 +72,7 @@ const App = () => {
     <div className="app-container w-full flex flex-col gap-4 pb-4">
       <div className='flex gap-4'>
         <div className='w-[70%] h-full'>
+          <button onClick={handleSignOut}>Sign Out</button>
           <Calendar 
             isAuthenticated={isAuthenticated}
             handleAuth={handleGoogleAuth}

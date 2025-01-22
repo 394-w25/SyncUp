@@ -60,7 +60,7 @@ const Calendar = ({
       }
       const events = await importEvents(userId, startDate, endDate);
       setEvents(events);
-      const availability = calculateAvailability(events);
+      const availability = calculateAvailability(events, userId);
       setAvailability(availability);
     } catch (error) {
       console.error('Error importing events:', error);

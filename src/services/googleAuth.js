@@ -1,4 +1,4 @@
-import { GoogleAuthProvider, signInWithPopup, getAuth } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, getAuth , signOut as firebaseSignOut} from "firebase/auth";
 import { setDoc, doc } from "firebase/firestore";
 import { gapi } from "gapi-script";
 import { db } from '../firebase'; // Assuming you have a firebase.js file for Firestore
@@ -45,4 +45,17 @@ const handleAuth = async (setIsAuthenticated) => {
     }
 };
 
-export { signInWithGoogle, handleAuth };
+const signOut = async (setIsAuthenticated, setUserId) => {
+  try {
+    await firebaseSignOut(auth);
+    setIsAuthenticated(false);
+    setUserId(null);
+    localStorage.removeItem('google-auth');
+    localStorage.removeItem('user-id');
+    console.log('User signed out');
+  } catch (error) {
+    console.error('Error signing out:', error);
+  }
+};
+
+export { signInWithGoogle, handleAuth, signOut };
