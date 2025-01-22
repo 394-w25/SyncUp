@@ -9,7 +9,7 @@ function dateParse(dateString) {
   return new Date(year, month, date);
 }
 
-const TimeSchedule = ({ startTime, endTime, startDate, endDate, events }) => {
+const CalendarEvents = ({ startTime, endTime, startDate, endDate, events }) => {
   const generateDateRange = (startDate, endDate) => {
     const start = dateParse(startDate);
     const end = dateParse(endDate);
@@ -61,30 +61,28 @@ const TimeSchedule = ({ startTime, endTime, startDate, endDate, events }) => {
       
       const eventStartTime = new Date(startDateTime);
       const eventEndTime = new Date(endDateTime);
+
+      if (eventStartTime.getHours() < startTime || eventEndTime.getHours() > endTime) return null;
       
       const eventStartHour = eventStartTime.getHours() + (eventStartTime.getMinutes() / 60);
       const eventEndHour = eventEndTime.getHours() + (eventEndTime.getMinutes() / 60);
       const duration = eventEndHour - eventStartHour;
       
-      const totalVisibleHours = endTime - startTime;
-      const startPercentage = ((eventStartHour - startTime + 1) / totalVisibleHours) * 100;
-      const heightPercentage = (duration / totalVisibleHours) * 100;
+      const pixelsPerHour = 48;
+      const topPosition = (eventStartHour - startTime + 1) * pixelsPerHour;
+      var height = duration * pixelsPerHour;
 
-      console.log('Event:', event.summary, {
-        eventStartHour, 
-        eventEndHour,
-        duration,
-        startPercentage,
-        heightPercentage
-      });
+      if (eventEndHour > endTime) {
+        height = (endTime - eventStartHour) * pixelsPerHour;
+      }
 
       return (
         <div
           key={index}
           className="absolute left-0 right-0 mr-1 rounded bg-neutral-200 border border-neutral-400 border-l-2 p-1 overflow-hidden"
           style={{
-            top: `${startPercentage}%`,
-            height: `${heightPercentage}%`,
+            top: `${topPosition}px`,
+            height: `${height}px`,
             zIndex: 10
           }}
         >
@@ -129,7 +127,7 @@ const TimeSchedule = ({ startTime, endTime, startDate, endDate, events }) => {
       <div className="w-full flex">
         {/* Time Column Body */}
         <div 
-            className="w-[10%] text-nowrap bg-neutral-100 relative">
+            className="w-[10%] border text-nowrap bg-neutral-100 relative">
           {times.map((time, index) => (
             <div
               key={index}
@@ -174,4 +172,4 @@ const TimeSchedule = ({ startTime, endTime, startDate, endDate, events }) => {
   );
 };
 
-export default TimeSchedule;
+export default CalendarEvents;

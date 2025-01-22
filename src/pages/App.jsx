@@ -15,10 +15,10 @@ import Calendar from '../components/Calendar';
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userId, setUserId] = useState(null);
-  const [startDate, setStartDate] = useState("2025-01-19");
+  const [startDate, setStartDate] = useState("2025-01-21");
   const [endDate, setEndDate] = useState("2025-01-25");
-  const [startTime, setStartTime] = useState(9);
-  const [endTime, setEndTime] = useState(21);
+  const [startTime, setStartTime] = useState(8);
+  const [endTime, setEndTime] = useState(18);
 
   useEffect(() => {
     const initClient = async () => {

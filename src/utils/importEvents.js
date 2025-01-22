@@ -4,7 +4,7 @@ import { db } from '../firebase'; // Assuming you have a firebase.js file for Fi
 
 export const importEvents = async (userId, startDate, endDate) => {
   try {
-    console.log('Received user ID:', userId); // Debugging log
+    console.log('Received user ID:', userId);
     if (!userId) {
       throw new Error('User ID is null or undefined');
     }
@@ -12,33 +12,43 @@ export const importEvents = async (userId, startDate, endDate) => {
       throw new Error('Start date and end date are required');
     }
 
-    const events = await getGoogleCalendarEvents(startDate, endDate);
-    const limitedEvents = events;
-    // const limitedEvents = events.slice(0, 5); // Limit to 5 events
+    // Parse dates and set to local timezone
+    const start = new Date(startDate + 'T00:00:00');
+    const end = new Date(endDate + 'T23:59:59.999');
+
+    console.log('Input dates:', { startDate, endDate });
+    console.log('Fetching events between:', start, 'and', end);
+    
+    const events = await getGoogleCalendarEvents(start, end);
     const eventsByDate = {};
 
     // Organize events by date
-    limitedEvents.forEach(event => {
+    events.forEach(event => {
       if (event.start && event.start.dateTime && event.end && event.end.dateTime) {
-        const date = new Date(event.start.dateTime).toISOString().split('T')[0]; // Get date as YYYY-MM-DD
-        if (!eventsByDate[date]) {
-          eventsByDate[date] = [];
+        const eventStartDate = new Date(event.start.dateTime);
+        const eventDate = eventStartDate.toISOString().split('T')[0];
+        
+        // Check if event starts within our date range
+        if (eventStartDate >= start && eventStartDate <= end) {
+          if (!eventsByDate[eventDate]) {
+            eventsByDate[eventDate] = [];
+          }
+          eventsByDate[eventDate].push({
+            title: event.summary,
+            start: new Date(event.start.dateTime),
+            end: new Date(event.end.dateTime),
+            isGoogleCalEvent: true,
+            googleCalEventId: event.id,
+            lastSync: new Date()
+          });
         }
-        eventsByDate[date].push({
-          title: event.summary,
-          start: new Date(event.start.dateTime),
-          end: new Date(event.end.dateTime),
-          isGoogleCalEvent: true,
-          googleCalEventId: event.id,
-          lastSync: new Date()
-        });
       }
     });
 
     // Save events to Firestore
     for (const [date, events] of Object.entries(eventsByDate)) {
       const docId = `${userId}_${date}`;
-      console.log('Saving document with ID:', docId); // Debugging log
+      console.log('Saving document with ID:', docId);
       await setDoc(doc(db, "calendarEvents", docId), {
         userId,
         date: new Date(date),
@@ -46,7 +56,7 @@ export const importEvents = async (userId, startDate, endDate) => {
       });
     }
 
-    return limitedEvents;
+    return events;
   } catch (error) {
     console.error('Error importing events:', error);
     throw error;

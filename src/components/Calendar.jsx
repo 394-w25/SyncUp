@@ -3,7 +3,7 @@ import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import Button from '@mui/material/Button';
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import Box from '@mui/material/Box';
-import TimeSchedule from './CalendarEvents';
+import CalendarEvents from './CalendarEvents';
 import { importEvents } from '../utils/importEvents';
 import { calculateAvailability } from '../utils/availability';
 
@@ -38,15 +38,6 @@ const CustomShape = ({ fillColor, outsideColor }) => {
   );
 };
 
-function dateParse(dateString) {
-  const dateArray = dateString.split("-");
-  const year = parseInt(dateArray[0], 10);
-  const month = parseInt(dateArray[1], 10) - 1; // Month is 0-based in JavaScript
-  const date = parseInt(dateArray[2], 10);
-  
-  return new Date(year, month, date);
-}
-
 const Calendar = ({ 
   isAuthenticated, 
   handleAuth, 
@@ -78,27 +69,6 @@ const Calendar = ({
     }
   };
 
-  const generateDateRange = (startDate, endDate) => {
-    
-    const start = dateParse(startDate);
-    const end = dateParse(endDate);
-
-    const dates = [];
-    const days = [];
-
-    while (start <= end) {
-      dates.push(start.getDate());
-      // console.log(dates)
-      days.push(
-        new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(start)
-      );
-      start.setDate(start.getDate() + 1);
-    }
-
-    return { dates, days };
-  };
-
-  const { dates, days } = generateDateRange(startDate, endDate);
   const currentMonth = new Intl.DateTimeFormat('en-US', { month: 'long' }).format(
     new Date(startDate)
   );
@@ -152,7 +122,7 @@ const Calendar = ({
           </div>
         </div>
 
-        <TimeSchedule 
+        <CalendarEvents 
           startTime={startTime} 
           endTime={endTime} 
           startDate={startDate} 

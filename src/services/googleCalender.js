@@ -17,15 +17,16 @@ export const initializeGAPIClient = async () => {
   
 export const getGoogleCalendarEvents = async (startDate, endDate) => {
     try {
-      // Ensure we have valid Date objects
-      const start = new Date(startDate);
-      const end = new Date(endDate);
+      // Ensure we're working with Date objects and proper timezone handling
+      const start = startDate instanceof Date ? startDate : new Date(startDate);
+      const end = endDate instanceof Date ? endDate : new Date(endDate);
       
-      // Set start time to beginning of day (00:00:00)
-      start.setHours(0, 0, 0, 0);
-      
-      // Set end time to end of day (23:59:59)
-      end.setHours(23, 59, 59, 999);
+      console.log('Requesting events from Google Calendar:', {
+        timeMin: start.toISOString(),
+        timeMax: end.toISOString(),
+        startDate: start.toLocaleString(),
+        endDate: end.toLocaleString()
+      });
 
       const response = await gapi.client.calendar.events.list({
         calendarId: 'primary',
@@ -37,7 +38,7 @@ export const getGoogleCalendarEvents = async (startDate, endDate) => {
       });
   
       const events = response.result.items;
-      console.log('Fetched events:', events);
+      console.log(`Fetched ${events.length} events from Google Calendar`);
       return events;
     } catch (error) {
       console.error('Error fetching Google Calendar events:', error);
