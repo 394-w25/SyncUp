@@ -1,4 +1,32 @@
 import React, { useState, useRef } from 'react';
+import Logo from './Logo';
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
+import { ThemeProvider, createTheme } from "@mui/material/styles";
+import EventRoundedIcon from '@mui/icons-material/EventRounded';
+import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
+import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
+import Button from '@mui/material/Button';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+
+const buttonTheme = createTheme({
+  palette: {
+    mode: 'light',
+    primary: {
+      main: '#ffffff',
+    },
+    secondary: {
+      main: '#23B76F',
+    },
+    background: {
+      default: '#fafafa',
+      paper: '#ffffff',
+    },
+  },
+  typography: {
+    fontFamily: 'Nunito',
+  },
+});
 
 // Convert "YYYY-MM-DD" to Date
 function dateParse(dateString) {
@@ -174,36 +202,86 @@ function GroupSchedule({ startTime, endTime, startDate, endDate }) {
 
 // Example pop-up component showing *all* selected blocks
 function PopupCard({ selectedBlocks, onClose }) {
-  // Sort or group blocks if you like, for now just show them all
-  // Each entry looks like "2025-01-15 9 AM"
-  
+  console.log(selectedBlocks);
+  const blocks = selectedBlocks.map(block => {
+    const [dateStr, hour, ampm] = block.split(' ');
+    const formattedTime = `${hour}:00 ${ampm}`;
+    return { date: new Date(dateStr), time: formattedTime };
+  });
+
+  const uniqueDates = [...new Set(blocks.map(b => b.date.toLocaleDateString('en-US', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  })))];
+
+  const dateDisplay = uniqueDates.join(', ');
+
+  const times = blocks.map(b => b.time);
+  const timeDisplay = times.length > 1 
+    ? `${times[0]} - ${times[times.length - 1]}` 
+    : `${times[0].replace(':00', ':00')} - ${times[0].replace(':00', ':59')}`; // Show minutes for single block
+
   return (
-    <div
-      className="fixed bottom-5 right-5 w-96 p-4 bg-white shadow-xl rounded-lg z-50 border border-gray-200"
-    >
-      <div className="flex items-center justify-between mb-3">
-        <span className="font-semibold text-lg text-green-700">
-          SyncUp!
-        </span>
-        <button onClick={onClose} className="text-gray-500">✕</button>
+    <div className="flex flex-col w-[28%] bg-white rounded-[20px] fixed bottom-5 right-5 shadow-xl z-50 border border-gray-200 min-w-[400px]">
+      <div className="p-4 bg-green-600 rounded-t-[20px]">
+        <div className="flex justify-end">
+          <ThemeProvider theme={buttonTheme}>
+            <IconButton 
+              color="primary" 
+              aria-label="close" 
+              onClick={onClose} 
+              className="text-white hover:bg-green-500"
+            >
+              <CloseIcon />
+            </IconButton>
+          </ThemeProvider>
+        </div>
+        <div className="flex justify-center -mt-6">
+          <Logo color='text-white' size='24pt'/>
+        </div>
       </div>
 
-      <p className="text-sm mb-2">
-        You selected <strong>{selectedBlocks.length}</strong> time blocks:
-      </p>
+      {/* <div className="flex justify-between p-8 text-[18px]"> */}
+        <div className="flex items-center p-8 flex-col gap-4 text-neutral-1000">
+          <div className="flex items-center gap-3">
+            <EventRoundedIcon className="text-neutral-1000" />
+            <span>{dateDisplay}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <AccessTimeRoundedIcon className="text-neutral-1000" />
+            <span>{timeDisplay}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <GroupsRoundedIcon className="text-neutral-1000" />
+            <span>4 people</span>
+          </div>
+        </div>
 
-      <ul className="max-h-32 overflow-auto list-disc list-inside text-sm mb-3">
-        {selectedBlocks.map((block, i) => (
-          <li key={i}>{block}</li>
-        ))}
-      </ul>
-
-      <button
-        className="bg-green-500 text-white px-4 py-1 rounded hover:bg-green-600 w-full"
-        onClick={() => alert('Proceed to schedule these time(s)!')}
-      >
-        GO →
-      </button>
+        {/* <div className="flex flex-col items-center gap-3 text-[18px]">
+          <span className="text-neutral-1000">Schedule now?</span>
+          <ThemeProvider theme={buttonTheme}>
+            <Button 
+              variant="contained" 
+              color="secondary"
+              style={{
+                textTransform: 'none',
+                borderRadius: 50,
+                color: 'white',
+                fontWeight: 'bold',
+                padding: '8px 32px',
+                fontSize: '16px'
+              }}
+              onClick={() => alert('Proceed to schedule these time(s)!')}
+              endIcon={<ArrowForwardIcon />}
+              disableElevation
+            >
+              Go
+            </Button>
+          </ThemeProvider>
+        </div> */}
+      {/* </div> */}
     </div>
   );
 }
