@@ -1,127 +1,221 @@
-import React from 'react';
-import { dateParse } from './CalendarEvents';
+import React, { useState, useRef } from 'react';
 
-const GroupSchedule = ({ startTime, endTime, startDate, endDate }) => {
-  // Function to generate date range
-  const generateDateRange = (startDate, endDate) => {
-    const start = dateParse(startDate);
-    const end = dateParse(endDate);
+// Convert “YYYY-MM-DD” to Date
+function dateParse(dateString) {
+  const [y, m, d] = dateString.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
 
+// Represents an individual cell by day+hour
+// (Could just store indices, but storing actual data is fine.)
+function makeSlotKey(date, hourLabel) {
+  // Format date as 2025-01-13 + "9 AM"
+  const iso = date.toISOString().split('T')[0];
+  return `${iso} ${hourLabel}`;
+}
+
+function GroupSchedule({ startTime, endTime, startDate, endDate }) {
+  // Keep track of:
+  //  1) all selected blocks
+  //  2) whether the mouse is down (i.e., user is dragging)
+  //  3) whether to show the pop-up
+  const [selectedBlocks, setSelectedBlocks] = useState(new Set());
+  const [isMouseDown, setIsMouseDown] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+
+  // Generate all dates in range
+  const getDatesInRange = (start, end) => {
     const dates = [];
-    const days = [];
-
-    while (start <= end) {
-      dates.push(new Date(start)); // Push the full date object for later use
-      days.push(
-        new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(start)
-      );
-      start.setDate(start.getDate() + 1);
+    const curr = dateParse(start);
+    const last = dateParse(end);
+    while (curr <= last) {
+      dates.push(new Date(curr));
+      curr.setDate(curr.getDate() + 1);
     }
+    return dates;
+  };
+  const dates = getDatesInRange(startDate, endDate);
 
-    return { dates, days };
+  // Generate hour labels
+  const hourLabels = [];
+  for (let hour = startTime; hour < endTime; hour++) {
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+    hourLabels.push(`${displayHour} ${ampm}`);
+  }
+
+  // Mouse Handlers
+  const handleMouseDown = (date, hourLabel) => {
+    setIsMouseDown(true);
+    setShowPopup(false); // Hide any old popup while we drag
+    // Start fresh or continue from existing? 
+    // If you want SHIFT-like behavior, you might *not* clear. 
+    // For simplicity, let's clear old selections each time:
+    const newSet = new Set();
+    newSet.add(makeSlotKey(date, hourLabel));
+    setSelectedBlocks(newSet);
   };
 
-  const { dates } = generateDateRange(startDate, endDate);
+  const handleMouseEnter = (date, hourLabel) => {
+    // Only highlight if we're currently dragging
+    if (!isMouseDown) return;
+    setSelectedBlocks(prev => {
+      const updated = new Set(prev);
+      updated.add(makeSlotKey(date, hourLabel));
+      return updated;
+    });
+  };
 
-  // Generates an array of hour labels (e.g., 9 AM, 10 PM)
-  const hourLabels = [];
-  for (let hour = startTime; hour <= endTime; hour++) {
-      const period = hour >= 12 ? "PM" : "AM";
-      const formattedHour = hour % 12 === 0 ? 12 : hour % 12;
-      hourLabels.push(`${formattedHour} ${period}`);
-  }
-
-  // Generate an array of times from startTime to endTime in 15 minute increments
-  const times = [];
-  for (let hour = startTime; hour < endTime; hour++) {
-    for (let minutes = 0; minutes < 60; minutes += 15) {
-      const period = hour >= 12 ? "PM" : "AM";
-      const formattedHour = hour % 12 === 0 ? 12 : hour % 12;
-      const formattedMinutes = minutes === 0 ? "00" : minutes;
-      times.push(`${formattedHour}:${formattedMinutes} ${period}`);
+  const handleMouseUp = () => {
+    setIsMouseDown(false);
+    // Show the pop-up if we have any selections
+    if (selectedBlocks.size > 0) {
+      setShowPopup(true);
     }
-  }
-  // Add the last time slot for the endTime
-  // times.push(`${endTime % 12 === 0 ? 12 : endTime % 12}:00 ${endTime >= 12 ? "PM" : "AM"}`);
+  };
 
-  const dateColumnWidth = `${(100 / (dates.length))}%`; // Include the time column
-  const timeSlotHeight = 1.5; // Height of each 15 min time slot in rem
+  // Grid Layout
+  const columns = 1 + dates.length; // one col for hour labels, plus one for each date
+  const rows = 1 + hourLabels.length; // one header row, plus one for each hour
+
+  // Format for convenience
 
   return (
-    <div className="w-full flex flex-col border-neutral-400 rounded-lg">
-      {/* Header Row Date Labels */}
-      <div className="w-full flex">
-        <div className="w-[10%] text-center border-neutral-400"></div> {/* Empty space for time labels */}
-        {dates.map((date, index) => {
-          const day = new Intl.DateTimeFormat("en-US", {
-            weekday: "short",
+    <div 
+      className="relative"
+      onMouseLeave={() => {
+        // If user drags out of the table, treat as mouse up
+        if (isMouseDown) handleMouseUp();
+      }}
+      onMouseUp={() => {
+        if (isMouseDown) handleMouseUp();
+      }}
+    >
+      {/* The main grid */}
+      <div
+        className="w-full select-none" 
+        style={{
+          display: 'grid',
+          gridTemplateColumns: `15% repeat(${dates.length}, 1fr)`,
+          gridTemplateRows: `auto repeat(${hourLabels.length}, 1fr)`,
+          border: '1px solid #ccc',
+          borderRadius: 8,
+          userSelect: 'none'
+        }}
+      >
+        {/* Top-left blank cell */}
+        <div />
+        {/* Header row: date columns */}
+        {/* Header row with date labels */}
+        {dates.map((date, i) => {
+          const dayName = new Intl.DateTimeFormat('en-US', {
+            weekday: 'short',
           }).format(date);
-          const formattedDate = new Intl.DateTimeFormat("en-US", {
-            day: "numeric",
-          }).format(date);
-
+          const dayNum = date.getDate();
           return (
             <div
-              key={index}
-              style={{ width: dateColumnWidth }}
-              className={`text-center border-neutral-400 bg-neutral-100`}
+              key={i}
+              className="flex flex-col items-center justify-center border-l border-gray-200"
             >
-              <h2 className="text-sm text-neutral-800">{day}</h2>
-              <p className="text-sm text-neutral-800">{formattedDate}</p>
+              <span className="text-sm">{dayName}</span>
+              <span className="text-sm">{dayNum}</span>
             </div>
           );
         })}
-      </div>
 
-      {/* Body rows */}
-      <div className="w-full flex">
-        {/* Column Hour Labels */}
-        <div 
-            className="w-[10%] pr-1 text-nowrap bg-neutral-100 justify-items-end">
-          {hourLabels.map((time, index) => (
-            <div
-              key={index}
-              className={`border-neutral-400 h-${timeSlotHeight*4} flex items-center`}
-            >
-              <p className="text-xs text-neutral-800">{time}</p>
+        {/* Rows for each hour */}
+        {hourLabels.map((hourLabel, hourIndex) => (
+          <React.Fragment key={hourIndex}>
+            {/* Hour label column */}
+            <div className="flex items-center justify-center bg-neutral-100 border-t border-gray-200">
+              {hourLabel}
             </div>
-          ))}
-        </div>
-        <div className={`w-full flex mt-${timeSlotHeight*2}`}>
-          {/* Date Columns Body */}
-          {dates.map((date, index) => {
-            return (
-              <div
-                key={index}
-                  style={{ width: dateColumnWidth }}
-                className={`bg-neutral-100`}
-              >
-                {times.map((_, idx) => (
-                  <div
-                    key={idx}
-                    className={`h-${timeSlotHeight} bg-scale-3`} // add code to color based on avail
-                  ></div>
-                ))}
-              </div>
-            );
-          })}
-        </div>
+            {/* One cell per date */}
+            {dates.map((date, dateIndex) => {
+              // Unique key for day+hour
+              const slotKey = makeSlotKey(date, hourLabel);
+              const isSelected = selectedBlocks.has(slotKey);
+
+              return (
+                <div
+                  key={dateIndex}
+                  onMouseDown={() => handleMouseDown(date, hourLabel)}
+                  onMouseEnter={() => handleMouseEnter(date, hourLabel)}
+                  className={
+                    'border-t border-l border-gray-200 ' +
+                    (isSelected ? 'bg-green-200' : 'bg-white') +
+                    ' hover:bg-green-50'
+                  }
+                  style={{ cursor: 'pointer' }}
+                />
+              );
+            })}
+          </React.Fragment>
+        ))}
       </div>
+
+      {/* Pop-up in bottom-right (or wherever you like) */}
+      {showPopup && selectedBlocks.size > 0 && (
+        <PopupCard 
+          selectedBlocks={[...selectedBlocks]} 
+          onClose={() => setShowPopup(false)}
+        />
+      )}
     </div>
   );
-};
+}
 
-const GroupAvailability = ({startDate, endDate, startTime, endTime}) => {
+// Example pop-up component showing *all* selected blocks
+function PopupCard({ selectedBlocks, onClose }) {
+  // Sort or group blocks if you like, for now just show them all
+  // Each entry looks like "2025-01-15 9 AM"
+  
   return (
-    <div className='w-full h-[50%]'>
-      <div className="w-full h-full p-3 bg-white rounded-[20px] shadow-[0px_7px_15.699999809265137px_0px_rgba(17,107,60,0.06)]">
-          <div className='p-5'>
-            <span className='text-2xl'>Group Availability</span>
-          </div>
-          <GroupSchedule startTime={startTime} endTime={endTime} startDate={startDate} endDate={endDate}/>
+    <div
+      className="fixed bottom-5 right-5 w-96 p-4 bg-white shadow-xl rounded-lg z-50 border border-gray-200"
+    >
+      <div className="flex items-center justify-between mb-3">
+        <span className="font-semibold text-lg text-green-700">
+          SyncUp!
+        </span>
+        <button onClick={onClose} className="text-gray-500">✕</button>
       </div>
+
+      <p className="text-sm mb-2">
+        You selected <strong>{selectedBlocks.length}</strong> time blocks:
+      </p>
+
+      <ul className="max-h-32 overflow-auto list-disc list-inside text-sm mb-3">
+        {selectedBlocks.map((block, i) => (
+          <li key={i}>{block}</li>
+        ))}
+      </ul>
+
+      <button
+        className="bg-green-500 text-white px-4 py-1 rounded hover:bg-green-600 w-full"
+        onClick={() => alert('Proceed to schedule these time(s)!')}
+      >
+        GO →
+      </button>
     </div>
   );
-};
+}
 
-export default GroupAvailability;
+const day = new Date();
+const currentDate = `${day.getFullYear()}-${day.getMonth() + 1}-${day.getDate()}`;
+day.setDate(day.getDate() + 7);
+const nextDate = `${day.getFullYear()}-${day.getMonth() + 1}-${day.getDate()}`;
+
+export default function GroupAvailability() {
+  return (
+    <div className="min-h-screen p-3 bg-gray-50">
+      <h2 className="text-2xl mb-4">Group Availability</h2>
+      <GroupSchedule
+        startTime={9}
+        endTime={22}
+        startDate={currentDate}
+        endDate={nextDate}
+      />
+    </div>
+  );
+}
