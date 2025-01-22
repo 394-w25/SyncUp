@@ -105,7 +105,7 @@ function GroupSchedule({ startTime, endTime, startDate, endDate }) {
           display: 'grid',
           gridTemplateColumns: `15% repeat(${dates.length}, 1fr)`,
           gridTemplateRows: `auto repeat(${hourLabels.length}, 1fr)`,
-          border: '1px solid #ccc',
+          // border: '1px solid #ccc',
           borderRadius: 8,
           userSelect: 'none'
         }}

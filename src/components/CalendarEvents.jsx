@@ -90,8 +90,16 @@ const CalendarEvents = ({ startTime, endTime, startDate, endDate, events }) => {
             zIndex: 10
           }}
         >
-          <p className="text-xs truncate">{event.summary || event.title}</p>
-          <p className="text-xs truncate">{eventStartTime.toLocaleTimeString()}</p>
+          <p className="text-xs truncate text-neutral-800">{event.summary || event.title}</p>
+          <p className="text-xs truncate text-neutral-600">{eventStartTime.toLocaleTimeString("en", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true
+          })} - {eventEndTime.toLocaleTimeString("en", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true
+          })}</p>
         </div>
       );
     });
