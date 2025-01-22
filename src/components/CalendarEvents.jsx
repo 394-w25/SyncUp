@@ -79,7 +79,7 @@ const CalendarEvents = ({ startTime, endTime, startDate, endDate, events }) => {
       return (
         <div
           key={index}
-          className="absolute left-0 right-0 mr-1 rounded bg-neutral-200 border border-neutral-400 border-l-2 p-1 overflow-hidden"
+          className="absolute left-0 right-0 mr-1 rounded bg-neutral-200 border border-neutral-400 border-l-4 p-1 overflow-hidden"
           style={{
             top: `${topPosition}px`,
             height: `${height}px`,
@@ -108,8 +108,6 @@ const CalendarEvents = ({ startTime, endTime, startDate, endDate, events }) => {
             day: "numeric",
           }).format(date);
 
-          const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-
           return (
             <div
               key={index}
@@ -127,7 +125,7 @@ const CalendarEvents = ({ startTime, endTime, startDate, endDate, events }) => {
       <div className="w-full flex">
         {/* Time Column Body */}
         <div 
-            className="w-[10%] border text-nowrap bg-neutral-100 relative">
+          className="w-[10%] text-nowrap bg-neutral-100 relative">
           {times.map((time, index) => (
             <div
               key={index}
@@ -136,12 +134,6 @@ const CalendarEvents = ({ startTime, endTime, startDate, endDate, events }) => {
             >
               <p className="text-sm text-neutral-800 text-center">{time}</p>
             </div>
-          ))}
-          {times.map((_, idx) => (
-            <div
-              key={idx}
-              className="h-12  border-neutral-300"
-            />
           ))}
         </div>
 
@@ -155,14 +147,12 @@ const CalendarEvents = ({ startTime, endTime, startDate, endDate, events }) => {
             {times.map((_, idx) => (
               <div
                 key={idx}
-                className={`h-12 border-b
-                  ${
-                  idx !== times.length - 1 ? "border-b" : ""
-                  } 
-                ${
+                className={`h-12 border-b ${
                   index !== dates.length - 1 ? "border-r" : ""
                 } border-neutral-300`}
-              ></div>
+              >
+                <div className={`h-6 ${idx !== 0 ? "border-b border-neutral-300 border-dashed" : ""}`}></div>
+              </div>
             ))}
             {renderEvents(date)}
           </div>

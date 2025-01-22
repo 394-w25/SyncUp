@@ -82,67 +82,6 @@ const App = () => {
           <GroupAvailability />
         </div>
       </div>
-      
-      {/* <div className="grid-container px-4">
-        {!isAuthenticated ? (
-          <button onClick={handleGoogleAuth}>Sign in with Google</button>
-        ) : (
-          <>
-            {events.length > 0 ? (
-              <div className="events-list">
-                <h2 className="text-xl font-semibold mb-4">Imported Events</h2>
-                <div className="space-y-2">
-                  {events.map((event) => {
-                    const startTime = new Date(event.start.dateTime).toLocaleString([], {
-                      weekday: 'short',
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    });
-                    const endTime = new Date(event.end.dateTime).toLocaleString([], {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    });
-                    
-                    return (
-                      <div key={event.id} className="p-3 bg-gray-100 rounded-lg">
-                        <div className="font-medium">{event.summary}</div>
-                        <div className="text-gray-600 text-sm">
-                          {startTime} - {endTime}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : (
-              <p>No events imported</p>
-            )}
-            <div>
-              <h2>Availability</h2>
-              {availability.length > 0 ? (
-                <ul>
-                  {availability.map((day) => (
-                    <li key={day.date}>
-                      {day.date}
-                      <ul>
-                        {day.slots.map((slot, index) => (
-                          <li key={index}>
-                            {new Date(slot.start).toLocaleTimeString()} - {new Date(slot.end).toLocaleTimeString()}
-                          </li>
-                        ))}
-                      </ul>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p>No availability calculated</p>
-              )}
-            </div>
-          </>
-        )}
-      </div> */}
     </div>
   );
 };
