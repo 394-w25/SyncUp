@@ -1,6 +1,6 @@
 import React from "react";
 
-function dateParse(dateString) {
+export function dateParse(dateString) {
   const dateArray = dateString.split("-");
   const year = parseInt(dateArray[0], 10);
   const month = parseInt(dateArray[1], 10) - 1;

@@ -78,7 +78,7 @@ const App = () => {
         </div>
         <div className='w-[30%] h-full flex flex-col gap-4 mr-4'>
           <Legend meetingID={'rewnd7'} eventName={'394 meeting'} participants={participants}/>  
-          <GroupAvailability />
+          <GroupAvailability startDate={startDate} endDate={endDate} startTime={startTime} endTime={endTime}/>
         </div>
       </div>
     </div>

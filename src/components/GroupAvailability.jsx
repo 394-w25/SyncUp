@@ -1,13 +1,5 @@
 import React from 'react';
-
-function dateParse(dateString) {
-  const dateArray = dateString.split("-");
-  const year = parseInt(dateArray[0], 10);
-  const month = parseInt(dateArray[1], 10) - 1; // Month is 0-based in JavaScript
-  const date = parseInt(dateArray[2], 10);
-
-  return new Date(year, month, date);
-}
+import { dateParse } from './CalendarEvents';
 
 const GroupSchedule = ({ startTime, endTime, startDate, endDate }) => {
   // Function to generate date range
@@ -119,14 +111,14 @@ const GroupSchedule = ({ startTime, endTime, startDate, endDate }) => {
   );
 };
 
-const GroupAvailability = () => {
+const GroupAvailability = ({startDate, endDate, startTime, endTime}) => {
   return (
     <div className='w-full h-[50%]'>
       <div className="w-full h-full p-3 bg-white rounded-[20px] shadow-[0px_7px_15.699999809265137px_0px_rgba(17,107,60,0.06)]">
           <div className='p-5'>
             <span className='text-2xl'>Group Availability</span>
           </div>
-        <GroupSchedule startTime={9} endTime={21} startDate={"2025-01-13"} endDate={"2025-01-19"}/>
+          <GroupSchedule startTime={startTime} endTime={endTime} startDate={startDate} endDate={endDate}/>
       </div>
     </div>
   );
