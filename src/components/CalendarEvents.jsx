@@ -99,21 +99,46 @@ export default function CalendarEvents({
 
     setIsSaving(true);
     try {
-      const availabilityData = {
-        userId,
-        startDate,
-        endDate,
-        blocks: highlightBlocks.map(block => ({
-          dayIndex: block.dayIndex,
-          top: block.top,
-          height: block.height,
-          startTime: pixelsToTime(block.top),
-          endTime: pixelsToTime(block.top + block.height)
-        })),
-        lastUpdated: new Date()
-      };
+      const availabilityByDate = {};
       
-      await setDoc(doc(db, "availability", userId), availabilityData);
+      highlightBlocks.forEach(block => {
+        const date = new Date(startDate);
+        date.setDate(date.getDate() + block.dayIndex);
+        const dateString = date.toISOString().split('T')[0];
+        
+        if (!availabilityByDate[dateString]) {
+          availabilityByDate[dateString] = new Array((endTime - startTime) * 4).fill(0);
+        }
+        
+        const startSlot = Math.floor(block.top / 12);
+        const endSlot = Math.floor((block.top + block.height) / 12);
+        
+        for (let i = startSlot; i < endSlot; i++) {
+          if (i < availabilityByDate[dateString].length) {
+            availabilityByDate[dateString][i] = 1;
+          }
+        }
+      });
+
+      const availabilityCollection = {};
+      Object.entries(availabilityByDate).forEach(([date, slots]) => {
+        availabilityCollection[date] = {
+          date: date,
+          startTime: new Date(date + 'T' + startTime.toString().padStart(2, '0') + ':00:00'),
+          endTime: new Date(date + 'T' + endTime.toString().padStart(2, '0') + ':00:00'),
+          intervalMins: 15,
+          data: {
+            data: slots
+          }
+        };
+      });
+
+      const availabilityDoc = {
+        userId,
+        availability: availabilityCollection,
+      };
+
+      await setDoc(doc(db, "availability", userId), availabilityDoc);
       setHasUnsavedChanges(false);
       alert('Availability saved successfully!');
     } catch (error) {
