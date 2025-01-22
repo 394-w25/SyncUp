@@ -6,6 +6,7 @@ import Box from '@mui/material/Box';
 import CalendarEvents from './CalendarEvents';
 import { importEvents } from '../utils/importEvents';
 import { calculateAvailability } from '../utils/availability';
+import { updateIsSynced } from '../services/googleAuth';
 
 const buttonTheme = createTheme({
   palette: {
@@ -62,6 +63,8 @@ const Calendar = ({
       setEvents(events);
       const availability = calculateAvailability(events, userId);
       setAvailability(availability);
+      console.log('updating user isSynced to true');
+      await updateIsSynced(userId);
     } catch (error) {
       console.error('Error importing events:', error);
     } finally {
