@@ -1,10 +1,10 @@
 import React from 'react';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 
-const Logo = () => {
+const Logo = ({ color = 'text-green-800', size = '32pt' }) => {
     return (
-        <div className='flex items-center gap-4 text-green-800 text-[32pt]'>
-            <EventAvailableIcon fontSize='text-[32pt]'/>
+        <div className={`flex items-center gap-4 select-none ${color}`} style={{ fontSize: size }}>
+            <EventAvailableIcon sx={{ fontSize: 'inherit' }}/>
             <div className='block'>
                 <span className='font-bold'>
                     Sync
