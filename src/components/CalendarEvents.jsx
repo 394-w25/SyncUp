@@ -41,16 +41,16 @@ const CalendarEvents = ({ startTime, endTime, startDate, endDate, events }) => {
     times.push(formatTime(hour));
   }
 
-  const dateColumnWidth = `${(100 / (dates.length))}%`;
-
   const renderEvents = (date) => {
-    const dateStr = date.toISOString().split('T')[0];
 
     const dayEvents = events?.filter(event => {
       const eventStart = event.start?.dateTime || event.start?.date;
       if (!eventStart) return false;
-      const eventDate = new Date(eventStart).toISOString().split('T')[0];
-      return eventDate === dateStr;
+      
+      const eventDate = new Date(eventStart);
+      return eventDate.getFullYear() === date.getFullYear() &&
+             eventDate.getMonth() === date.getMonth() &&
+             eventDate.getDate() === date.getDate();
     });
 
     return dayEvents?.map((event, index) => {
@@ -62,19 +62,23 @@ const CalendarEvents = ({ startTime, endTime, startDate, endDate, events }) => {
       const eventStartTime = new Date(startDateTime);
       const eventEndTime = new Date(endDateTime);
 
-      if (eventStartTime.getHours() < startTime || eventEndTime.getHours() > endTime) return null;
+      if (eventStartTime.getHours() < startTime || eventStartTime.getHours() >= endTime) return null;
       
       const eventStartHour = eventStartTime.getHours() + (eventStartTime.getMinutes() / 60);
       const eventEndHour = eventEndTime.getHours() + (eventEndTime.getMinutes() / 60);
       const duration = eventEndHour - eventStartHour;
       
+      if (duration <= 0) return null;
+      
       const pixelsPerHour = 48;
-      const topPosition = (eventStartHour - startTime + 1) * pixelsPerHour;
+      const topPosition = (eventStartHour - startTime) * pixelsPerHour;
       var height = duration * pixelsPerHour;
 
       if (eventEndHour > endTime) {
         height = (endTime - eventStartHour) * pixelsPerHour;
       }
+
+      console.log(event.summary, event.start.dateTime, eventStartHour, eventEndHour, height);
 
       return (
         <div
@@ -94,10 +98,10 @@ const CalendarEvents = ({ startTime, endTime, startDate, endDate, events }) => {
   };
 
   return (
-    <div className="w-full flex flex-col mt-8 border-neutral-400 rounded-lg">
+    <div className="w-full flex flex-col mt-6 ">
       {/* Header row */}
       <div className="w-full flex">
-        <div className="w-[10%] py-4 text-center border-neutral-400"></div>
+        <div className="w-16 mr-1 py-4 text-center border-neutral-400"></div>
 
         {/* Date Columns Header */}
         {dates.map((date, index) => {
@@ -111,8 +115,14 @@ const CalendarEvents = ({ startTime, endTime, startDate, endDate, events }) => {
           return (
             <div
               key={index}
-              style={{ width: dateColumnWidth }}
-              className={`py-4 text-center border-neutral-400 bg-neutral-100`}
+              style={{ 
+                width: `calc((100% - 4rem) / ${dates.length})`,
+                backgroundImage: index !== dates.length - 1 ? 'linear-gradient(to top, #d4d4d4 30%, transparent 30%)' : 'none',
+                backgroundSize: '1px 100%',
+                backgroundPosition: 'right',
+                backgroundRepeat: 'repeat-y'
+              }}
+              className={`py-4 text-center bg-neutral-100`}
             >
               <h2 className="text-lg text-neutral-800">{day}</h2>
               <p className="text-sm text-neutral-800">{formattedDate}</p>
@@ -125,14 +135,14 @@ const CalendarEvents = ({ startTime, endTime, startDate, endDate, events }) => {
       <div className="w-full flex">
         {/* Time Column Body */}
         <div 
-          className="w-[10%] text-nowrap bg-neutral-100 relative">
+          className="w-16 text-nowrap bg-neutral-100 relative mr-1">
           {times.map((time, index) => (
             <div
               key={index}
-              className="absolute w-full"
-              style={{ top: `${(index + 1) * 48}px`, transform: 'translateY(-50%)' }}
+              className="absolute w-full pr-2"
+              style={{ top: `${(index ) * 48}px`, transform: 'translateY(-50%)' }}
             >
-              <p className="text-sm text-neutral-800 text-center">{time}</p>
+              <p className="text-sm text-neutral-800 text-right">{time}</p>
             </div>
           ))}
         </div>
@@ -141,19 +151,19 @@ const CalendarEvents = ({ startTime, endTime, startDate, endDate, events }) => {
         {dates.map((date, index) => (
           <div
             key={index}
-            style={{ width: dateColumnWidth }}
+            style={{ width: `calc((100% - 4rem) / ${dates.length})` }}
             className="relative bg-neutral-100"
           >
-            {times.map((_, idx) => (
+            {times.map((_, idx, arr) => (
               <div
                 key={idx}
-                className={`h-12 border-b ${
+                className={`h-12 border-t ${
                   index !== dates.length - 1 ? "border-r" : ""
-                } border-neutral-300`}
+                } ${idx === arr.length - 2 ? "border-b" : ""} border-neutral-300`}
               >
-                <div className={`h-6 ${idx !== 0 ? "border-b border-neutral-300 border-dashed" : ""}`}></div>
+                <div className={`h-6 border-b border-neutral-200 border-dashed`}></div>
               </div>
-            ))}
+            )).slice(0, -1)}
             {renderEvents(date)}
           </div>
         ))}

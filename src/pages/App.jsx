@@ -15,8 +15,8 @@ import Calendar from '../components/Calendar';
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userId, setUserId] = useState(null);
-  const [startDate, setStartDate] = useState("2025-01-21");
-  const [endDate, setEndDate] = useState("2025-01-25");
+  const [startDate, setStartDate] = useState("2025-01-20");
+  const [endDate, setEndDate] = useState("2025-01-26");
   const [startTime, setStartTime] = useState(8);
   const [endTime, setEndTime] = useState(18);
 
@@ -64,7 +64,6 @@ const App = () => {
 
   return (
     <div className="app-container w-full flex flex-col gap-4 pb-4">
-      {/* top row, header and legend */}
       <div className='flex gap-4'>
         <div className='w-[70%] h-full'>
           <Calendar 
