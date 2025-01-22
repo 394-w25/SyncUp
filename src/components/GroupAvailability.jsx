@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 
-// Convert “YYYY-MM-DD” to Date
+// Convert "YYYY-MM-DD" to Date
 function dateParse(dateString) {
   const [y, m, d] = dateString.split('-').map(Number);
   return new Date(y, m - 1, d);
@@ -47,21 +47,28 @@ function GroupSchedule({ startTime, endTime, startDate, endDate }) {
   // Mouse Handlers
   const handleMouseDown = (date, hourLabel) => {
     setIsMouseDown(true);
-    setShowPopup(false); // Hide any old popup while we drag
-    // Start fresh or continue from existing? 
-    // If you want SHIFT-like behavior, you might *not* clear. 
-    // For simplicity, let's clear old selections each time:
+    setShowPopup(false);
+    
+    const slotKey = makeSlotKey(date, hourLabel);
     const newSet = new Set();
-    newSet.add(makeSlotKey(date, hourLabel));
+    
+    if (!selectedBlocks.has(slotKey)) {
+      newSet.add(slotKey);
+    }
     setSelectedBlocks(newSet);
   };
 
   const handleMouseEnter = (date, hourLabel) => {
-    // Only highlight if we're currently dragging
     if (!isMouseDown) return;
+    
+    const slotKey = makeSlotKey(date, hourLabel);
     setSelectedBlocks(prev => {
       const updated = new Set(prev);
-      updated.add(makeSlotKey(date, hourLabel));
+      if (updated.size === 0) {
+        updated.delete(slotKey);
+      } else {
+        updated.add(slotKey);
+      }
       return updated;
     });
   };
@@ -206,15 +213,15 @@ const currentDate = `${day.getFullYear()}-${day.getMonth() + 1}-${day.getDate()}
 day.setDate(day.getDate() + 7);
 const nextDate = `${day.getFullYear()}-${day.getMonth() + 1}-${day.getDate()}`;
 
-export default function GroupAvailability() {
+export default function GroupAvailability({startDate, endDate, startTime, endTime}) {
   return (
     <div className="min-h-screen p-3 bg-gray-50">
       <h2 className="text-2xl mb-4">Group Availability</h2>
       <GroupSchedule
-        startTime={9}
-        endTime={22}
-        startDate={currentDate}
-        endDate={nextDate}
+        startTime={startTime}
+        endTime={endTime}
+        startDate={startDate}
+        endDate={endDate}
       />
     </div>
   );
