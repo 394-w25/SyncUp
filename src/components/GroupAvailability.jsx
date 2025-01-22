@@ -34,15 +34,17 @@ querySnapshot.forEach((doc) => {
 
     // adds the slots to the existing slots for that date if it exists
     if (date in groupAvailabilityData) {
+      // console.log(groupAvailabilityData[date]);
       groupAvailabilityData[date] = groupAvailabilityData[date].map((num, index) => num + compressedSlots[index]);
     }
     else {
       groupAvailabilityData[date] = compressedSlots;
     } 
-    groupAvailabilityData[date] = compressedSlots;
   };
 });
 
+// console.log(groupAvailabilityData);
+// console.log(numMembers);
 
 const buttonTheme = createTheme({
   palette: {
