@@ -50,7 +50,7 @@ const LegendAvatar = ({ name, status }) => {
             <Avatar 
                 {...stringAvatar(name)} 
                 sx={{ width: 32, height: 32 }}/>
-            <p>{name}</p>
+            <p className="truncate max-w-[150px]">{name}</p>
             {status 
                 ? <CheckIcon sx={{color:'#116B3C'}} /> 
                 : <ClearIcon sx={{color:'#B21B25'}} />} 

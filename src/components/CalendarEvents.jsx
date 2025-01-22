@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from "react";
+import { doc, setDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 const pixelsPerHour = 48;
 const pixelsPer30Min = 24;
@@ -11,6 +13,13 @@ export default function CalendarEvents({
   events = [],
 }) {
   const [highlightBlocks, setHighlightBlocks] = useState([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState(null);
+  const [currentBlock, setCurrentBlock] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const pixelsPerHour = 48;
+  const pixelsPerIncrement = 24;
+  const userId = localStorage.getItem('user-id');
 
   const [dragData, setDragData] = useState({
     isDragging: false,
@@ -76,6 +85,42 @@ export default function CalendarEvents({
     });
     return map;
   }, [dates, events, startTime, endTime]);
+
+  const snapToGrid = (pixels) => {
+    return Math.round(pixels / pixelsPerIncrement) * pixelsPerIncrement;
+  };
+
+  const handleSave = async () => {
+    if (!userId) {
+      alert('Please sign in to save your availability');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const availabilityData = {
+        userId,
+        startDate,
+        endDate,
+        blocks: highlightBlocks.map(block => ({
+          dayIndex: block.dayIndex,
+          top: block.top,
+          height: block.height,
+          startTime: pixelsToTime(block.top),
+          endTime: pixelsToTime(block.top + block.height)
+        })),
+        lastUpdated: new Date()
+      };
+      
+      await setDoc(doc(db, "availability", userId), availabilityData);
+      alert('Availability saved successfully!');
+    } catch (error) {
+      console.error("Error saving availability:", error);
+      alert('Failed to save availability. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // MOUSE HANDLERS
   function handleMouseDown(e, dayIndex) {
@@ -154,13 +199,39 @@ export default function CalendarEvents({
   }
 
   // Remove user highlights
-  function handleBlockClick(id) {
-    setHighlightBlocks((prev) => prev.filter((b) => b.id !== id));
-  }
+  const handleBlockClick = (e, id) => {
+    e.stopPropagation(); // Prevent triggering new block creation
+    const updatedBlocks = highlightBlocks.filter(block => block.id !== id);
+    setHighlightBlocks(updatedBlocks);
+    setIsSaving(false); // Reset saving state when deselecting
+  };
+
+  const pixelsToTime = (pixels) => {
+    const totalMinutes = (pixels / pixelsPerHour) * 60;
+    const hour = Math.floor(totalMinutes / 60) + startTime;
+    const minutes = Math.floor(totalMinutes % 60);
+    return `${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  };
 
   // RENDER
   return (
-    <div className="w-full flex flex-col mt-6">
+    <div className="flex flex-col">
+      {/* Save Button */}
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={handleSave}
+          disabled={isSaving}
+          className={`px-4 py-2 rounded-md text-white font-medium
+            ${isSaving 
+              ? 'bg-gray-400 cursor-not-allowed' 
+              : 'bg-green-600 hover:bg-green-700'
+            }
+          `}
+        >
+          {isSaving ? 'Saving...' : 'Save Availability'}
+        </button>
+      </div>
+
       {/* HEADER ROW */}
       <div className="w-full flex">
         <div className="w-16 mr-1 py-4 text-center border-neutral-400" />
@@ -219,7 +290,7 @@ export default function CalendarEvents({
           >
             {/* Hour lines */}
             {times.map((_, i) => (
-              <div key={i} className="h-12 border-t border-neutral-200 relative">
+              <div key={i} className="h-12 border-t border-neutral-200 relative last:border-b">
                 <div className="h-6 border-b border-neutral-200 border-dashed" />
               </div>
             )).slice(0, -1)}
@@ -233,19 +304,18 @@ export default function CalendarEvents({
               .map((block) => (
                 <div
                   key={block.id}
-                  onClick={() => handleBlockClick(block.id)}
+                  className="absolute mr-1 rounded  border-l-4 p-1 w-full cursor-pointer transition-colors bg-blue-100 border-2 border-blue-500 hover:bg-blue-200"
                   style={{
-                    position: "absolute",
-                    top: block.top,
-                    height: block.height,
-                    left: 0,
-                    width: "100%",
-                    backgroundColor: "#B1CCFA",
-                    border: "1px solid #083684",
-                    cursor: "pointer",
-                    zIndex: 40,
+                    top: `${block.top}px`,
+                    height: `${block.height}px`,
                   }}
-                />
+                  onClick={(e) => handleBlockClick(e, block.id)}
+                >
+                  <div className="text-xs text-blue-1000 truncate">
+                    {formatDisplayTime(block.top, startTime, pixelsPerHour)} - 
+                    {formatDisplayTime(block.top + block.height, startTime, pixelsPerHour)}
+                  </div>
+                </div>
               ))}
 
             {/* 3) EPHEMERAL BLOCK WHILE DRAGGING */}
@@ -373,4 +443,11 @@ function formatTime(hour) {
   const period = hour >= 12 ? "PM" : "AM";
   const displayHour = hour % 12 || 12;
   return `${displayHour} ${period}`;
+}
+
+function formatDisplayTime(pixels, startTime, pixelsPerHour) {
+  const totalMinutes = (pixels / pixelsPerHour) * 60;
+  const hour = Math.floor(totalMinutes / 60) + startTime;
+  const minutes = Math.floor(totalMinutes % 60);
+  return `${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
 }

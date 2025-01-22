@@ -9,43 +9,6 @@ import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import Button from '@mui/material/Button';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
-import { collection, getDocs } from "firebase/firestore";
-import { db } from '../firebase';
-
-
-const groupAvailabilityData = {};   // maps dates to group availability
-const querySnapshot = await getDocs(collection(db, "availability"));
-let numMembers = 0; // number of members in the group
-
-// Get the availability data for all group members and stores in groupAvailabilityData
-querySnapshot.forEach((doc) => {
-  numMembers++;
-  const data = doc.data()['availability'];
-
-  for (const date in data) {
-    const slots = data[date]['data']['data'];
-
-    // Compress the 40-element array into a 10-element array, one element for each hour
-    const compressedSlots = [];
-    for (let i = 0; i < slots.length; i += 4) {
-      const group = slots.slice(i, i + 4);
-      compressedSlots.push(group.every(slot => slot === 1) ? 1 : 0);
-    }
-
-    // adds the slots to the existing slots for that date if it exists
-    if (date in groupAvailabilityData) {
-      // console.log(groupAvailabilityData[date]);
-      groupAvailabilityData[date] = groupAvailabilityData[date].map((num, index) => num + compressedSlots[index]);
-    }
-    else {
-      groupAvailabilityData[date] = compressedSlots;
-    } 
-  };
-});
-
-// console.log(groupAvailabilityData);
-// console.log(numMembers);
-
 const buttonTheme = createTheme({
   palette: {
     mode: 'light',
@@ -64,30 +27,6 @@ const buttonTheme = createTheme({
     fontFamily: 'Nunito',
   },
 });
-
-// function to get the color of the cell based on the availability
-function getColor(date, hourIndex) {
-  const iso = date.toISOString().split('T')[0];
-  const slots = groupAvailabilityData[iso];
-
-  if (slots === undefined) {
-    return 'bg-white';
-  }
-
-  const slotVal = slots[hourIndex];
-  const pctAvail = slotVal / numMembers;
-
-  switch(true) {
-    case pctAvail === 1:
-      return 'bg-scale-4';
-    case pctAvail >= 0.75:
-      return 'bg-scale-3';
-    case pctAvail >= 0.4:
-      return 'bg-scale-2';
-    default:
-      return 'bg-white';
-  }
-}
 
 // Convert "YYYY-MM-DD" to Date
 function dateParse(dateString) {
@@ -239,7 +178,7 @@ function GroupSchedule({ startTime, endTime, startDate, endDate }) {
                   onMouseEnter={() => handleMouseEnter(date, hourLabel)}
                   className={
                     'border-t border-l border-gray-200 ' +
-                    (isSelected ? 'bg-green-200' : getColor(date, hourIndex)) +
+                    (isSelected ? 'bg-green-200' : 'bg-white') +
                     ' hover:bg-green-50'
                   }
                   style={{ cursor: 'pointer' }}

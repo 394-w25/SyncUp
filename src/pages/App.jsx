@@ -12,6 +12,30 @@ import '../styles/globals.css';
 import GroupAvailability from '../components/GroupAvailability';
 import Legend from '../components/Legend';
 import Calendar from '../components/Calendar';
+import LogoutIcon from '@mui/icons-material/Logout';
+import { Button, ThemeProvider, createTheme, IconButton } from '@mui/material';
+
+const buttonTheme = createTheme({
+  palette: {
+    mode: 'light',
+    primary: {
+      main: '#116b3c',
+      light: '#23da7a',
+      dark: '#0c4f2c',
+    },
+    secondary: {
+      main: '#4a4a4a',
+      light: '#606060',
+    },
+    background: {
+      default: '#fafafa',
+      paper: '#ffffff',
+    },
+  },
+  typography: {
+    fontFamily: 'Nunito',
+  },
+});
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -76,25 +100,50 @@ const App = () => {
   }, [meetingId, event]);
 
   return (
-    <div className="app-container w-full flex flex-col gap-4 pb-4">
-      <div className='flex gap-4'>
-        <div className='w-[70%] h-full'>
-          <button onClick={handleSignOut}>Sign Out</button>
-          <Calendar 
+    <div className="w-screen h-screen px-4 pb-4 bg-background relative">
+      <div className="w-full h-full flex gap-4">
+        <div className='w-full h-full flex flex-col gap-4'>
+          <Calendar
             isAuthenticated={isAuthenticated}
             handleAuth={handleGoogleAuth}
             startDate={startDate}
             endDate={endDate}
-            userId={userId}
             startTime={startTime}
             endTime={endTime}
+            userId={userId}
           />
         </div>
-        <div className='w-[30%] h-full flex flex-col gap-4 mr-4'>
-          <Legend meetingID={'rewnd7'} eventName={'394 meeting'} participants={participants} />
-          <GroupAvailability startDate={startDate} endDate={endDate} startTime={startTime} endTime={endTime}/>
+        <div className='w-[30%] h-full flex flex-col gap-4'>
+          <Legend 
+            meetingID={meetingId}
+            eventName={event}
+            participants={participants}
+          />
+          <GroupAvailability
+              startDate={startDate}
+              endDate={endDate}
+              startTime={startTime}
+              endTime={endTime}
+            />
         </div>
+          
       </div>
+
+      {/* Sign out button in bottom left corner */}
+      {isAuthenticated && (
+        <div className="absolute bottom-4 right-4">
+          <ThemeProvider theme={buttonTheme}>
+            <IconButton
+              onClick={handleSignOut}
+              color="secondary"
+              size="small"
+              title="Sign Out"
+            >
+              <LogoutIcon />
+            </IconButton>
+          </ThemeProvider>
+        </div>
+      )}
     </div>
   );
 };
