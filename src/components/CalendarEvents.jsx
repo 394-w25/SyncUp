@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from "react";
-import { doc, setDoc } from 'firebase/firestore';
+import React, { useState, useMemo, useEffect } from "react";
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
 const pixelsPerHour = 48;
@@ -90,6 +90,81 @@ export default function CalendarEvents({
   const snapToGrid = (pixels) => {
     return Math.round(pixels / pixelsPerIncrement) * pixelsPerIncrement;
   };
+
+  useEffect(() => {
+    if (!userId) return; // If not logged in, skip
+
+    const fetchAvailability = async () => {
+      try {
+        const docRef = doc(db, "availability", userId);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const data = docSnap.data(); 
+          // data has: { userId, availability: { 'YYYY-MM-DD': {...}, ... } }
+          const availabilityData = data.availability || {};
+
+          // We'll gather the newly reconstructed blocks here
+          const newBlocks = [];
+
+          // Convert startDate string to a Date object for dayIndex calculations
+          const startDateObj = new Date(startDate); // e.g. "2025-01-20"
+
+          // Iterate over each date in availability
+          for (const [dateString, details] of Object.entries(availabilityData)) {
+            // Convert the dateString (e.g. "2025-01-22") to a Date object
+            const dayDate = new Date(dateString + "T00:00:00");
+
+            // Calculate dayIndex as difference in days from startDate to this date
+            const dayIndex = Math.round(
+              (dayDate - startDateObj) / (1000 * 60 * 60 * 24)
+            );
+
+            // If it's outside your displayed range, optionally skip
+            if (dayIndex < 0) continue;
+
+            // Extract the 0/1 slots array
+            // details.data.data => your array of 0/1 for the day
+            const slotsArray = details?.data?.data || [];
+
+            // Parse consecutive 1's into highlight blocks
+            let i = 0;
+            while (i < slotsArray.length) {
+              if (slotsArray[i] === 1) {
+                // found start of a block
+                let j = i + 1;
+                // move j forward while consecutive 1's
+                while (j < slotsArray.length && slotsArray[j] === 1) {
+                  j++;
+                }
+                // Now we have a block from i..(j-1)
+                const blockTop = i * 12; // each slot = 15 mins => 12 pixels
+                const blockHeight = (j - i) * 12;
+                
+                newBlocks.push({
+                  id: Date.now() + Math.random(), // unique ID
+                  dayIndex,
+                  top: blockTop,
+                  height: blockHeight,
+                });
+                // jump to j
+                i = j;
+              } else {
+                i++;
+              }
+            }
+          }
+
+          // Finally, set the highlight blocks with the newly loaded data
+          setHighlightBlocks(newBlocks);
+        }
+      } catch (error) {
+        console.error("Error fetching user availability:", error);
+      }
+    };
+
+    fetchAvailability();
+  }, [userId, startDate, endDate]);
 
   const handleSave = async () => {
     if (!userId) {
