@@ -14,31 +14,6 @@ import Draggable from 'react-draggable';
 
 import { collection, getDocs } from "firebase/firestore";
 import { db } from '../firebase';
-const groupAvailabilityData = {};  
-const querySnapshot = await getDocs(collection(db, "availability"));
-let numMembers = 0; 
-
-querySnapshot.forEach((doc) => {
-  numMembers++;
-  const data = doc.data()['availability'];
-  for (const date in data) {
-    const slots = data[date]['data']['data'];
-    // const isoDate = new Date(date).toISOString().split('T')[0];
-    // Compress the 40-element array into a 20-element array, one element for each half hour
-    const compressedSlots = [];
-    for (let i = 0; i < slots.length; i += 2) {
-      const group = slots.slice(i, i + 2);
-      compressedSlots.push(group.every(slot => slot === 1) ? 1 : 0);
-    }
-    // adds the slots to the existing slots for that date if it exists
-    if (date in groupAvailabilityData) {
-      groupAvailabilityData[date] = groupAvailabilityData[date].map((num, index) => num + compressedSlots[index]);
-    }
-    else {
-      groupAvailabilityData[date] = compressedSlots;
-    } 
-  };
-});
 
 const buttonTheme = createTheme({
   palette: {
@@ -75,6 +50,39 @@ function GroupSchedule({ startTime, endTime, startDate, endDate }) {
   const [selectedBlocks, setSelectedBlocks] = useState(new Set());
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
+  const [groupAvailabilityData, setGroupAvailabilityData] = useState({});
+  const [numMembers, setNumMembers] = useState(0);
+
+  useEffect(() => {
+    async function fetchAvailabilityData() {
+      const data = {};
+      const querySnapshot = await getDocs(collection(db, "availability"));
+      let members = 0;
+
+      querySnapshot.forEach((doc) => {
+        members++;
+        const docData = doc.data()['availability'];
+        for (const date in docData) {
+          const slots = docData[date]['data']['data'];
+          const compressedSlots = [];
+          for (let i = 0; i < slots.length; i += 2) {
+            const group = slots.slice(i, i + 2);
+            compressedSlots.push(group.every(slot => slot === 1) ? 1 : 0);
+          }
+          if (date in data) {
+            data[date] = data[date].map((num, index) => num + compressedSlots[index]);
+          } else {
+            data[date] = compressedSlots;
+          }
+        }
+      });
+
+      setGroupAvailabilityData(data);
+      setNumMembers(members);
+    }
+
+    fetchAvailabilityData();
+  }, []);
 
   // Generate all dates in range
   const getDatesInRange = (start, end) => {
