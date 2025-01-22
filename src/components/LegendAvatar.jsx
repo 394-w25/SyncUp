@@ -44,12 +44,24 @@ function stringAvatar(name) {
   }
 }
 
-const LegendAvatar = ({ name, status }) => {
-    return (
-        <div className='flex gap-2 items-center'>
+const LegendAvatar = ({ name, status, showFull = true }) => {
+    if (!showFull) {
+        return (
             <Avatar 
                 {...stringAvatar(name)} 
-                sx={{ width: 32, height: 32 }}/>
+                sx={{ 
+                    ...(showFull && { width: 32, height: 32 })
+                }}/>
+        );
+    }
+
+    return (
+        <div className="flex gap-2 items-center">
+            <Avatar 
+                {...stringAvatar(name)} 
+                sx={{ 
+                    ...(showFull && { width: 32, height: 32 })
+                }}/>
             <p className="truncate max-w-[150px]">{name}</p>
             {status 
                 ? <CheckIcon sx={{color:'#116B3C'}} /> 

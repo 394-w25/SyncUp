@@ -15,7 +15,7 @@ const Legend = ({meetingID, eventName, participants}) => {
                     </div>
                     <div className="flex flex-col gap-2" style={{ maxHeight: '160px', overflowY: 'auto' }}>
                         {participants.map(participant => (
-                            <LegendAvatar key={participant.name} name={participant.name} status={participant.isSynced} />
+                            <LegendAvatar key={participant.name} name={participant.name} status={participant.isSynced} showFull={true} />
                         ))}
                     </div>
                 </div>

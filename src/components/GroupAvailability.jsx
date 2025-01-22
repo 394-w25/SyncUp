@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Logo from './Logo';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
@@ -8,25 +8,26 @@ import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import Button from '@mui/material/Button';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import AvatarGroup from '@mui/material/AvatarGroup';
+import LegendAvatar from './LegendAvatar';
+import Draggable from 'react-draggable';
 
 import { collection, getDocs } from "firebase/firestore";
 import { db } from '../firebase';
-const groupAvailabilityData = {};   // maps dates to group availability
+const groupAvailabilityData = {};  
 const querySnapshot = await getDocs(collection(db, "availability"));
-let numMembers = 0; // number of members in the group
-// Get the availability data for all group members and stores in groupAvailabilityData
+let numMembers = 0; 
+
 querySnapshot.forEach((doc) => {
   numMembers++;
   const data = doc.data()['availability'];
   for (const date in data) {
     const slots = data[date]['data']['data'];
-    // Compress the 40-element array into a 10-element array, one element for each hour
     const compressedSlots = [];
     for (let i = 0; i < slots.length; i += 4) {
       const group = slots.slice(i, i + 4);
       compressedSlots.push(group.every(slot => slot === 1) ? 1 : 0);
     }
-    // adds the slots to the existing slots for that date if it exists
     if (date in groupAvailabilityData) {
       // console.log(groupAvailabilityData[date]);
       groupAvailabilityData[date] = groupAvailabilityData[date].map((num, index) => num + compressedSlots[index]);
@@ -62,19 +63,13 @@ function dateParse(dateString) {
   return new Date(y, m - 1, d);
 }
 
-// Represents an individual cell by day+hour
-// (Could just store indices, but storing actual data is fine.)
-function makeSlotKey(date, hourLabel) {
-  // Format date as 2025-01-13 + "9 AM"
+function makeSlotKey(date, hourLabel, isHalfHour = false) {
   const iso = date.toISOString().split('T')[0];
-  return `${iso} ${hourLabel}`;
+  const minutes = isHalfHour ? '30' : '00';
+  return `${iso} ${hourLabel}:${minutes}`;
 }
 
 function GroupSchedule({ startTime, endTime, startDate, endDate }) {
-  // Keep track of:
-  //  1) all selected blocks
-  //  2) whether the mouse is down (i.e., user is dragging)
-  //  3) whether to show the pop-up
   const [selectedBlocks, setSelectedBlocks] = useState(new Set());
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
@@ -116,18 +111,18 @@ function getColor(date, hourIndex) {
 
   // Generate hour labels
   const hourLabels = [];
-  for (let hour = startTime; hour < endTime; hour++) {
+  for (let hour = startTime; hour <= endTime; hour++) {
     const ampm = hour >= 12 ? 'PM' : 'AM';
     const displayHour = hour % 12 === 0 ? 12 : hour % 12;
     hourLabels.push(`${displayHour} ${ampm}`);
   }
 
-  // Mouse Handlers
-  const handleMouseDown = (date, hourLabel) => {
+  // Mouse Handlers updated for 30-min increments
+  const handleMouseDown = (date, hourLabel, isHalfHour) => {
     setIsMouseDown(true);
     setShowPopup(false);
     
-    const slotKey = makeSlotKey(date, hourLabel);
+    const slotKey = makeSlotKey(date, hourLabel, isHalfHour);
     const newSet = new Set();
     
     if (!selectedBlocks.has(slotKey)) {
@@ -136,10 +131,10 @@ function getColor(date, hourIndex) {
     setSelectedBlocks(newSet);
   };
 
-  const handleMouseEnter = (date, hourLabel) => {
+  const handleMouseEnter = (date, hourLabel, isHalfHour) => {
     if (!isMouseDown) return;
     
-    const slotKey = makeSlotKey(date, hourLabel);
+    const slotKey = makeSlotKey(date, hourLabel, isHalfHour);
     setSelectedBlocks(prev => {
       const updated = new Set(prev);
       if (updated.size === 0) {
@@ -182,8 +177,7 @@ function getColor(date, hourIndex) {
         style={{
           display: 'grid',
           gridTemplateColumns: `15% repeat(${dates.length}, 1fr)`,
-          gridTemplateRows: `auto repeat(${hourLabels.length}, 1fr)`,
-          // border: '1px solid #ccc',
+          gridTemplateRows: `auto repeat(${(hourLabels.length) * 2}, minmax(24px, 1fr))`,
           borderRadius: 8,
           userSelect: 'none'
         }}
@@ -212,25 +206,43 @@ function getColor(date, hourIndex) {
         {hourLabels.map((hourLabel, hourIndex) => (
           <React.Fragment key={hourIndex}>
             {/* Hour label column */}
-            <div className="flex items-center justify-center bg-neutral-100 border-t border-gray-200">
+            <div className="flex items-center justify-center bg-neutral-100 border-t border-gray-200 row-span-2">
               {hourLabel}
             </div>
-            {/* One cell per date */}
+            
+            {/* Full hour row */}
             {dates.map((date, dateIndex) => {
-              // Unique key for day+hour
-              const slotKey = makeSlotKey(date, hourLabel);
+              const slotKey = makeSlotKey(date, hourLabel, false);
               const isSelected = selectedBlocks.has(slotKey);
-
               return (
                 <div
-                  key={dateIndex}
-                  onMouseDown={() => handleMouseDown(date, hourLabel)}
-                  onMouseEnter={() => handleMouseEnter(date, hourLabel)}
-                  className={
-                    'border-t border-l border-gray-200 ' +
-                    (isSelected ? 'bg-green-200' : getColor(date, hourIndex)) +
-                    ' hover:bg-green-50'
-                  }
+                  key={`${dateIndex}-full`}
+                  onMouseDown={() => handleMouseDown(date, hourLabel, false)}
+                  onMouseEnter={() => handleMouseEnter(date, hourLabel, false)}
+                  className={`
+                    border-t border-l border-gray-200
+                    ${isSelected ? 'bg-green-200' : getColor(date, hourIndex * 2)}
+                    hover:bg-green-50
+                  `}
+                  style={{ cursor: 'pointer' }}
+                />
+              );
+            })}
+            
+            {/* Half hour row */}
+            {dates.map((date, dateIndex) => {
+              const slotKey = makeSlotKey(date, hourLabel, true);
+              const isSelected = selectedBlocks.has(slotKey);
+              return (
+                <div
+                  key={`${dateIndex}-half`}
+                  onMouseDown={() => handleMouseDown(date, hourLabel, true)}
+                  onMouseEnter={() => handleMouseEnter(date, hourLabel, true)}
+                  className={`
+                    border-l border-gray-200 border-t border-dashed
+                    ${isSelected ? 'bg-green-200' : getColor(date, hourIndex * 2 + 1)}
+                    hover:bg-green-50
+                  `}
                   style={{ cursor: 'pointer' }}
                 />
               );
@@ -250,13 +262,41 @@ function getColor(date, hourIndex) {
   );
 }
 
-// Example pop-up component showing *all* selected blocks
 function PopupCard({ selectedBlocks, onClose }) {
-  console.log(selectedBlocks);
+  const [users, setUsers] = useState([]);
+  const [memberData, setMemberData] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const usersRef = collection(db, "users");
+        const usersSnapshot = await getDocs(usersRef);
+        const userData = {};
+        usersSnapshot.docs.forEach((doc) => {
+          userData[doc.id] = doc.data().name;
+        });
+        setUsers(userData);
+
+        const availabilityRef = collection(db, "availability");
+        const availabilitySnapshot = await getDocs(availabilityRef);
+        const members = availabilitySnapshot.docs.map(doc => ({
+          id: doc.id,
+          availability: doc.data().availability
+        }));
+        setMemberData(members);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
   const blocks = selectedBlocks.map(block => {
-    const [dateStr, hour, ampm] = block.split(' ');
-    const formattedTime = `${hour}:00 ${ampm}`;
-    return { date: new Date(dateStr), time: formattedTime };
+    const [dateStr, hour, ampmMinutes] = block.split(' ');
+    const [_, minutes] = ampmMinutes.split(':');
+    const formattedTime = `${hour}:${minutes}`;
+    const date = new Date(dateStr + 'T12:00:00');
+    return { date, time: formattedTime };
   });
 
   const uniqueDates = [...new Set(blocks.map(b => b.date.toLocaleDateString('en-US', {
@@ -269,31 +309,45 @@ function PopupCard({ selectedBlocks, onClose }) {
   const dateDisplay = uniqueDates.join(', ');
 
   const times = blocks.map(b => b.time);
-  const timeDisplay = times.length > 1 
-    ? `${times[0]} - ${times[times.length - 1]}` 
-    : `${times[0].replace(':00', ':00')} - ${times[0].replace(':00', ':59')}`; // Show minutes for single block
+  
+  const lastTime = times[times.length - 1];
+  const [lastHour, lastMinutes] = lastTime.split(':').map(Number);
+  let endHour = lastHour;
+  let endMinutes = lastMinutes + 30;
+  
+  if (endMinutes >= 60) {
+    endHour += 1;
+    endMinutes -= 60;
+  }
+  
+  const endTime = `${endHour}:${endMinutes === 0 ? '00' : endMinutes}`;
+  const timeDisplay = `${times[0]} - ${endTime}`;
 
   return (
-    <div className="flex flex-col w-[28%] bg-white rounded-[20px] fixed bottom-5 right-5 shadow-2xl z-50 border border-gray-200 min-w-[400px]">
-      <div className="pt-2 pr-2 pb-4 bg-green-600 rounded-t-[20px]">
-        <div className="flex justify-end">
-          <ThemeProvider theme={buttonTheme}>
-            <IconButton 
-              color="primary" 
-              aria-label="close" 
-              onClick={onClose} 
-              className="text-white hover:bg-green-500"
-            >
-              <CloseIcon />
-            </IconButton>
-          </ThemeProvider>
+    <Draggable 
+      handle="#draggable-header"
+      defaultPosition={{x: 0, y: 0}}
+      // bounds="parent"
+    >
+      <div className="flex flex-col w-fit bg-white rounded-[20px] absolute bottom-5 right-5 shadow-2xl z-50 border border-gray-200 min-w-[400px]">
+        <div id="draggable-header" className="pt-2 pr-2 pb-4 bg-green-600 rounded-t-[20px] cursor-move">
+          <div className="flex justify-end">
+            <ThemeProvider theme={buttonTheme}>
+              <IconButton 
+                color="primary" 
+                aria-label="close" 
+                onClick={onClose} 
+                className="text-white hover:bg-green-500"
+              >
+                <CloseIcon />
+              </IconButton>
+            </ThemeProvider>
+          </div>
+          <div className="flex justify-center -mt-6">
+            <Logo color='text-white' size='24pt'/>
+          </div>
         </div>
-        <div className="flex justify-center -mt-6">
-          <Logo color='text-white' size='24pt'/>
-        </div>
-      </div>
 
-      {/* <div className="flex justify-between p-8 text-[18px]"> */}
         <div className="flex items-center p-8 flex-col gap-4 text-neutral-1000">
           <div className="flex items-center gap-3">
             <EventRoundedIcon className="text-neutral-1000" />
@@ -305,34 +359,20 @@ function PopupCard({ selectedBlocks, onClose }) {
           </div>
           <div className="flex items-center gap-3">
             <GroupsRoundedIcon className="text-neutral-1000" />
-            <span>4 people</span>
+            <AvatarGroup max={4} spacing="small" className="ml-2">
+              {memberData.map((member) => (
+                <LegendAvatar 
+                  key={member.id}
+                  name={users[member.id] || member.id}
+                  status={true}
+                  showFull={false}
+                />
+              ))}
+            </AvatarGroup>
           </div>
         </div>
-
-        {/* <div className="flex flex-col items-center gap-3 text-[18px]">
-          <span className="text-neutral-1000">Schedule now?</span>
-          <ThemeProvider theme={buttonTheme}>
-            <Button 
-              variant="contained" 
-              color="secondary"
-              style={{
-                textTransform: 'none',
-                borderRadius: 50,
-                color: 'white',
-                fontWeight: 'bold',
-                padding: '8px 32px',
-                fontSize: '16px'
-              }}
-              onClick={() => alert('Proceed to schedule these time(s)!')}
-              endIcon={<ArrowForwardIcon />}
-              disableElevation
-            >
-              Go
-            </Button>
-          </ThemeProvider>
-        </div> */}
-      {/* </div> */}
-    </div>
+      </div>
+    </Draggable>
   );
 }
 
