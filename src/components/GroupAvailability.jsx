@@ -225,7 +225,7 @@ function PopupCard({ selectedBlocks, onClose }) {
 
   return (
     <div className="flex flex-col w-[28%] bg-white rounded-[20px] fixed bottom-5 right-5 shadow-2xl z-50 border border-gray-200 min-w-[400px]">
-      <div className="pt-2 pb-4 bg-green-600 rounded-t-[20px]">
+      <div className="pt-2 pr-2 pb-4 bg-green-600 rounded-t-[20px]">
         <div className="flex justify-end">
           <ThemeProvider theme={buttonTheme}>
             <IconButton 
