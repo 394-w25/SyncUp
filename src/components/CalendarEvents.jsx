@@ -17,6 +17,7 @@ export default function CalendarEvents({
   const [dragStart, setDragStart] = useState(null);
   const [currentBlock, setCurrentBlock] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const pixelsPerHour = 48;
   const pixelsPerIncrement = 24;
   const userId = localStorage.getItem('user-id');
@@ -113,6 +114,7 @@ export default function CalendarEvents({
       };
       
       await setDoc(doc(db, "availability", userId), availabilityData);
+      setHasUnsavedChanges(false);
       alert('Availability saved successfully!');
     } catch (error) {
       console.error("Error saving availability:", error);
@@ -191,6 +193,7 @@ export default function CalendarEvents({
       height,
     };
     setHighlightBlocks((prev) => [...prev, newBlock]);
+    setHasUnsavedChanges(true);
     resetDrag();
   }
 
@@ -200,10 +203,11 @@ export default function CalendarEvents({
 
   // Remove user highlights
   const handleBlockClick = (e, id) => {
-    e.stopPropagation(); // Prevent triggering new block creation
+    e.stopPropagation();
     const updatedBlocks = highlightBlocks.filter(block => block.id !== id);
     setHighlightBlocks(updatedBlocks);
-    setIsSaving(false); // Reset saving state when deselecting
+    setHasUnsavedChanges(true);
+    setIsSaving(false);
   };
 
   const pixelsToTime = (pixels) => {
@@ -216,21 +220,6 @@ export default function CalendarEvents({
   // RENDER
   return (
     <div className="flex flex-col">
-      {/* Save Button */}
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={handleSave}
-          disabled={isSaving}
-          className={`px-4 py-2 rounded-md text-white font-medium
-            ${isSaving 
-              ? 'bg-gray-400 cursor-not-allowed' 
-              : 'bg-green-600 hover:bg-green-700'
-            }
-          `}
-        >
-          {isSaving ? 'Saving...' : 'Save Availability'}
-        </button>
-      </div>
 
       {/* HEADER ROW */}
       <div className="w-full flex">
@@ -325,6 +314,21 @@ export default function CalendarEvents({
           </div>
         ))}
       </div>
+      {/* Save Button */}
+      <div className="flex justify-end mb-4 mt-8">
+        <button
+          onClick={handleSave}
+          disabled={isSaving || !hasUnsavedChanges}
+          className={`px-4 py-2 rounded-md text-white font-medium
+            ${(isSaving || !hasUnsavedChanges)
+              ? 'bg-neutral-300 cursor-not-allowed' 
+              : 'bg-green-600 hover:bg-green-700'
+            }
+          `}
+        >
+          {isSaving ? 'Saving...' : 'Save Availability'}
+        </button>
+      </div>
     </div>
   );
 }
@@ -412,6 +416,7 @@ function DragSelectionBlock({ dragData }) {
         backgroundColor: "#b1ccfab0",
         border: "1px solid #083684b0",
         zIndex: 50,
+        borderRadius: "4px",
       }}
     />
   );
