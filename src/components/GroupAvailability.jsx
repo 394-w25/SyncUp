@@ -20,6 +20,7 @@ querySnapshot.forEach((doc) => {
   const data = doc.data()['availability'];
   for (const date in data) {
     const slots = data[date]['data']['data'];
+    const isoDate = new Date(date).toISOString().split('T')[0];
     // Compress the 40-element array into a 10-element array, one element for each hour
     const compressedSlots = [];
     for (let i = 0; i < slots.length; i += 4) {
@@ -27,12 +28,11 @@ querySnapshot.forEach((doc) => {
       compressedSlots.push(group.every(slot => slot === 1) ? 1 : 0);
     }
     // adds the slots to the existing slots for that date if it exists
-    if (date in groupAvailabilityData) {
-      // console.log(groupAvailabilityData[date]);
-      groupAvailabilityData[date] = groupAvailabilityData[date].map((num, index) => num + compressedSlots[index]);
+    if (isoDate in groupAvailabilityData) {
+      groupAvailabilityData[isoDate] = groupAvailabilityData[isoDate].map((num, index) => num + compressedSlots[index]);
     }
     else {
-      groupAvailabilityData[date] = compressedSlots;
+      groupAvailabilityData[isoDate] = compressedSlots;
     } 
   };
 });
@@ -101,6 +101,7 @@ function getColor(date, hourIndex) {
   }
   const slotVal = slots[hourIndex];
   const pctAvail = slotVal / numMembers;
+
   switch(true) {
     case pctAvail === 1:
       return 'bg-scale-4';
@@ -108,8 +109,10 @@ function getColor(date, hourIndex) {
       return 'bg-scale-3';
     case pctAvail >= 0.4:
       return 'bg-scale-2';
+    case pctAvail >= 0.2:
+      return 'bg-scale-1';
     default:
-      return 'bg-white';
+      return 'bg-scale-none';
   }
 }
 
