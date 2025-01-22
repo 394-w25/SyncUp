@@ -5,6 +5,7 @@ import { initializeGAPIClient } from '../services/googleCalender';
 import { importEvents } from '../utils/importEvents';
 import { calculateAvailability } from '../utils/availability';
 import "./App.css"; // Import the new CSS file
+import { fetchParticipants } from '../firebase.config'; // Import the fetchParticipants function
 
 import '../styles/globals.css';
 
@@ -15,10 +16,14 @@ import Calendar from '../components/Calendar';
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userId, setUserId] = useState(null);
+  const [participants, setParticipants] = useState([]); // Dynamic participants
   const [startDate, setStartDate] = useState("2025-01-20");
   const [endDate, setEndDate] = useState("2025-01-26");
   const [startTime, setStartTime] = useState(8);
   const [endTime, setEndTime] = useState(18);
+
+  const meetingId = "rewnd7";
+  const event = "394 meeting";
 
   useEffect(() => {
     const initClient = async () => {
@@ -50,17 +55,31 @@ const App = () => {
     }
   };
 
+  // useEffect(() => {
+  //   console.log('User ID updated:', userId); // Debugging log
+  // }, [userId]);
+  // const participants = [
+  //   { name: "Alice", status: true },
+  //   { name: "Bob", status: false },
+  //   { name: "Charlie", status: true },
+  //   { name: "Devin", status: true },
+  //   { name: "Ellie", status: false },
+  //   { name: "Ferris", status: false },
+  // ];
+
   useEffect(() => {
-    console.log('User ID updated:', userId); // Debugging log
-  }, [userId]);
-  const participants = [
-    { name: "Alice", status: true },
-    { name: "Bob", status: false },
-    { name: "Charlie", status: true },
-    { name: "Devin", status: true },
-    { name: "Ellie", status: false },
-    { name: "Ferris", status: false },
-  ];
+    const loadParticipants = async () => {
+      try {
+        const data = await fetchParticipants(meetingId, event); // Fetch data for the given meetingId and event
+        setParticipants(data);
+        console.log("Fetched participants:", data); // Debugging log
+      } catch (error) {
+        console.error("Error fetching participants:", error);
+      }
+    };
+
+    loadParticipants();
+  }, [meetingId, event]);
 
   return (
     <div className="app-container w-full flex flex-col gap-4 pb-4">
@@ -77,7 +96,7 @@ const App = () => {
           />
         </div>
         <div className='w-[30%] h-full flex flex-col gap-4 mr-4'>
-          <Legend meetingID={'rewnd7'} eventName={'394 meeting'} participants={participants}/>  
+          <Legend meetingID={'rewnd7'} eventName={'394 meeting'} participants={participants} />
           <GroupAvailability startDate={startDate} endDate={endDate} startTime={startTime} endTime={endTime}/>
         </div>
       </div>
