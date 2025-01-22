@@ -23,19 +23,19 @@ querySnapshot.forEach((doc) => {
   const data = doc.data()['availability'];
   for (const date in data) {
     const slots = data[date]['data']['data'];
-    const isoDate = new Date(date).toISOString().split('T')[0];
-    // Compress the 40-element array into a 10-element array, one element for each hour
+    // const isoDate = new Date(date).toISOString().split('T')[0];
+    // Compress the 40-element array into a 20-element array, one element for each half hour
     const compressedSlots = [];
-    for (let i = 0; i < slots.length; i += 4) {
-      const group = slots.slice(i, i + 4);
+    for (let i = 0; i < slots.length; i += 2) {
+      const group = slots.slice(i, i + 2);
       compressedSlots.push(group.every(slot => slot === 1) ? 1 : 0);
     }
     // adds the slots to the existing slots for that date if it exists
-    if (isoDate in groupAvailabilityData) {
-      groupAvailabilityData[isoDate] = groupAvailabilityData[isoDate].map((num, index) => num + compressedSlots[index]);
+    if (date in groupAvailabilityData) {
+      groupAvailabilityData[date] = groupAvailabilityData[date].map((num, index) => num + compressedSlots[index]);
     }
     else {
-      groupAvailabilityData[isoDate] = compressedSlots;
+      groupAvailabilityData[date] = compressedSlots;
     } 
   };
 });
