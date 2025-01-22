@@ -224,8 +224,8 @@ function PopupCard({ selectedBlocks, onClose }) {
     : `${times[0].replace(':00', ':00')} - ${times[0].replace(':00', ':59')}`; // Show minutes for single block
 
   return (
-    <div className="flex flex-col w-[28%] bg-white rounded-[20px] fixed bottom-5 right-5 shadow-xl z-50 border border-gray-200 min-w-[400px]">
-      <div className="p-4 bg-green-600 rounded-t-[20px]">
+    <div className="flex flex-col w-[28%] bg-white rounded-[20px] fixed bottom-5 right-5 shadow-2xl z-50 border border-gray-200 min-w-[400px]">
+      <div className="pt-2 pb-4 bg-green-600 rounded-t-[20px]">
         <div className="flex justify-end">
           <ThemeProvider theme={buttonTheme}>
             <IconButton 
@@ -293,7 +293,7 @@ const nextDate = `${day.getFullYear()}-${day.getMonth() + 1}-${day.getDate()}`;
 
 export default function GroupAvailability({startDate, endDate, startTime, endTime}) {
   return (
-    <div className="min-h-screen p-3 bg-gray-50">
+    <div className="flex flex-col bg-white px-8 py-8 gap-2 rounded-[20px] shadow-[0px_7px_15.699999809265137px_0px_rgba(17,107,60,0.06)]">
       <h2 className="text-2xl mb-4">Group Availability</h2>
       <GroupSchedule
         startTime={startTime}
