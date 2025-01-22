@@ -1,5 +1,5 @@
 import { GoogleAuthProvider, signInWithPopup, getAuth , signOut as firebaseSignOut} from "firebase/auth";
-import { setDoc, doc } from "firebase/firestore";
+import { setDoc, doc, updateDoc } from "firebase/firestore";
 import { gapi } from "gapi-script";
 import { db } from '../firebase'; // Assuming you have a firebase.js file for Firestore
 
@@ -22,6 +22,7 @@ const signInWithGoogle = async () => {
         uid: user.uid,
         name: user.displayName,
         email: user.email,
+        isSynced: false,
       });
   
       console.log('User signed in and authenticated');
@@ -45,6 +46,18 @@ const handleAuth = async (setIsAuthenticated) => {
     }
 };
 
+const updateIsSynced = async (userId) => {
+  try {
+    const userDoc = doc(db, "users", userId);
+    await updateDoc(userDoc, {
+      isSynced: true
+    });
+    console.log('User calendar sync status updated to true');
+  } catch (error) {
+    console.error('Error updating sync status:', error);
+  }
+};
+
 const signOut = async (setIsAuthenticated, setUserId) => {
   try {
     await firebaseSignOut(auth);
@@ -58,4 +71,4 @@ const signOut = async (setIsAuthenticated, setUserId) => {
   }
 };
 
-export { signInWithGoogle, handleAuth, signOut };
+export { signInWithGoogle, handleAuth, updateIsSynced, signOut };
