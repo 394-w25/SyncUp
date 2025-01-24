@@ -1,0 +1,55 @@
+.availability-status {
+    position: absolute;
+    width: 258px;
+    height: 300px;
+    top: 488px;
+    left: 1682px;
+    border-radius: 20px;
+    background-color: #f5f5f5;
+    box-shadow: 0px 7px 15.7px rgba(17, 107, 60, 0.07);
+    padding: 20px;
+  }
+  .status-box {
+    position: relative;
+    width: 178px;
+    height: 220px;
+    top: 27px;
+    left: 22px;
+  }
+  .status-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 2px solid;
+    margin-right: 20px;
+  }
+  .avatar.neutral {
+    background-color: #e0e0e0;
+    border-color: #333333;
+  }
+  .avatar.blue {
+    background-color: #bbdefb;
+    border-color: #0d47a1;
+  }
+  .avatar.gradient {
+    width: 42px;
+    height: 93px;
+    border-radius: 80px;
+    border: 2px solid transparent;
+    background: linear-gradient(180deg, #f4b8bc 0%, #ffe291 56%, #57bb8a 100%);
+  }
+  .status-text-container {
+    display: flex;
+    flex-direction: column;
+  }
+  .status-text {
+    font-family: 'Nunito', Helvetica, sans-serif;
+    font-weight: normal;
+    color: #333333;
+  }
