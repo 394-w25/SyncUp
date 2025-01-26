@@ -264,6 +264,7 @@ function getColor(date, hourIndex) {
         ))}
       </div>
 
+      {/* Pop-up in bottom-right (or wherever you like) */}
       {showPopup && selectedBlocks.size > 0 && (
         <PopupCard 
           selectedBlocks={[...selectedBlocks]} 
