@@ -264,20 +264,22 @@ function getColor(date, hourIndex) {
         ))}
       </div>
 
-      {/* Pop-up in bottom-right (or wherever you like) */}
       {showPopup && selectedBlocks.size > 0 && (
         <PopupCard 
           selectedBlocks={[...selectedBlocks]} 
           onClose={() => setShowPopup(false)}
+          groupAvailabilityData={groupAvailabilityData}
+          numMembers={numMembers}
         />
       )}
     </div>
   );
 }
 
-function PopupCard({ selectedBlocks, onClose }) {
+function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers }) {
   const [users, setUsers] = useState([]);
   const [memberData, setMemberData] = useState([]);
+  const [availabilityCounts, setAvailabilityCounts] = useState({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -302,14 +304,28 @@ function PopupCard({ selectedBlocks, onClose }) {
       }
     };
     fetchData();
-  }, []);
+
+    // Count availability for each block
+    const countAvailability = () => {
+      const counts = {};
+      selectedBlocks.forEach(block => {
+        const [dateStr, hour, ampmMinutes] = block.split(' ');
+        const isoDate = dateStr;
+        const hourIndex = parseInt(hour) * 2 + (ampmMinutes.includes(':30') ? 1 : 0);
+        counts[block] = groupAvailabilityData[isoDate]?.[hourIndex] || 0;
+      });
+      setAvailabilityCounts(counts);
+    };
+
+    countAvailability();
+  }, [selectedBlocks, groupAvailabilityData]);
 
   const blocks = selectedBlocks.map(block => {
     const [dateStr, hour, ampmMinutes] = block.split(' ');
     const [_, minutes] = ampmMinutes.split(':');
     const formattedTime = `${hour}:${minutes}`;
     const date = new Date(dateStr + 'T12:00:00');
-    return { date, time: formattedTime };
+    return { date, time: formattedTime, block };
   });
 
   const uniqueDates = [...new Set(blocks.map(b => b.date.toLocaleDateString('en-US', {
@@ -322,17 +338,16 @@ function PopupCard({ selectedBlocks, onClose }) {
   const dateDisplay = uniqueDates.join(', ');
 
   const times = blocks.map(b => b.time);
-  
   const lastTime = times[times.length - 1];
   const [lastHour, lastMinutes] = lastTime.split(':').map(Number);
   let endHour = lastHour;
   let endMinutes = lastMinutes + 30;
-  
+
   if (endMinutes >= 60) {
     endHour += 1;
     endMinutes -= 60;
   }
-  
+
   const endTime = `${endHour}:${endMinutes === 0 ? '00' : endMinutes}`;
   const timeDisplay = `${times[0]} - ${endTime}`;
 
@@ -340,7 +355,6 @@ function PopupCard({ selectedBlocks, onClose }) {
     <Draggable 
       handle="#draggable-header"
       defaultPosition={{x: 0, y: 0}}
-      // bounds="parent"
     >
       <div className="flex flex-col w-fit bg-white rounded-[20px] absolute bottom-5 right-5 shadow-2xl z-50 border border-gray-200 min-w-[400px]">
         <div id="draggable-header" className="pt-2 pr-2 pb-4 bg-green-600 rounded-t-[20px] cursor-move">
@@ -383,11 +397,24 @@ function PopupCard({ selectedBlocks, onClose }) {
               ))}
             </AvatarGroup>
           </div>
+          {/* Add count for each member */}
+          <div className="flex flex-col w-full">
+            <h3 className="text-lg font-bold mb-2">Selected Time Slots</h3>
+            <ul className="text-sm text-neutral-800">
+              {blocks.map(({ block, time }) => (
+                <li key={block} className="flex justify-between">
+                  <span>{time}</span>
+                  <span>{availabilityCounts[block]} / {numMembers} available</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
     </Draggable>
   );
 }
+
 
 const day = new Date();
 const currentDate = `${day.getFullYear()}-${day.getMonth() + 1}-${day.getDate()}`;
