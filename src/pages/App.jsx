@@ -14,6 +14,7 @@ import Legend from '../components/Legend';
 import Calendar from '../components/Calendar';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { Button, ThemeProvider, createTheme, IconButton } from '@mui/material';
+import CreateGroupButton from '../components/TestCreateGroup';
 
 const buttonTheme = createTheme({
   palette: {
@@ -101,6 +102,7 @@ const App = () => {
 
   return (
     <div className="w-screen h-screen px-4 pb-4 bg-background relative">
+      <CreateGroupButton />
       <div className="w-full h-full flex gap-4">
         <div className='w-full h-full flex flex-col gap-4'>
           <Calendar
