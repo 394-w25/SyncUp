@@ -6,8 +6,6 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import EventRoundedIcon from '@mui/icons-material/EventRounded';
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
-import Button from '@mui/material/Button';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import AvatarGroup from '@mui/material/AvatarGroup';
 import LegendAvatar from './LegendAvatar';
 import Draggable from 'react-draggable';
@@ -52,6 +50,7 @@ function GroupSchedule({ startTime, endTime, startDate, endDate }) {
   const [showPopup, setShowPopup] = useState(false);
   const [groupAvailabilityData, setGroupAvailabilityData] = useState({});
   const [numMembers, setNumMembers] = useState(0);
+  const [lockedDate, setLockedDate] = useState(null);
 
   useEffect(() => {
     async function fetchAvailabilityData() {
@@ -134,6 +133,7 @@ function getColor(date, hourIndex) {
   const handleMouseDown = (date, hourLabel, isHalfHour) => {
     setIsMouseDown(true);
     setShowPopup(false);
+    setLockedDate(date);
     
     const slotKey = makeSlotKey(date, hourLabel, isHalfHour);
     const newSet = new Set();
@@ -145,7 +145,8 @@ function getColor(date, hourIndex) {
   };
 
   const handleMouseEnter = (date, hourLabel, isHalfHour) => {
-    if (!isMouseDown) return;
+    if (!isMouseDown || !lockedDate) return;
+    if (date.toDateString() !== lockedDate.toDateString()) return; // if this cell date differs from the locked date, ignore
     
     const slotKey = makeSlotKey(date, hourLabel, isHalfHour);
     setSelectedBlocks(prev => {
@@ -161,6 +162,7 @@ function getColor(date, hourIndex) {
 
   const handleMouseUp = () => {
     setIsMouseDown(false);
+    setLockedDate(null);
     // Show the pop-up if we have any selections
     if (selectedBlocks.size > 0) {
       setShowPopup(true);
