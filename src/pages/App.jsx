@@ -6,6 +6,7 @@ import { importEvents } from '../utils/importEvents';
 import { calculateAvailability } from '../utils/availability';
 import "./App.css"; // Import the new CSS file
 import { fetchParticipants } from '../firebase.config'; // Import the fetchParticipants function
+import LandingPage from '../components/LandingPage';
 
 import '../styles/globals.css';
 
@@ -102,7 +103,7 @@ const App = () => {
 
   return (
     <div className="w-screen h-screen px-4 pb-4 bg-background relative">
-      <CreateGroupButton />
+      <LandingPage />
       <div className="w-full h-full flex gap-4">
         <div className='w-full h-full flex flex-col gap-4'>
           <Calendar
