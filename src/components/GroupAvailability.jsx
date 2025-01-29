@@ -42,45 +42,40 @@ function makeSlotKey(date, hourLabel, isHalfHour = false) {
   return `${iso} ${hourLabel}:${minutes}`;
 }
 
-function GroupSchedule({ startTime, endTime, startDate, endDate }) {
+function GroupSchedule({ groupData, startTime, endTime, startDate, endDate }) {
   const [selectedBlocks, setSelectedBlocks] = useState(new Set());
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [groupAvailabilityData, setGroupAvailabilityData] = useState({});
-  const [numMembers, setNumMembers] = useState(0);
+  const numMembers = groupData.memberIds.length;
 
   useEffect(() => {
     async function fetchAvailabilityData() {
       const data = {};
       const querySnapshot = await getDocs(collection(db, "availability"));
-      let members = 0;
 
       querySnapshot.forEach((doc) => {
-        members++;
         const userID = doc.id;
-        for (const date in doc.data()) {
-          const slots = doc.data()[date]['data'];
-          if (slots === undefined) continue;
-          // console.log(date, slots);
-
-          const compressedSlots = [];
-          for (let i = 0; i < slots.length; i += 2) {
-            const group = slots.slice(i, i + 2);
-            compressedSlots.push(group.every(slot => slot === 1) ? 1 : 0);
+        if (groupData.memberIds.includes(userID)) {
+          for (const date in doc.data()) {
+            const slots = doc.data()[date]['data'];
+            if (slots === undefined) continue;
+  
+            const compressedSlots = [];
+            for (let i = 0; i < slots.length; i += 2) {
+              const group = slots.slice(i, i + 2);
+              compressedSlots.push(group.every(slot => slot === 1) ? 1 : 0);
+            }
+  
+            if (date in data) {
+              data[date] = data[date].map((num, index) => num + compressedSlots[index]);
+            } else {
+              data[date] = compressedSlots;
+            }
           }
-
-          if (date in data) {
-            data[date] = data[date].map((num, index) => num + compressedSlots[index]);
-          } else {
-            data[date] = compressedSlots;
-          }
-        }
-      });
-
+        }});
       setGroupAvailabilityData(data);
-      setNumMembers(members);
     }
-
     fetchAvailabilityData();
   }, []);
 
@@ -384,11 +379,12 @@ const currentDate = `${day.getFullYear()}-${day.getMonth() + 1}-${day.getDate()}
 day.setDate(day.getDate() + 7);
 const nextDate = `${day.getFullYear()}-${day.getMonth() + 1}-${day.getDate()}`;
 
-export default function GroupAvailability({ startDate, endDate, startTime, endTime}) {
+export default function GroupAvailability({ groupData, startDate, endDate, startTime, endTime}) {
   return (
     <div className="flex flex-col bg-white px-8 py-8 gap-2 rounded-[20px] shadow-[0px_7px_15.699999809265137px_0px_rgba(17,107,60,0.06)]">
       <h2 className="text-2xl mb-4">Group Availability</h2>
       <GroupSchedule
+        groupData={groupData}
         startTime={startTime}
         endTime={endTime}
         startDate={startDate}

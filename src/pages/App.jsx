@@ -3,6 +3,7 @@ import { gapi } from 'gapi-script';
 import { handleAuth as googleHandleAuth, signOut } from '../services/googleAuth';
 import { initializeGAPIClient } from '../services/googleCalender';
 import { importEvents } from '../utils/importEvents';
+import { fetchGroupData } from '../utils/fetchGroupData';
 import "./App.css"; // Import the new CSS file
 import { fetchParticipants } from '../firebase.config'; // Import the fetchParticipants function
 
@@ -39,13 +40,14 @@ const buttonTheme = createTheme({
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userId, setUserId] = useState(null);
+  const [meetingId, setMeetingId] = useState("rewnd7"); // should pull from URL
+  const [groupData, setGroupData] = useState({});
   const [participants, setParticipants] = useState([]); // Dynamic participants
   const [startDate, setStartDate] = useState("2025-01-27");
   const [endDate, setEndDate] = useState("2025-02-02");
   const [startTime, setStartTime] = useState(8);
   const [endTime, setEndTime] = useState(18);
 
-  const meetingId = "rewnd7";
   const event = "394 meeting";
 
   useEffect(() => {
@@ -65,6 +67,9 @@ const App = () => {
     };
 
     gapi.load('client:auth2', initClient);
+
+    // Fetch group data
+    setGroupData(fetchGroupData(meetingId));
   }, []);
 
   // Push availability data to Firestore
@@ -119,6 +124,7 @@ const App = () => {
             participants={participants}
           />
           <GroupAvailability
+              groupData={groupData}
               startDate={startDate}
               endDate={endDate}
               startTime={startTime}
