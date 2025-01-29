@@ -36,19 +36,18 @@ const buttonTheme = createTheme({
 
 const MeetingPage = () => {
     const location = useLocation();
-    const { startDate, endDate, startTime, endTime } = location.state || {
+    const { startDate, endDate, startTime, endTime, meetingId, event } = location.state || {
         startDate: "2025-01-20",
         endDate: "2025-01-26",
         startTime: 8,
-        endTime: 18
+        endTime: 18,
+        meetingId: "rewnd7",
+        event: "394 meeting"
     };
     
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userId, setUserId] = useState(null);
     const [participants, setParticipants] = useState([]); // Dynamic participants
-
-    const meetingId = "rewnd7";
-    const event = "394 meeting";
 
     useEffect(() => {
         const initClient = async () => {

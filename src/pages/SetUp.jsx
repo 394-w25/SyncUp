@@ -349,7 +349,9 @@ const SetUp = () => {
                                                     startDate: firstDate,
                                                     endDate: lastDate,
                                                     startTime: startHour,
-                                                    endTime: endHour
+                                                    endTime: endHour,
+                                                    meetingId: groupLink.split('/').pop(),
+                                                    event: meetingName
                                                 }
                                             });
                                         }}
