@@ -48,8 +48,8 @@ function GroupSchedule({ groupData, startTime, endTime, startDate, endDate }) {
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [groupAvailabilityData, setGroupAvailabilityData] = useState({});
-  // const numMembers = groupData.memberIds.length;
-  const numMembers = 10;
+  const numMembers = groupData.memberIds.length;
+  // const numMembers = 10;
 
   useEffect(() => {
       setGroupAvailabilityData(fetchGroupAvailabilityData(groupData));
