@@ -89,7 +89,7 @@ const App = () => {
       try {
         const data = await fetchParticipants(meetingId, event); // Fetch data for the given meetingId and event
         setParticipants(data);
-        console.log("Fetched participants:", data); // Debugging log
+        // console.log("Fetched participants:", data); // Debugging log
       } catch (error) {
         console.error("Error fetching participants:", error);
       }
