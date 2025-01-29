@@ -10,6 +10,7 @@ import Draggable from 'react-draggable';
 
 import { collection, getDocs } from "firebase/firestore";
 import { db } from '../firebase';
+import { fetchGroupAvailabilityData } from '../utils/fetchGroupAvailability';
 
 const buttonTheme = createTheme({
   palette: {
@@ -47,36 +48,11 @@ function GroupSchedule({ groupData, startTime, endTime, startDate, endDate }) {
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [groupAvailabilityData, setGroupAvailabilityData] = useState({});
-  const numMembers = groupData.memberIds.length;
+  // const numMembers = groupData.memberIds.length;
+  const numMembers = 10;
 
   useEffect(() => {
-    async function fetchAvailabilityData() {
-      const data = {};
-      const querySnapshot = await getDocs(collection(db, "availability"));
-
-      querySnapshot.forEach((doc) => {
-        const userID = doc.id;
-        if (groupData.memberIds.includes(userID)) {
-          for (const date in doc.data()) {
-            const slots = doc.data()[date]['data'];
-            if (slots === undefined) continue;
-  
-            const compressedSlots = [];
-            for (let i = 0; i < slots.length; i += 2) {
-              const group = slots.slice(i, i + 2);
-              compressedSlots.push(group.every(slot => slot === 1) ? 1 : 0);
-            }
-  
-            if (date in data) {
-              data[date] = data[date].map((num, index) => num + compressedSlots[index]);
-            } else {
-              data[date] = compressedSlots;
-            }
-          }
-        }});
-      setGroupAvailabilityData(data);
-    }
-    fetchAvailabilityData();
+      setGroupAvailabilityData(fetchGroupAvailabilityData(groupData));
   }, []);
 
   // Generate all dates in range
