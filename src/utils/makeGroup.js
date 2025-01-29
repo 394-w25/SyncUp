@@ -25,5 +25,5 @@ export const createGroup = async (groupData) => {
     });
 
     console.log('Group created:', groupLink);
-    return groupLink;
+    return { link: groupLink, id: groupId };
 };
