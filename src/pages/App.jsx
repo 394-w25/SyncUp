@@ -1,16 +1,10 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
-import SetUp from './SetUp';
-import MeetingPage from './MeetingPage';
-import LandingPage from './LandingPage';
+import { RouterProvider } from 'react-router-dom';
+import { router } from '../routes';
 
 const App = () => {
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/setup-meeting" element={<SetUp />} />
-      <Route path="/group/:id" element={<MeetingPage />} />
-    </Routes>
+    <RouterProvider router={router} />
   );
 };
 
