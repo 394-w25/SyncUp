@@ -1,25 +1,24 @@
 import { useState } from "react";
-import DatePicker, { DateObject, Calendar } from "react-multi-date-picker";
-import DatePanel from "react-multi-date-picker/plugins/date_panel"
 import { useNavigate } from "react-router-dom";
-import GoogleIcon from '@mui/icons-material/Google';
-import { Button, ThemeProvider, createTheme } from '@mui/material';
-import { TextField } from '@mui/material';
-import { styled } from '@mui/material/styles';
+
+import { Button, ThemeProvider, createTheme, TextField, IconButton } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-// import TimePicker from "react-multi-date-picker/plugins/time_picker"
-import moment from 'moment';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
-import { TimeField } from '@mui/x-date-pickers/TimeField';
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import { renderTimeViewClock } from "@mui/x-date-pickers/timeViewRenderers";
+
+import GoogleIcon from '@mui/icons-material/Google';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { Timestamp } from 'firebase/firestore';
-import { createGroup } from '../utils/makeGroup';
-import { IconButton } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DoneIcon from '@mui/icons-material/Done';
+import AddLinkRoundedIcon from '@mui/icons-material/AddLinkRounded';
+
+import { Calendar } from "react-multi-date-picker";
+import DatePanel from "react-multi-date-picker/plugins/date_panel";
+import moment from 'moment';
+import { Timestamp } from 'firebase/firestore';
+import { createGroup } from '../utils/makeGroup';
 
 const buttonTheme = createTheme({
   palette: {
@@ -304,7 +303,7 @@ const SetUp = () => {
                                 color='secondary'
                                 onClick={handleStart}
                                 style={{textTransform: 'none'}}
-                                endIcon={<ArrowForwardIcon />}
+                                endIcon={<AddLinkRoundedIcon />}
                                 >
                                     Get your group link
                                 </Button>
