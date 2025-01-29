@@ -60,14 +60,18 @@ function GroupSchedule({ startTime, endTime, startDate, endDate }) {
 
       querySnapshot.forEach((doc) => {
         members++;
-        const docData = doc.data()['availability'];
-        for (const date in docData) {
-          const slots = docData[date]['data']['data'];
+        const userID = doc.id;
+        for (const date in doc.data()) {
+          const slots = doc.data()[date]['data'];
+          if (slots === undefined) continue;
+          // console.log(date, slots);
+
           const compressedSlots = [];
           for (let i = 0; i < slots.length; i += 2) {
             const group = slots.slice(i, i + 2);
             compressedSlots.push(group.every(slot => slot === 1) ? 1 : 0);
           }
+
           if (date in data) {
             data[date] = data[date].map((num, index) => num + compressedSlots[index]);
           } else {
@@ -383,7 +387,7 @@ const currentDate = `${day.getFullYear()}-${day.getMonth() + 1}-${day.getDate()}
 day.setDate(day.getDate() + 7);
 const nextDate = `${day.getFullYear()}-${day.getMonth() + 1}-${day.getDate()}`;
 
-export default function GroupAvailability({startDate, endDate, startTime, endTime}) {
+export default function GroupAvailability({ groupID, startDate, endDate, startTime, endTime}) {
   return (
     <div className="flex flex-col bg-white px-8 py-8 gap-2 rounded-[20px] shadow-[0px_7px_15.699999809265137px_0px_rgba(17,107,60,0.06)]">
       <h2 className="text-2xl mb-4">Group Availability</h2>
