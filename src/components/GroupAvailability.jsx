@@ -283,6 +283,7 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers 
   const [availabilityCounts, setAvailabilityCounts] = useState({});
 
   useEffect(() => {
+    console.log("Selected Blocks:", selectedBlocks);
     const fetchData = async () => {
       try {
         const usersRef = collection(db, "users");
@@ -308,15 +309,25 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers 
 
     // Count availability for each block
     const countAvailability = () => {
+      console.log("Counting availability for:", selectedBlocks);
+    
       const counts = {};
       selectedBlocks.forEach(block => {
         const [dateStr, hour, ampmMinutes] = block.split(' ');
         const isoDate = dateStr;
-        const hourIndex = parseInt(hour) * 2 + (ampmMinutes.includes(':30') ? 1 : 0);
+    
+        const totalMinutes = (parseInt(hour) % 12 + (block.includes('PM') ? 12 : 0)) * 60 + (ampmMinutes.includes(':30') ? 30 : 0);
+        const hourIndex = (totalMinutes - 480) / 30;
+    
+        console.log(`Checking availability for ${isoDate} at index ${hourIndex}`);
+        console.log("Data at this date:", groupAvailabilityData[isoDate]);
+    
         counts[block] = groupAvailabilityData[isoDate]?.[hourIndex] || 0;
       });
+    
       setAvailabilityCounts(counts);
     };
+    
 
     countAvailability();
   }, [selectedBlocks, groupAvailabilityData]);
