@@ -338,15 +338,29 @@ const SetUp = () => {
                                     <Button 
                                         variant='contained' 
                                         color='primary'
-                                        onClick={() => navigate(`/group/${groupLink.split('/').pop()}`)}
+                                        onClick={() => {
+                                            const startHour = moment(selectedStartTime).hour();
+                                            const endHour = moment(selectedEndTime).hour();
+                                            const firstDate = moment(selectedDate[0].toDate()).format('YYYY-MM-DD');
+                                            const lastDate = moment(selectedDate[selectedDate.length - 1].toDate()).format('YYYY-MM-DD');
+                                            
+                                            navigate(`/group/${groupLink.split('/').pop()}`, {
+                                                state: {
+                                                    startDate: firstDate,
+                                                    endDate: lastDate,
+                                                    startTime: startHour,
+                                                    endTime: endHour
+                                                }
+                                            });
+                                        }}
                                         style={{textTransform: 'none', fontSize: '16px'}}
                                         fullWidth
                                         endIcon={<ArrowForwardIcon />}
                                     >
-                                    Start Scheduling
-                                </Button>
-                            </ThemeProvider>
-                        </div>
+                                        Start Scheduling
+                                    </Button>
+                                </ThemeProvider>
+                            </div>
                         )}
                     </div>
                 </div>

@@ -10,6 +10,7 @@ import Legend from '../components/Legend';
 import Calendar from '../components/Calendar';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { Button, ThemeProvider, createTheme, IconButton } from '@mui/material';
+import { useLocation } from 'react-router-dom';
 
 const buttonTheme = createTheme({
   palette: {
@@ -34,13 +35,17 @@ const buttonTheme = createTheme({
 });
 
 const MeetingPage = () => {
+    const location = useLocation();
+    const { startDate, endDate, startTime, endTime } = location.state || {
+        startDate: "2025-01-20",
+        endDate: "2025-01-26",
+        startTime: 8,
+        endTime: 18
+    };
+    
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userId, setUserId] = useState(null);
     const [participants, setParticipants] = useState([]); // Dynamic participants
-    const [startDate, setStartDate] = useState("2025-01-20");
-    const [endDate, setEndDate] = useState("2025-01-26");
-    const [startTime, setStartTime] = useState(8);
-    const [endTime, setEndTime] = useState(18);
 
     const meetingId = "rewnd7";
     const event = "394 meeting";
