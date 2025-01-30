@@ -7,7 +7,6 @@ import EventRoundedIcon from '@mui/icons-material/EventRounded';
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import AvatarGroup from '@mui/material/AvatarGroup';
-import LegendAvatar from './LegendAvatar';
 import Draggable from 'react-draggable';
 
 import { collection, getDocs } from "firebase/firestore";
@@ -119,7 +118,6 @@ function getColor(date, hourIndex) {
       return 'bg-scale-none';
   }
 }
-
 
   // Generate hour labels
   const hourLabels = [];
@@ -374,16 +372,7 @@ function PopupCard({ selectedBlocks, onClose }) {
           </div>
           <div className="flex items-center gap-3">
             <GroupsRoundedIcon className="text-neutral-1000" />
-            <AvatarGroup max={4} spacing="small" className="ml-2">
-              {memberData.map((member) => (
-                <LegendAvatar 
-                  key={member.id}
-                  name={users[member.id] || member.id}
-                  status={true}
-                  showFull={false}
-                />
-              ))}
-            </AvatarGroup>
+            <span>{memberData.length} available</span>
           </div>
         </div>
       </div>

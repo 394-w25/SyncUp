@@ -3,7 +3,6 @@ import { gapi } from 'gapi-script';
 import { handleAuth as googleHandleAuth, signOut } from '../services/googleAuth';
 import { initializeGAPIClient } from '../services/googleCalender';
 import { importEvents } from '../utils/importEvents';
-import { calculateAvailability } from '../utils/availability';
 import "./App.css"; // Import the new CSS file
 import { fetchParticipants } from '../firebase.config'; // Import the fetchParticipants function
 
@@ -48,8 +47,10 @@ const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userId, setUserId] = useState(null);
   const [participants, setParticipants] = useState([]); // Dynamic participants
+
   const [startDate, setStartDate] = useState(todayDate);
   const [endDate, setEndDate] = useState(nextWkDate);
+
   const [startTime, setStartTime] = useState(8);
   const [endTime, setEndTime] = useState(18);
 

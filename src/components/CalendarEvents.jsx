@@ -215,7 +215,7 @@ export default function CalendarEvents({
 
       await setDoc(doc(db, "availability", userId), availabilityDoc);
       setHasUnsavedChanges(false);
-      alert('Availability saved successfully!');
+      // alert('Availability saved successfully!');
     } catch (error) {
       console.error("Error saving availability:", error);
       alert('Failed to save availability. Please try again.');
@@ -423,7 +423,10 @@ export default function CalendarEvents({
       {/* Save Button */}
       <div className="flex justify-end mb-4 mt-8">
         <button
-          onClick={handleSave}
+          onClick={async () => {
+            await handleSave();
+            window.location.reload(); // Refresh the page
+          }}
           disabled={isSaving || !hasUnsavedChanges}
           className={`px-4 py-2 rounded-md text-white font-medium
             ${(isSaving || !hasUnsavedChanges)
