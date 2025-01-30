@@ -8,8 +8,8 @@ const pixelsPer30Min = 24;
 export default function CalendarEvents({
   startTime = 8,
   endTime = 18,
-  startDate = "2025-01-01",
-  endDate = "2025-01-07",
+  startDate,
+  endDate,
   events = [],
 }) {
   const [highlightBlocks, setHighlightBlocks] = useState([]);
@@ -253,6 +253,13 @@ export default function CalendarEvents({
     // If user dragged a tiny amount, ignore
     if (height < 5) {
       resetDrag();
+      // if user dragged a tiny amount on highlighted block, remove it
+      const clickedBlock = highlightBlocks.find((block) => {
+        return block.dayIndex === dayIndex && top >= block.top && top <= block.top + block.height;
+      });
+      if (clickedBlock) {
+        handleBlockClick(e, clickedBlock.id);
+      }
       return;
     }
 
@@ -272,7 +279,6 @@ export default function CalendarEvents({
     });
 
     if (hasOverlapWithUserBlocks || hasOverlapWithGcal) {
-      console.log("Cannot select—overlaps an existing highlight or Gcal event");
       resetDrag();
       return;
     }
