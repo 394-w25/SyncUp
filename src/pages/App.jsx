@@ -36,12 +36,21 @@ const buttonTheme = createTheme({
   },
 });
 
+// Get start and dates
+const today = new Date();
+const nextWk = new Date(today);
+nextWk.setDate(today.getDate() + 7);
+const todayDate = today.toISOString().split('T')[0];
+const nextWkDate = nextWk.toISOString().split('T')[0];
+
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userId, setUserId] = useState(null);
   const [participants, setParticipants] = useState([]); // Dynamic participants
-  const [startDate, setStartDate] = useState("2025-01-27");
-  const [endDate, setEndDate] = useState("2025-02-02");
+
+  const [startDate, setStartDate] = useState(todayDate);
+  const [endDate, setEndDate] = useState(nextWkDate);
+
   const [startTime, setStartTime] = useState(8);
   const [endTime, setEndTime] = useState(18);
 
