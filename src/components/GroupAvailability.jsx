@@ -10,7 +10,6 @@ import Draggable from 'react-draggable';
 
 import { collection, getDocs } from "firebase/firestore";
 import { db } from '../firebase';
-import { fetchGroupAvailabilityData } from '../utils/fetchGroupAvailability';
 
 const buttonTheme = createTheme({
   palette: {
