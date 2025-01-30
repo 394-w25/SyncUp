@@ -101,8 +101,7 @@ export default function CalendarEvents({
 
         if (docSnap.exists()) {
           const data = docSnap.data(); 
-          // data has: { userId, availability: { 'YYYY-MM-DD': {...}, ... } }
-          const availabilityData = data.availability || {};
+          // data has: { 'YYYY-MM-DD': ... }
 
           // We'll gather the newly reconstructed blocks here
           const newBlocks = [];
@@ -111,8 +110,8 @@ export default function CalendarEvents({
           const startDateObj = new Date(startDate); // e.g. "2025-01-20"
 
           // Iterate over each date in availability
-          for (const [dateString, details] of Object.entries(availabilityData)) {
-            // Convert the dateString (e.g. "2025-01-22") to a Date object
+          for (const [dateString, details] of Object.entries(data)) {
+          // Convert the dateString (e.g. "2025-01-22") to a Date object
             const dayDate = new Date(dateString + "T00:00:00");
 
             // Calculate dayIndex as difference in days from startDate to this date
@@ -125,7 +124,7 @@ export default function CalendarEvents({
 
             // Extract the 0/1 slots array
             // details.data.data => your array of 0/1 for the day
-            const slotsArray = details?.data?.data || [];
+            const slotsArray = details?.data || [];
 
             // Parse consecutive 1's into highlight blocks
             let i = 0;
@@ -194,25 +193,18 @@ export default function CalendarEvents({
           }
         }
       });
+      
+      const availabilityDoc = {};
 
-      const availabilityCollection = {};
       Object.entries(availabilityByDate).forEach(([date, slots]) => {
-        availabilityCollection[date] = {
-          date: date,
-          startTime: new Date(date + 'T' + startTime.toString().padStart(2, '0') + ':00:00'),
-          endTime: new Date(date + 'T' + endTime.toString().padStart(2, '0') + ':00:00'),
+        availabilityDoc[date] = {
+          startTime: startTime,
+          endTime: endTime,
           intervalMins: 15,
-          data: {
-            data: slots
-          }
+          data: slots,
         };
       });
-
-      const availabilityDoc = {
-        userId,
-        availability: availabilityCollection,
-      };
-
+      
       await setDoc(doc(db, "availability", userId), availabilityDoc);
       setHasUnsavedChanges(false);
       // alert('Availability saved successfully!');
