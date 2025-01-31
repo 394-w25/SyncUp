@@ -11,6 +11,8 @@ import Calendar from '../components/Calendar';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { Button, ThemeProvider, createTheme, IconButton } from '@mui/material';
 import { useLocation } from 'react-router-dom';
+
+import { fetchGroupData } from '../utils/fetchGroupData';
 import { addParticipantToGroup } from '../utils/addUserToGroup';
 import { db } from '../firebase.config';
 import { doc, getDoc } from 'firebase/firestore';
@@ -49,6 +51,7 @@ const MeetingPage = () => {
 
     // Get groupid from the URL
     const [groupId, setGroupId] = useState(null);
+    const [groupData, setGroupData] = useState({});
     const [eventTitle, setEvent] = useState('');
     const [StartDate, setStartDate] = useState('');
     const [EndDate, setEndDate] = useState('');
@@ -92,6 +95,7 @@ const MeetingPage = () => {
         };
 
         getMeetingData();
+        setGroupData(fetchGroupData(groupId));
 
         const initClient = async () => {
         try {
@@ -166,6 +170,7 @@ const MeetingPage = () => {
                     participants={participants}
                 />
                 <GroupAvailability
+                    groupData={groupData}
                     startDate={startDate}
                     endDate={endDate}
                     startTime={startTime}
