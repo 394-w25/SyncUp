@@ -188,11 +188,14 @@ const SetUp = () => {
             Timestamp.fromDate(date.toDate())
         );
 
+        const startHour = moment(selectedStartTime).hour() + moment(selectedStartTime).minutes() / 60;
+        const endHour = moment(selectedEndTime).hour() + moment(selectedEndTime).minutes() / 60;
+
         const groupData = {
             title: meetingName,
             proposedDays: proposedDays,
-            proposedStart: moment(selectedStartTime).format('HH:mm'),
-            proposedEnd: moment(selectedEndTime).format('HH:mm'),
+            proposedStart: startHour,
+            proposedEnd: endHour,
             creator: userId,
             participants: []
         };

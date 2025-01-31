@@ -7,7 +7,7 @@ import CalendarEvents from './CalendarEvents';
 import { importEvents } from '../utils/importEvents';
 import { calculateAvailability } from '../utils/availability';
 import { updateIsSynced } from '../services/googleAuth';
-
+import moment from 'moment';
 const buttonTheme = createTheme({
   palette: {
     mode: 'light',
@@ -44,14 +44,14 @@ const Calendar = ({
   handleAuth, 
   startDate, 
   endDate,
-  startTime,
-  endTime,
+  startTime = 9,
+  endTime = 17,
   userId
 }) => {
   const [events, setEvents] = useState([]);
   const [availability, setAvailability] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-
+  
   const handleImportEvents = async () => {
     try {
       setIsLoading(true);
@@ -72,11 +72,10 @@ const Calendar = ({
     }
   };
 
-  // const currentMonth = new Intl.DateTimeFormat('en-US', { month: 'long' }).format(
-  //   new Date(startDate)
-  // );
-  // const currentYear = new Date(startDate).getFullYear();
-
+  console.log('startDate', startDate);
+  console.log('endDate', endDate);
+  console.log('startTime', startTime);
+  console.log('endTime', endTime);
 
   return (
     <div className="w-full h-full">
