@@ -8,8 +8,8 @@ const pixelsPer30Min = 24;
 export default function CalendarEvents({
   startTime = 8,
   endTime = 18,
-  startDate = "2025-01-01",
-  endDate = "2025-01-07",
+  startDate,
+  endDate,
   events = [],
 }) {
   
@@ -19,8 +19,6 @@ export default function CalendarEvents({
   const [currentBlock, setCurrentBlock] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const pixelsPerHour = 48;
-  const pixelsPerIncrement = 24;
   const userId = localStorage.getItem('user-id');
 
   const [dragData, setDragData] = useState({
@@ -88,10 +86,6 @@ export default function CalendarEvents({
     return map;
   }, [dates, events, startTime, endTime]);
 
-  const snapToGrid = (pixels) => {
-    return Math.round(pixels / pixelsPerIncrement) * pixelsPerIncrement;
-  };
-
   useEffect(() => {
     if (!userId) return; // If not logged in, skip
 
@@ -102,8 +96,7 @@ export default function CalendarEvents({
 
         if (docSnap.exists()) {
           const data = docSnap.data(); 
-          // data has: { userId, availability: { 'YYYY-MM-DD': {...}, ... } }
-          const availabilityData = data.availability || {};
+          // data has: { 'YYYY-MM-DD': ... }
 
           // We'll gather the newly reconstructed blocks here
           const newBlocks = [];
@@ -112,8 +105,8 @@ export default function CalendarEvents({
           const startDateObj = new Date(startDate); // e.g. "2025-01-20"
 
           // Iterate over each date in availability
-          for (const [dateString, details] of Object.entries(availabilityData)) {
-            // Convert the dateString (e.g. "2025-01-22") to a Date object
+          for (const [dateString, details] of Object.entries(data)) {
+          // Convert the dateString (e.g. "2025-01-22") to a Date object
             const dayDate = new Date(dateString + "T00:00:00");
 
             // Calculate dayIndex as difference in days from startDate to this date
@@ -126,7 +119,7 @@ export default function CalendarEvents({
 
             // Extract the 0/1 slots array
             // details.data.data => your array of 0/1 for the day
-            const slotsArray = details?.data?.data || [];
+            const slotsArray = details?.data || [];
 
             // Parse consecutive 1's into highlight blocks
             let i = 0;
@@ -195,28 +188,21 @@ export default function CalendarEvents({
           }
         }
       });
+      
+      const availabilityDoc = {};
 
-      const availabilityCollection = {};
       Object.entries(availabilityByDate).forEach(([date, slots]) => {
-        availabilityCollection[date] = {
-          date: date,
-          startTime: new Date(date + 'T' + startTime.toString().padStart(2, '0') + ':00:00'),
-          endTime: new Date(date + 'T' + endTime.toString().padStart(2, '0') + ':00:00'),
+        availabilityDoc[date] = {
+          startTime: startTime,
+          endTime: endTime,
           intervalMins: 15,
-          data: {
-            data: slots
-          }
+          data: slots,
         };
       });
-
-      const availabilityDoc = {
-        userId,
-        availability: availabilityCollection,
-      };
-
+      
       await setDoc(doc(db, "availability", userId), availabilityDoc);
       setHasUnsavedChanges(false);
-      alert('Availability saved successfully!');
+      // alert('Availability saved successfully!');
     } catch (error) {
       console.error("Error saving availability:", error);
       alert('Failed to save availability. Please try again.');
@@ -262,6 +248,13 @@ export default function CalendarEvents({
     // If user dragged a tiny amount, ignore
     if (height < 5) {
       resetDrag();
+      // if user dragged a tiny amount on highlighted block, remove it
+      const clickedBlock = highlightBlocks.find((block) => {
+        return block.dayIndex === dayIndex && top >= block.top && top <= block.top + block.height;
+      });
+      if (clickedBlock) {
+        handleBlockClick(e, clickedBlock.id);
+      }
       return;
     }
 
@@ -281,7 +274,6 @@ export default function CalendarEvents({
     });
 
     if (hasOverlapWithUserBlocks || hasOverlapWithGcal) {
-      console.log("Cannot select—overlaps an existing highlight or Gcal event");
       resetDrag();
       return;
     }
@@ -418,7 +410,10 @@ export default function CalendarEvents({
       {/* Save Button */}
       <div className="flex justify-end mb-4 mt-8">
         <button
-          onClick={handleSave}
+          onClick={async () => {
+            await handleSave();
+            window.location.reload(); // Refresh the page
+          }}
           disabled={isSaving || !hasUnsavedChanges}
           className={`px-4 py-2 rounded-md text-white font-medium
             ${(isSaving || !hasUnsavedChanges)

@@ -8,6 +8,15 @@ import { importEvents } from '../utils/importEvents';
 import { calculateAvailability } from '../utils/availability';
 import { updateIsSynced } from '../services/googleAuth';
 import moment from 'moment';
+
+// for week toggler
+function formatYyyyMmDd(date) {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 const buttonTheme = createTheme({
   palette: {
     mode: 'light',
@@ -51,7 +60,50 @@ const Calendar = ({
   const [events, setEvents] = useState([]);
   const [availability, setAvailability] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  
+
+  // for week toggler, store active week range
+  const initialStart = new Date(startDate);
+  const initialEnd = new Date(endDate);
+
+  const [weekStart, setWeekStart] = useState(initialStart);
+  const [weekEnd, setWeekEnd] = useState(initialEnd);
+  const [currentMonth, setCurrentMonth] = useState(initialStart.toLocaleString('default', { month: 'long' }));
+  const [currentYear, setCurrentYear] = useState(initialStart.getFullYear());
+
+  // WEEK TOGGLER HANDLERS
+  const handlePreviousWeek = () => {
+    setWeekStart(prev => {
+      const d = new Date(prev);
+      d.setDate(d.getDate() - 7);
+      if (d.getMonth() !== prev.getMonth()) {
+        setCurrentMonth(d.toLocaleString('default', { month: 'long' }));
+        setCurrentYear(d.getFullYear());
+      }
+      return d;
+    });
+    setWeekEnd(prev => {
+      const d = new Date(prev);
+      d.setDate(d.getDate() - 7);
+      return d;
+    });
+  };
+  const handleNextWeek = () => {
+    setWeekStart(prev => {
+      const d = new Date(prev);
+      d.setDate(d.getDate() + 7);
+      if (d.getMonth() !== prev.getMonth()) {
+        setCurrentMonth(d.toLocaleString('default', { month: 'long' }));
+        setCurrentYear(d.getFullYear());
+      }
+      return d;
+    });
+    setWeekEnd(prev => {
+      const d = new Date(prev);
+      d.setDate(d.getDate() + 7);
+      return d;
+    });
+  };
+
   const handleImportEvents = async () => {
     try {
       setIsLoading(true);
@@ -59,7 +111,11 @@ const Calendar = ({
       if (!userId) {
         throw new Error('User ID is null or undefined');
       }
-      const events = await importEvents(userId, startDate, endDate);
+      const events = await importEvents(
+        userId, 
+        formatYyyyMmDd(weekStart), 
+        formatYyyyMmDd(weekEnd)
+      );
       setEvents(events);
       const availability = calculateAvailability(events, userId);
       setAvailability(availability);
@@ -71,12 +127,7 @@ const Calendar = ({
       setIsLoading(false);
     }
   };
-
-  console.log('startDate', startDate);
-  console.log('endDate', endDate);
-  console.log('startTime', startTime);
-  console.log('endTime', endTime);
-
+  
   return (
     <div className="w-full h-full">
       <div className="w-full h-full flex flex-col bg-white px-8 py-8 gap-2 rounded-bl-[20px] rounded-br-[20px] shadow-[0px_7px_15.699999809265137px_0px_rgba(17,107,60,0.06)]">
@@ -123,12 +174,23 @@ const Calendar = ({
             </div>
           </div>
         </div>
-
+        {/* WEEK-NAVIGATION BUTTONS */}
+        <div className='flex justify-between gap-4'>
+            <ThemeProvider theme={buttonTheme}>
+              <Button variant='outlined' onClick={handlePreviousWeek}>
+                &lt; Previous Week
+              </Button>
+              <Button variant='outlined' onClick={handleNextWeek}>
+                Next Week &gt;
+              </Button>
+            </ThemeProvider>
+        </div>
+        
         <CalendarEvents 
           startTime={startTime} 
           endTime={endTime} 
-          startDate={startDate} 
-          endDate={endDate}
+          startDate={formatYyyyMmDd(weekStart)} 
+          endDate={formatYyyyMmDd(weekEnd)}
           events={events}
         />
 
