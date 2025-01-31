@@ -11,6 +11,9 @@ import Calendar from '../components/Calendar';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { Button, ThemeProvider, createTheme, IconButton } from '@mui/material';
 import { useLocation } from 'react-router-dom';
+import { addParticipantToGroup } from '../utils/addUserToGroup';
+import { db } from '../firebase.config';
+import { doc, getDoc } from 'firebase/firestore';
 
 const buttonTheme = createTheme({
   palette: {
@@ -34,22 +37,62 @@ const buttonTheme = createTheme({
   },
 });
 
+function formatDate(input) {
+    const date = new Date(input);
+    const offset = date.getTimezoneOffset();
+    const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+    return localDate.toISOString().split('T')[0];
+}
+
 const MeetingPage = () => {
     const location = useLocation();
+
+    // Get groupid from the URL
+    const [groupId, setGroupId] = useState(null);
+    const [eventTitle, setEvent] = useState('');
+    const [StartDate, setStartDate] = useState('');
+    const [EndDate, setEndDate] = useState('');
+    const [StartTime, setStartTime] = useState('');
+    const [EndTime, setEndTime] = useState('');
+
     const { startDate, endDate, startTime, endTime, meetingId, event } = location.state || {
-        startDate: "2025-01-20",
-        endDate: "2025-01-26",
-        startTime: 8,
-        endTime: 18,
-        meetingId: "rewnd7",
-        event: "394 meeting"
+        startDate: StartDate,
+        endDate:  EndDate,
+        startTime: StartTime,
+        endTime: EndTime,
+        meetingId: groupId,
+        event: eventTitle
     };
-    
+
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userId, setUserId] = useState(null);
     const [participants, setParticipants] = useState([]); // Dynamic participants
 
     useEffect(() => {
+        const pathParts = location.pathname.split('/');
+        const groupId = pathParts[pathParts.length - 1];
+        console.log('Group ID from URL:', groupId); // Debugging log
+        setGroupId(groupId);
+
+        // Get the meeting data from the Firestore database
+        const getMeetingData = async () => {
+            const docRef = doc(db, 'groups', groupId);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists) {
+                const data = docSnap.data();
+                setEvent(data.title);
+                setStartDate(formatDate(data.proposedDays[0].toDate()));
+                setEndDate(formatDate(data.proposedDays[data.proposedDays.length - 1].toDate()));
+                setStartTime(data.proposedStart);
+                setEndTime(data.proposedEnd);
+                console.log('Event title', data.title, 'Start Date', formatDate(data.proposedDays[0].toDate()), 'End Date',formatDate(data.proposedDays[data.proposedDays.length - 1].toDate()), 'Start Time', data.proposedStart, 'End Time', data.proposedEnd, 'created At', data.createdAt.toDate());
+            } else {
+                console.log('No such document!');
+            }
+        };
+
+        getMeetingData();
+
         const initClient = async () => {
         try {
             await initializeGAPIClient();
@@ -58,6 +101,8 @@ const MeetingPage = () => {
             if (storedAuth === 'true' && storedUserId) {
             setIsAuthenticated(true);
             setUserId(storedUserId);
+            // add userid to the groupid
+            addParticipantToGroup(groupId, storedUserId);
             console.log('Stored user ID:', storedUserId); // Debugging log
             }
         } catch (error) {
