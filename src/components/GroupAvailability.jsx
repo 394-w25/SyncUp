@@ -11,6 +11,8 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import AvatarGroup from '@mui/material/AvatarGroup';
 import LegendAvatar from './LegendAvatar';
 import Draggable from 'react-draggable';
+import { createGoogleCalendarEvent } from '../services/googleCalender';
+
 
 import { collection, getDocs } from "firebase/firestore";
 import { db } from '../firebase';
@@ -55,15 +57,19 @@ function GroupSchedule({ startTime, endTime, startDate, endDate }) {
 
   useEffect(() => {
     async function fetchAvailabilityData() {
+      console.log("fetchAvailabilityData function called");
+      
       const data = {};
       const querySnapshot = await getDocs(collection(db, "availability"));
       let members = 0;
 
       querySnapshot.forEach((doc) => {
         members++;
-        const docData = doc.data()['availability'];
+        const docData = doc.data();
         for (const date in docData) {
-          const slots = docData[date]['data']['data'];
+          // const slots = docData[date]['data'];
+          const slots = docData[date]?.data || [];
+
           const compressedSlots = [];
           for (let i = 0; i < slots.length; i += 2) {
             const group = slots.slice(i, i + 2);
@@ -75,8 +81,10 @@ function GroupSchedule({ startTime, endTime, startDate, endDate }) {
             data[date] = compressedSlots;
           }
         }
+        console.log("print out the data: ", data)
       });
 
+      console.log("Final groupAvailabilityData before setting:", data);
       setGroupAvailabilityData(data);
       setNumMembers(members);
     }
@@ -282,8 +290,51 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers 
   const [memberData, setMemberData] = useState([]);
   const [availabilityCounts, setAvailabilityCounts] = useState({});
 
+  // Extract available user IDs for the selected time slots
+  const availableUserIds = memberData.filter(member => 
+    selectedBlocks.some(block => {
+      const [dateStr] = block.split(" "); // Extract the date part
+      return member.availability[dateStr] && member.availability[dateStr].data.includes(1);
+    })
+  ).map(member => member.id);
+
+  console.log("✅ Available User IDs for selected time slots:", availableUserIds);
+
+  const handleConfirmSelection = async () => {
+    console.log("Confirming selection:", selectedBlocks);
+    console.log("Available User IDs:", availableUserIds); // ✅ Debugging log
+
+    if (!gapi.auth2) {
+      alert("Google API is not initialized. Please refresh and sign in again.");
+      return;
+    }
+
+    const authInstance = gapi.auth2.getAuthInstance();
+    const isSignedIn = authInstance?.isSignedIn?.get();
+
+    if (!isSignedIn) {
+      alert("Please sign in with Google first!");
+      return;
+    }
+
+    try {
+      const user = authInstance.currentUser.get();
+      const authResponse = user.getAuthResponse();
+      gapi.client.setToken(authResponse);
+
+      await createGoogleCalendarEvent(selectedBlocks, users, availableUserIds);
+      alert("Meeting scheduled successfully!");
+    } catch (error) {
+      console.error("Error scheduling meeting:", error);
+      alert("Failed to schedule the meeting. Please try again.");
+    }
+};
+
+  
+
   useEffect(() => {
     console.log("Selected Blocks:", selectedBlocks);
+    console.log("initial groupAvailabilityData: ", groupAvailabilityData);
     const fetchData = async () => {
       try {
         const usersRef = collection(db, "users");
@@ -298,8 +349,9 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers 
         const availabilitySnapshot = await getDocs(availabilityRef);
         const members = availabilitySnapshot.docs.map(doc => ({
           id: doc.id,
-          availability: doc.data().availability
+          availability: doc.data()
         }));
+        console.log("members are: ", members);
         setMemberData(members);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -307,6 +359,7 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers 
     };
     fetchData();
 
+    
     // Count availability for each block
     const countAvailability = () => {
       console.log("Counting availability for:", selectedBlocks);
@@ -320,9 +373,11 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers 
         const hourIndex = (totalMinutes - 480) / 30;
     
         console.log(`Checking availability for ${isoDate} at index ${hourIndex}`);
+        console.log("groupAvailabilityData", groupAvailabilityData)
         console.log("Data at this date:", groupAvailabilityData[isoDate]);
     
         counts[block] = groupAvailabilityData[isoDate]?.[hourIndex] || 0;
+        console.log("print counts: ", counts);
       });
     
       setAvailabilityCounts(counts);
@@ -421,6 +476,9 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers 
               ))}
             </ul>
           </div>
+          <Button variant="contained" color="primary" size="large" onClick={handleConfirmSelection}>
+            Confirm Selection
+          </Button>
         </div>
       </div>
     </Draggable>
