@@ -327,6 +327,7 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers 
     
         counts[block] = groupAvailabilityData[isoDate]?.[hourIndex] || 0;
       });
+      console.log("availabilityCounts: ", availabilityCounts);
     
       setAvailabilityCounts(counts);
     };
@@ -365,7 +366,8 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers 
 
   const endTime = `${endHour}:${endMinutes === 0 ? '00' : endMinutes}`;
   const timeDisplay = `${times[0]} - ${endTime}`;
-
+  const minAvailability = Math.min(...Object.values(availabilityCounts));
+  
   return (
     <Draggable 
       handle="#draggable-header"
@@ -401,7 +403,7 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers 
           </div>
           <div className="flex items-center gap-3">
             <GroupsRoundedIcon className="text-neutral-1000" />
-            <span>{memberData.length} available</span>
+            <span>{minAvailability} teammate(s) available</span>
           </div>
           {/* Add count for each member */}
           <div className="flex flex-col w-full">
