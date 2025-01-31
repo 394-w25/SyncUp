@@ -39,7 +39,14 @@ const buttonTheme = createTheme({
 // Get start and dates
 const today = new Date();
 const nextWk = new Date(today);
-nextWk.setDate(today.getDate() + 7);
+nextWk.setDate(nextWk.getDate() + 7);
+
+// get the start of the week
+const day = today.getDay(); // 0 = Sunday, 1 = Monday, ...
+const diff = (day === 0 ? -6 : 1) - day; 
+today.setDate(today.getDate() + diff + 1);
+nextWk.setDate(nextWk.getDate() + diff);
+
 const todayDate = today.toISOString().split('T')[0];
 const nextWkDate = nextWk.toISOString().split('T')[0];
 
@@ -121,7 +128,7 @@ const App = () => {
             userId={userId}
           />
         </div>
-        <div className='w-[30%] h-full flex flex-col gap-4'>
+        <div className='w-[30%] h-full flex flex-col gap-1'>
           <Legend 
             meetingID={meetingId}
             eventName={event}
