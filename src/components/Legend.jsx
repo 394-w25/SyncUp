@@ -1,6 +1,3 @@
-import { Avatar, AvatarGroup } from "@mui/material";
-import LegendAvatar from "./LegendAvatar";
-
 import Logo from "./Logo";
 
 const Legend = ({meetingID, eventName, participants}) => {
@@ -15,7 +12,9 @@ const Legend = ({meetingID, eventName, participants}) => {
                     </div>
                     <div className="flex flex-col gap-2" style={{ maxHeight: '160px', overflowY: 'auto' }}>
                         {participants.map(participant => (
-                            <LegendAvatar key={participant.name} name={participant.name} status={participant.isSynced} showFull={true} />
+                            <div className="flex gap-2 items-center">
+                                <p className="truncate max-w-[150px]">{participant.name}</p>
+                            </div>
                         ))}
                     </div>
                 </div>

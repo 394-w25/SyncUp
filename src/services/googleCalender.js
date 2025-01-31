@@ -7,7 +7,7 @@ export const initializeGAPIClient = async () => {
         discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
       });
   
-      console.log('GAPI client initialized');
+      // console.log('GAPI client initialized');
     } catch (error) {
       console.error('Error initializing GAPI client:', error);
       throw error;

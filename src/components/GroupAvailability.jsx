@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Logo from './Logo';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
@@ -6,10 +6,6 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import EventRoundedIcon from '@mui/icons-material/EventRounded';
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
-import Button from '@mui/material/Button';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import AvatarGroup from '@mui/material/AvatarGroup';
-import LegendAvatar from './LegendAvatar';
 import Draggable from 'react-draggable';
 
 import { collection, getDocs } from "firebase/firestore";
@@ -52,6 +48,7 @@ function GroupSchedule({ startTime, endTime, startDate, endDate }) {
   const [showPopup, setShowPopup] = useState(false);
   const [groupAvailabilityData, setGroupAvailabilityData] = useState({});
   const [numMembers, setNumMembers] = useState(0);
+  const [lockedDate, setLockedDate] = useState(null);
 
   useEffect(() => {
     async function fetchAvailabilityData() {
@@ -61,14 +58,18 @@ function GroupSchedule({ startTime, endTime, startDate, endDate }) {
 
       querySnapshot.forEach((doc) => {
         members++;
-        const docData = doc.data()['availability'];
-        for (const date in docData) {
-          const slots = docData[date]['data']['data'];
+        const userID = doc.id;
+        for (const date in doc.data()) {
+          const slots = doc.data()[date]['data'];
+          if (slots === undefined) continue;
+          // console.log(date, slots);
+
           const compressedSlots = [];
           for (let i = 0; i < slots.length; i += 2) {
             const group = slots.slice(i, i + 2);
             compressedSlots.push(group.every(slot => slot === 1) ? 1 : 0);
           }
+
           if (date in data) {
             data[date] = data[date].map((num, index) => num + compressedSlots[index]);
           } else {
@@ -121,7 +122,6 @@ function getColor(date, hourIndex) {
   }
 }
 
-
   // Generate hour labels
   const hourLabels = [];
   for (let hour = startTime; hour <= endTime; hour++) {
@@ -134,6 +134,7 @@ function getColor(date, hourIndex) {
   const handleMouseDown = (date, hourLabel, isHalfHour) => {
     setIsMouseDown(true);
     setShowPopup(false);
+    setLockedDate(date);
     
     const slotKey = makeSlotKey(date, hourLabel, isHalfHour);
     const newSet = new Set();
@@ -145,7 +146,8 @@ function getColor(date, hourIndex) {
   };
 
   const handleMouseEnter = (date, hourLabel, isHalfHour) => {
-    if (!isMouseDown) return;
+    if (!isMouseDown || !lockedDate) return;
+    if (date.toDateString() !== lockedDate.toDateString()) return; // if this cell date differs from the locked date, ignore
     
     const slotKey = makeSlotKey(date, hourLabel, isHalfHour);
     setSelectedBlocks(prev => {
@@ -161,6 +163,7 @@ function getColor(date, hourIndex) {
 
   const handleMouseUp = () => {
     setIsMouseDown(false);
+    setLockedDate(null);
     // Show the pop-up if we have any selections
     if (selectedBlocks.size > 0) {
       setShowPopup(true);
@@ -269,17 +272,21 @@ function getColor(date, hourIndex) {
         <PopupCard 
           selectedBlocks={[...selectedBlocks]} 
           onClose={() => setShowPopup(false)}
+          groupAvailabilityData={groupAvailabilityData}
+          numMembers={numMembers}
         />
       )}
     </div>
   );
 }
 
-function PopupCard({ selectedBlocks, onClose }) {
+function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers }) {
   const [users, setUsers] = useState([]);
   const [memberData, setMemberData] = useState([]);
+  const [availabilityCounts, setAvailabilityCounts] = useState({});
 
   useEffect(() => {
+    console.log("Selected Blocks:", selectedBlocks);
     const fetchData = async () => {
       try {
         const usersRef = collection(db, "users");
@@ -302,14 +309,39 @@ function PopupCard({ selectedBlocks, onClose }) {
       }
     };
     fetchData();
-  }, []);
+
+    // Count availability for each block
+    const countAvailability = () => {
+      console.log("Counting availability for:", selectedBlocks);
+    
+      const counts = {};
+      selectedBlocks.forEach(block => {
+        const [dateStr, hour, ampmMinutes] = block.split(' ');
+        const isoDate = dateStr;
+    
+        const totalMinutes = (parseInt(hour) % 12 + (block.includes('PM') ? 12 : 0)) * 60 + (ampmMinutes.includes(':30') ? 30 : 0);
+        const hourIndex = (totalMinutes - 480) / 30;
+    
+        console.log(`Checking availability for ${isoDate} at index ${hourIndex}`);
+        console.log("Data at this date:", groupAvailabilityData[isoDate]);
+    
+        counts[block] = groupAvailabilityData[isoDate]?.[hourIndex] || 0;
+      });
+      console.log("availabilityCounts: ", availabilityCounts);
+    
+      setAvailabilityCounts(counts);
+    };
+    
+
+    countAvailability();
+  }, [selectedBlocks, groupAvailabilityData]);
 
   const blocks = selectedBlocks.map(block => {
     const [dateStr, hour, ampmMinutes] = block.split(' ');
     const [_, minutes] = ampmMinutes.split(':');
     const formattedTime = `${hour}:${minutes}`;
     const date = new Date(dateStr + 'T12:00:00');
-    return { date, time: formattedTime };
+    return { date, time: formattedTime, block };
   });
 
   const uniqueDates = [...new Set(blocks.map(b => b.date.toLocaleDateString('en-US', {
@@ -322,25 +354,24 @@ function PopupCard({ selectedBlocks, onClose }) {
   const dateDisplay = uniqueDates.join(', ');
 
   const times = blocks.map(b => b.time);
-  
   const lastTime = times[times.length - 1];
   const [lastHour, lastMinutes] = lastTime.split(':').map(Number);
   let endHour = lastHour;
   let endMinutes = lastMinutes + 30;
-  
+
   if (endMinutes >= 60) {
     endHour += 1;
     endMinutes -= 60;
   }
-  
+
   const endTime = `${endHour}:${endMinutes === 0 ? '00' : endMinutes}`;
   const timeDisplay = `${times[0]} - ${endTime}`;
-
+  const minAvailability = Math.min(...Object.values(availabilityCounts));
+  
   return (
     <Draggable 
       handle="#draggable-header"
       defaultPosition={{x: 0, y: 0}}
-      // bounds="parent"
     >
       <div className="flex flex-col w-fit bg-white rounded-[20px] absolute bottom-5 right-5 shadow-2xl z-50 border border-gray-200 min-w-[400px]">
         <div id="draggable-header" className="pt-2 pr-2 pb-4 bg-green-600 rounded-t-[20px] cursor-move">
@@ -372,16 +403,19 @@ function PopupCard({ selectedBlocks, onClose }) {
           </div>
           <div className="flex items-center gap-3">
             <GroupsRoundedIcon className="text-neutral-1000" />
-            <AvatarGroup max={4} spacing="small" className="ml-2">
-              {memberData.map((member) => (
-                <LegendAvatar 
-                  key={member.id}
-                  name={users[member.id] || member.id}
-                  status={true}
-                  showFull={false}
-                />
+            <span>{minAvailability} teammate(s) available</span>
+          </div>
+          {/* Add count for each member */}
+          <div className="flex flex-col w-full">
+            <h3 className="text-lg font-bold mb-2">Selected Time Slots</h3>
+            <ul className="text-sm text-neutral-800">
+              {blocks.map(({ block, time }) => (
+                <li key={block} className="flex justify-between">
+                  <span>{time}</span>
+                  <span>{availabilityCounts[block]} / {numMembers} available</span>
+                </li>
               ))}
-            </AvatarGroup>
+            </ul>
           </div>
         </div>
       </div>
@@ -389,12 +423,13 @@ function PopupCard({ selectedBlocks, onClose }) {
   );
 }
 
+
 const day = new Date();
 const currentDate = `${day.getFullYear()}-${day.getMonth() + 1}-${day.getDate()}`;
 day.setDate(day.getDate() + 7);
 const nextDate = `${day.getFullYear()}-${day.getMonth() + 1}-${day.getDate()}`;
 
-export default function GroupAvailability({startDate, endDate, startTime, endTime}) {
+export default function GroupAvailability({ startDate, endDate, startTime, endTime}) {
   return (
     <div className="flex flex-col bg-white px-8 py-8 gap-2 rounded-[20px] shadow-[0px_7px_15.699999809265137px_0px_rgba(17,107,60,0.06)]">
       <h2 className="text-2xl mb-4">Group Availability</h2>
