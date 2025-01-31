@@ -423,21 +423,68 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers 
   );
 }
 
-
-const day = new Date();
-const currentDate = `${day.getFullYear()}-${day.getMonth() + 1}-${day.getDate()}`;
-day.setDate(day.getDate() + 7);
-const nextDate = `${day.getFullYear()}-${day.getMonth() + 1}-${day.getDate()}`;
+// for week toggler
+function formatYyyyMmDd(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
 
 export default function GroupAvailability({ startDate, endDate, startTime, endTime}) {
+  const [weekStart, setWeekStart] = useState(() => new Date(startDate));
+  const [weekEnd, setWeekEnd] = useState(() => new Date(endDate));
+
+  const handlePreviousWeek = () => {
+    setWeekStart(prev => {
+      const d = new Date(prev);
+      d.setDate(d.getDate() - 7);
+      return d;
+    });
+    setWeekEnd(prev => {
+      const d = new Date(prev);
+      d.setDate(d.getDate() - 7);
+      return d;
+    });
+  };
+  
+  const handleNextWeek = () => {
+    setWeekStart(prev => {
+      const d = new Date(prev);
+      d.setDate(d.getDate() + 7);
+      return d;
+    });
+    setWeekEnd(prev => {
+      const d = new Date(prev);
+      d.setDate(d.getDate() + 7);
+      return d;
+    });
+  };
+
+
   return (
     <div className="flex flex-col bg-white px-8 py-8 gap-2 rounded-[20px] shadow-[0px_7px_15.699999809265137px_0px_rgba(17,107,60,0.06)]">
-      <h2 className="text-2xl mb-4">Group Availability</h2>
+      <div className="mb-4 flex items-center justify-between mb-2 -mt-4">
+      <button 
+          onClick={handlePreviousWeek} 
+          className="px-3 py-1 border rounded text-sm"
+        >
+          &lt; 
+        </button>
+        <h2 className="text-xl">Group Availability</h2>
+        <button 
+          onClick={handleNextWeek} 
+          className="px-3 py-1 border rounded text-sm"
+        >
+          &gt;
+        </button>
+      </div>
+
       <GroupSchedule
         startTime={startTime}
         endTime={endTime}
-        startDate={startDate}
-        endDate={endDate}
+        startDate={formatYyyyMmDd(weekStart)}
+        endDate={formatYyyyMmDd(weekEnd)}
       />
     </div>
   );

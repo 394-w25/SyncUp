@@ -18,8 +18,6 @@ export default function CalendarEvents({
   const [currentBlock, setCurrentBlock] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const pixelsPerHour = 48;
-  const pixelsPerIncrement = 24;
   const userId = localStorage.getItem('user-id');
 
   const [dragData, setDragData] = useState({
@@ -86,10 +84,6 @@ export default function CalendarEvents({
     });
     return map;
   }, [dates, events, startTime, endTime]);
-
-  const snapToGrid = (pixels) => {
-    return Math.round(pixels / pixelsPerIncrement) * pixelsPerIncrement;
-  };
 
   useEffect(() => {
     if (!userId) return; // If not logged in, skip
