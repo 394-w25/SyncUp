@@ -39,3 +39,45 @@ h4 {
 .no-select {
     user-select: none;
 }
+
+.rmdp-wrapper{
+    box-shadow: none;
+    transform: scale(1.2);
+}
+
+.rmdp-panel-body li{
+    background-color: #116B3C;
+    .b-deselect{
+        background-color: #116B3C;
+    }
+}
+
+.rmdp-day.rmdp-today span{
+    background-color: #1DB566;
+}
+
+
+.rmdp-day.rmdp-selected span:not(.highlight){
+    background-color: #116B3C;
+}
+
+.rmdp-day:not(.rmdp-day-hidden) span:hover{
+    background-color: #179051;
+}
+
+.rmdp-week-day {
+    color: #116B3C;
+}
+
+.rmdp-arrow{
+    border: solid #116B3C;
+    border-width: 0 2px 2px 0;
+}
+
+.rmdp-arrow-container:hover{
+    background-color: #116B3C;
+
+    .rmdp-arrow{
+        color: white;
+    }
+}
