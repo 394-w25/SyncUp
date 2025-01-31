@@ -423,6 +423,7 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers 
 
   const endTime = `${endHour}:${endMinutes === 0 ? '00' : endMinutes}`;
   const timeDisplay = `${times[0]} - ${endTime}`;
+  const minAvailability = Math.min(...Object.values(availabilityCounts));
 
   return (
     <Draggable 
@@ -459,16 +460,7 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers 
           </div>
           <div className="flex items-center gap-3">
             <GroupsRoundedIcon className="text-neutral-1000" />
-            <AvatarGroup max={4} spacing="small" className="ml-2">
-              {memberData.map((member) => (
-                <LegendAvatar 
-                  key={member.id}
-                  name={users[member.id] || member.id}
-                  status={true}
-                  showFull={false}
-                />
-              ))}
-            </AvatarGroup>
+            <span>{minAvailability} teammate(s) available</span>
           </div>
           {/* Add count for each member */}
           <div className="flex flex-col w-full">
