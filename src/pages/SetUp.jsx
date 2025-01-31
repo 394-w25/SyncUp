@@ -258,7 +258,7 @@ const SetUp = () => {
                                             }}
                                             closeOnSelect={false}
                                             minutesStep={30}
-                                            onAccept={(newValue) => handleTimeChange(newValue, true)}
+                                            onChange={(newValue) => handleTimeChange(newValue, true)}
                                             error={!!timeError}
                                             slotProps={{ 
                                                 textField: { 
@@ -278,7 +278,7 @@ const SetUp = () => {
                                             }}
                                             closeOnSelect={false}
                                             minutesStep={30}
-                                            onAccept={(newValue) => handleTimeChange(newValue, false)}
+                                            onChange={(newValue) => handleTimeChange(newValue, false)}
                                             error={!!timeError}
                                             slotProps={{ 
                                                 textField: { 
