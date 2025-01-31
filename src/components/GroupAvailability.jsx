@@ -298,7 +298,12 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers 
     })
   ).map(member => member.id);
 
-  console.log("✅ Available User IDs for selected time slots:", availableUserIds);
+  useEffect(() => {
+    if (Object.keys(users).length > 0) {
+      console.log("✅ Users data is now available:", users);
+    }
+  }, [users]);
+  
 
   const handleConfirmSelection = async () => {
     console.log("Confirming selection:", selectedBlocks);
@@ -341,8 +346,9 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers 
         const usersSnapshot = await getDocs(usersRef);
         const userData = {};
         usersSnapshot.docs.forEach((doc) => {
-          userData[doc.id] = doc.data().name;
+          userData[doc.id] = doc.data().email; // ✅ CORRECT: Store emails instead of names
         });
+        
         setUsers(userData);
 
         const availabilityRef = collection(db, "availability");
