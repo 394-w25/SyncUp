@@ -22,6 +22,8 @@ export const createGroup = async (groupData) => {
         proposedStart: groupData.proposedStart,
         proposedEnd: groupData.proposedEnd,
         createdAt: serverTimestamp(),
+        creator: groupData.creator || null,
+        participants: groupData.participants || [],
     });
 
     console.log('Group created:', groupLink);

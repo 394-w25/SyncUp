@@ -19,6 +19,8 @@ import DatePanel from "react-multi-date-picker/plugins/date_panel";
 import moment from 'moment';
 import { Timestamp } from 'firebase/firestore';
 import { createGroup } from '../utils/makeGroup';
+import { handleAuth } from '../services/googleAuth'
+
 
 const buttonTheme = createTheme({
   palette: {
@@ -124,9 +126,32 @@ const SetUp = () => {
     const [showCopySuccess, setShowCopySuccess] = useState(false);
     const navigate = useNavigate();
 
-    const handleGoogleSignIn = () => {
-        console.log("Google Sign-In clicked");
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [userId, setUserId] = useState(null);
+
+    // const handleGoogleSignIn = async () => {
+    //     try {
+    //         const user = await signInWithGoogle();
+    //         localStorage.setItem('google-auth', 'true');
+    //         localStorage.setItem('user-id', user.uid); // Add this line
+    //         return user;
+    //       } catch (error) {
+    //         console.error('Error during authentication:', error);
+    //         throw error;
+    //       }
+    // };
+
+    const handleGoogleAuth = async () => {
+        try {
+        const user = await handleAuth(setIsAuthenticated);
+        setUserId(user.uid);
+        localStorage.setItem('user-id', user.uid);
+        console.log('User ID set:', user.uid); // Debugging log
+        } catch (error) {
+        console.error('Error during authentication:', error);
+        }
     };
+
 
     const validateTimeRange = (start, end) => {
         if (!start || !end) return false;
@@ -167,7 +192,9 @@ const SetUp = () => {
             title: meetingName,
             proposedDays: proposedDays,
             proposedStart: moment(selectedStartTime).format('HH:mm'),
-            proposedEnd: moment(selectedEndTime).format('HH:mm')
+            proposedEnd: moment(selectedEndTime).format('HH:mm'),
+            creator: userId,
+            participants: []
         };
 
         try {
@@ -199,7 +226,7 @@ const SetUp = () => {
                                     <Button 
                                         variant='outlined' 
                                         color='secondary'
-                                        onClick={handleGoogleSignIn}
+                                        onClick={handleGoogleAuth}
                                         style={{textTransform: 'none', fontSize: '16px'}}
                                         startIcon={<GoogleIcon />}>
                                             Sign in with Google

@@ -14,8 +14,8 @@ const signInWithGoogle = async () => {
       const user = result.user;
       const credential = GoogleAuthProvider.credentialFromResult(result);
   
-      // Use the credential to authenticate GAPI
-      gapi.auth.setToken({ access_token: credential.accessToken });
+      // // Use the credential to authenticate GAPI
+      // gapi.client.setToken({ access_token: credential.accessToken });
   
       // Save user info to Firestore
       await setDoc(doc(db, "users", user.uid), {
