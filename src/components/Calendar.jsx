@@ -158,19 +158,19 @@ const Calendar = ({
   const handleImportEvents = async () => {
     try {
       setIsLoading(true);
-      // console.log('Importing events for user ID:', userId);
       if (!userId) {
         throw new Error('User ID is null or undefined');
       }
+
+      console.log('Import dates: ', convertToISO(startDate), convertToISO(endDate));
       const events = await importEvents(
         userId, 
-        formatYyyyMmDd(weekStart), 
-        formatYyyyMmDd(weekEnd)
+        convertToISO(startDate), 
+        convertToISO(endDate)
       );
       setEvents(events);
       const availability = calculateAvailability(events, userId);
       setAvailability(availability);
-      // console.log('updating user isSynced to true');
       await updateIsSynced(userId);
     } catch (error) {
       console.error('Error importing events:', error);

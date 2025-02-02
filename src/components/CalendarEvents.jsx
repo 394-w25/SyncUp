@@ -34,10 +34,11 @@ export default function CalendarEvents({
         endDate,
         startTime,
         endTime,
-        dates
+        dates,
+        events
       });
     }
-  }, [startDate, endDate, startTime, endTime, dates]);
+  }, [startDate, endDate, startTime, endTime, dates, events]);
 
   // Create an array of label times (8 AM, 9 AM, etc.)
   const times = [];
