@@ -395,7 +395,7 @@ const SetUp = () => {
                                                     endDate: lastDate,
                                                     startTime: startHour,
                                                     endTime: endHour,
-                                                    meetingId: groupLink.split('/').pop(),
+                                                    meetingLink: groupLink,
                                                     event: meetingName
                                                 }
                                             });

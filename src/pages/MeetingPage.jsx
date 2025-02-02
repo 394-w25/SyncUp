@@ -55,14 +55,16 @@ const MeetingPage = () => {
     const [StartTime, setStartTime] = useState('');
     const [EndTime, setEndTime] = useState('');
 
-    const { startDate, endDate, startTime, endTime, meetingId, event } = location.state || {
+    const { startDate, endDate, startTime, endTime, meetingLink, event } = location.state || {
         startDate: StartDate,
         endDate:  EndDate,
         startTime: StartTime,
         endTime: EndTime,
-        meetingId: groupId,
+        meetingLink: meetingLink,
         event: eventTitle
     };
+
+    const meetingId = meetingLink.split('/').pop();
 
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userId, setUserId] = useState(null);
@@ -164,7 +166,7 @@ const MeetingPage = () => {
                 </div>
                 <div className='w-[30%] h-full flex flex-col gap-4'>
                 <Legend 
-                    meetingID={meetingId}
+                    meetingLink={meetingLink}
                     eventName={event}
                     participants={participants}
                 />
