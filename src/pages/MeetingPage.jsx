@@ -39,15 +39,15 @@ const buttonTheme = createTheme({
 
 function formatDate(input) {
     const date = new Date(input);
-    const offset = date.getTimezoneOffset();
-    const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+    // Create date at midnight in local timezone
+    const localDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     return localDate.toISOString().split('T')[0];
 }
 
 const MeetingPage = () => {
     const location = useLocation();
 
-    // Get groupid from the URL
+    // Get groupId from the URL
     const [groupId, setGroupId] = useState(null);
     const [eventTitle, setEvent] = useState('');
     const [StartDate, setStartDate] = useState('');
@@ -55,46 +55,51 @@ const MeetingPage = () => {
     const [StartTime, setStartTime] = useState('');
     const [EndTime, setEndTime] = useState('');
 
-    const { startDate, endDate, startTime, endTime, meetingLink, event } = location.state || {
+    const { startDate, endDate, startTime, endTime, meetingId, event } = location.state || {
         startDate: StartDate,
         endDate:  EndDate,
         startTime: StartTime,
         endTime: EndTime,
-        meetingLink: meetingLink,
+        meetingId: groupId,
         event: eventTitle
     };
-
-    const meetingId = meetingLink.split('/').pop();
 
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userId, setUserId] = useState(null);
     const [participants, setParticipants] = useState([]); // Dynamic participants
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const pathParts = location.pathname.split('/');
-        const groupId = pathParts[pathParts.length - 1];
-        console.log('Group ID from URL:', groupId); // Debugging log
-        setGroupId(groupId);
+        const initializePage = async () => {
+            setIsLoading(true);
+            const pathParts = location.pathname.split('/');
+            const groupId = pathParts[pathParts.length - 1];
+            setGroupId(groupId);
 
-        // Get the meeting data from the Firestore database
-        const getMeetingData = async () => {
-            const docRef = doc(db, 'groups', groupId);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists) {
-                const data = docSnap.data();
-                setEvent(data.title);
-                setStartDate(formatDate(data.proposedDays[0].toDate()));
-                setEndDate(formatDate(data.proposedDays[data.proposedDays.length - 1].toDate()));
-                setStartTime(data.proposedStart);
-                setEndTime(data.proposedEnd);
-                console.log('Event title', data.title, 'Start Date', formatDate(data.proposedDays[0].toDate()), 'End Date',formatDate(data.proposedDays[data.proposedDays.length - 1].toDate()), 'Start Time', data.proposedStart, 'End Time', data.proposedEnd, 'created At', data.createdAt.toDate());
-            } else {
-                console.log('No such document!');
+            // Get the meeting data from the Firestore database
+            try {
+                const docRef = doc(db, 'groups', groupId);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    setEvent(data.title);
+                    setStartDate(formatDate(data.proposedDays[0].toDate()));
+                    setEndDate(formatDate(data.proposedDays[data.proposedDays.length - 1].toDate()));
+                    setStartTime(data.proposedStart);
+                    setEndTime(data.proposedEnd);
+                    console.log('MeetingPage: Data initialized');
+                }
+            } catch (error) {
+                console.error('Error fetching meeting data:', error);
+            } finally {
+                setIsLoading(false);
             }
         };
 
-        getMeetingData();
+        initializePage();
+    }, [location]);
 
+    useEffect(() => {
         const initClient = async () => {
         try {
             await initializeGAPIClient();
@@ -105,7 +110,7 @@ const MeetingPage = () => {
             setUserId(storedUserId);
             // add userid to the groupid
             addParticipantToGroup(groupId, storedUserId);
-            console.log('Stored user ID:', storedUserId); // Debugging log
+            // console.log('Stored user ID:', storedUserId);
             }
         } catch (error) {
             console.error('Error initializing GAPI client:', error);
@@ -115,6 +120,16 @@ const MeetingPage = () => {
         gapi.load('client:auth2', initClient);
     }, []);
 
+    // debugging
+    useEffect(() => {
+        console.log('States updated:', {
+            startDate,
+            endDate,
+            startTime,
+            endTime
+        });
+    }, [startDate, endDate, startTime, endTime]);
+
     // Push availability data to Firestore
 
     const handleGoogleAuth = async () => {
@@ -122,7 +137,7 @@ const MeetingPage = () => {
         const user = await googleHandleAuth(setIsAuthenticated);
         setUserId(user.uid);
         localStorage.setItem('user-id', user.uid);
-        console.log('User ID set:', user.uid); // Debugging log
+        // console.log('User ID set:', user.uid);
         } catch (error) {
         console.error('Error during authentication:', error);
         }
@@ -137,7 +152,7 @@ const MeetingPage = () => {
         try {
             const data = await fetchParticipants(meetingId, event); // Fetch data for the given meetingId and event
             setParticipants(data);
-            console.log("Fetched participants:", data); // Debugging log
+            // console.log("Fetched participants:", data);
         } catch (error) {
             console.error("Error fetching participants:", error);
         }
@@ -146,39 +161,38 @@ const MeetingPage = () => {
         loadParticipants();
     }, [meetingId, event]);
 
-
-    console.log('set up startTime', startTime);
-    console.log('set up endTime', endTime);
-
     return (
         <div className="w-screen h-screen px-4 pb-4 bg-background relative">
-            <div className="w-full h-full flex gap-4">
-                <div className='w-full h-full flex flex-col gap-4'>
-                <Calendar
-                    isAuthenticated={isAuthenticated}
-                    handleAuth={handleGoogleAuth}
-                    startDate={startDate}
-                    endDate={endDate}
-                    startTime={startTime}
-                    endTime={endTime}
-                    userId={userId}
-                />
+            {isLoading ? (
+                <div>Loading...</div>
+            ) : (
+                <div className="w-full h-full flex gap-4">
+                    <div className='w-full h-full flex flex-col gap-4'>
+                        <Calendar
+                            isAuthenticated={isAuthenticated}
+                            handleAuth={handleGoogleAuth}
+                            startDate={startDate}
+                            endDate={endDate}
+                            startTime={startTime}
+                            endTime={endTime}
+                            userId={userId}
+                        />
+                    </div>
+                    <div className='w-[30%] h-full flex flex-col gap-4'>
+                        <Legend 
+                            meetingID={meetingId}
+                            eventName={event}
+                            participants={participants}
+                        />
+                        <GroupAvailability
+                            startDate={startDate}
+                            endDate={endDate}
+                            startTime={startTime}
+                            endTime={endTime}
+                        />
+                    </div>
                 </div>
-                <div className='w-[30%] h-full flex flex-col gap-4'>
-                <Legend 
-                    meetingLink={meetingLink}
-                    eventName={event}
-                    participants={participants}
-                />
-                <GroupAvailability
-                    startDate={startDate}
-                    endDate={endDate}
-                    startTime={startTime}
-                    endTime={endTime}
-                    />
-                </div>
-                
-            </div>
+            )}
 
             {/* Sign out button in bottom left corner */}
             {isAuthenticated && (

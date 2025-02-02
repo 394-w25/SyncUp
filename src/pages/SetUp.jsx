@@ -147,7 +147,7 @@ const SetUp = () => {
         const user = await handleAuth(setIsAuthenticated);
         setUserId(user.uid);
         localStorage.setItem('user-id', user.uid);
-        console.log('User ID set:', user.uid); // Debugging log
+        // console.log('User ID set:', user.uid); // Debugging log
         } catch (error) {
         console.error('Error during authentication:', error);
         }
@@ -389,13 +389,14 @@ const SetUp = () => {
                                             const firstDate = moment(selectedDate[0].toDate()).format('YYYY-MM-DD');
                                             const lastDate = moment(selectedDate[selectedDate.length - 1].toDate()).format('YYYY-MM-DD');
                                             
+                                            console.log('SETUP ')
                                             navigate(`/group/${groupLink.split('/').pop()}`, {
                                                 state: {
                                                     startDate: firstDate,
                                                     endDate: lastDate,
                                                     startTime: startHour,
                                                     endTime: endHour,
-                                                    meetingLink: groupLink,
+                                                    meetingId: groupLink.split('/').pop(),
                                                     event: meetingName
                                                 }
                                             });

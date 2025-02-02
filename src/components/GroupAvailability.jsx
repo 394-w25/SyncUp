@@ -432,8 +432,31 @@ function formatYyyyMmDd(date) {
 }
 
 export default function GroupAvailability({ startDate, endDate, startTime, endTime}) {
-  const [weekStart, setWeekStart] = useState(() => new Date(startDate));
-  const [weekEnd, setWeekEnd] = useState(() => new Date(endDate));
+  // console.log('GroupAvailability received:', {
+  //   startDate,
+  //   endDate,
+  //   startDateType: typeof startDate,
+  //   endDateType: typeof endDate
+  // });
+
+  const [weekStart, setWeekStart] = useState(() => {
+    if (!startDate) return new Date();
+    return new Date(startDate);
+  });
+  
+  const [weekEnd, setWeekEnd] = useState(() => {
+    if (!endDate) return new Date();
+    return new Date(endDate);
+  });
+
+  useEffect(() => {
+    if (startDate) {
+      setWeekStart(new Date(startDate));
+    }
+    if (endDate) {
+      setWeekEnd(new Date(endDate));
+    }
+  }, [startDate, endDate]);
 
   const handlePreviousWeek = () => {
     setWeekStart(prev => {

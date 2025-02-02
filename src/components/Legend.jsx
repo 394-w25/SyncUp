@@ -29,9 +29,11 @@ const buttonTheme = createTheme({
 
 
 
-const Legend = ({meetingLink, eventName, participants}) => {
+const Legend = ({meetingID, eventName, participants}) => {
 
     const handleCopyLink = () => {
+        const meetingLink = `syncup-5bc71.web.app/group/${meetingID}`; 
+        // TODO: fix meetingLink 
         navigator.clipboard.writeText(meetingLink);
         setIsCopied(true);
 
@@ -42,7 +44,7 @@ const Legend = ({meetingLink, eventName, participants}) => {
 
     const [isCopied, setIsCopied] = useState(false);
 
-    const meetingID = meetingLink.split('/').pop();
+
     return (
         <div className="w-full h-[25%]">
             <div className="w-full h-full py-8 px-8 bg-white rounded-bl-[20px] rounded-br-[20px] shadow-[0px_7px_15.699999809265137px_0px_rgba(17,107,60,0.06)]">
@@ -78,7 +80,7 @@ const Legend = ({meetingLink, eventName, participants}) => {
                     </div>
                     <div className="flex flex-col gap-2" style={{ maxHeight: '160px', overflowY: 'auto' }}>
                         {participants.map(participant => (
-                            <div className="flex gap-2 items-center">
+                            <div key={participants.id} className="flex gap-2 items-center">
                                 <p className="truncate max-w-[150px]">{participant.name}</p>
                             </div>
                         ))}

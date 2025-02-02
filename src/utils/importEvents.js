@@ -14,7 +14,7 @@ export const importEvents = async (userId, startDate, endDate) => {
 
     // Parse dates and set to local timezone
     const start = new Date(startDate + 'T00:00:00');
-    const end = new Date(endDate + 'T23:59:59.999');
+    const end = new Date(endDate + 'T23:59:59');
 
     console.log('Input dates:', { startDate, endDate });
     console.log('Fetching events between:', start, 'and', end);
