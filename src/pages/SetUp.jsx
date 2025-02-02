@@ -248,7 +248,7 @@ const SetUp = () => {
                         </div>
 
                         <div className="bg-white rounded-lg shadow-md p-8">
-                            <h3 className="text-xl font-semibold mb-8 text-center">What days would you like to meet?</h3>
+                            <h3 className="text-xl font-semibold mb-8 text-center">What dates might work?</h3>
                             <div className="flex justify-center py-8">
                                 <Calendar 
                                     multiple
@@ -283,7 +283,7 @@ const SetUp = () => {
                         </div>
 
                         <div className="bg-white rounded-lg shadow-md p-8 pb-12 pt-8">
-                            <h3 className="text-xl font-semibold mb-6 text-center">What times would you like to meet?</h3>
+                            <h3 className="text-xl font-semibold mb-6 text-center">What times might work?</h3>
                             <div className="flex flex-col sm:flex-row justify-center items-end gap-8 text-lg">
                                 <ThemeProvider theme={customTheme(outerTheme)}>
                                     <LocalizationProvider dateAdapter={AdapterMoment}>

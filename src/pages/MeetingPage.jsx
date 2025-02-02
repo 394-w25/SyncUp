@@ -143,6 +143,7 @@ const MeetingPage = () => {
         const user = await googleHandleAuth(setIsAuthenticated);
         setUserId(user.uid);
         localStorage.setItem('user-id', user.uid);
+        window.location.reload(); // Reload the page to update the UI
         console.log('User ID set:', user.uid); // Debugging log
         } catch (error) {
         console.error('Error during authentication:', error);
