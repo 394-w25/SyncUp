@@ -1,13 +1,13 @@
-import { collection, getDoc, getDocs } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 
-export const fetchGroupData = async (groupId) => {
+export async function fetchGroupData(groupId) {
     const docRef = doc(db, "groups", groupId);
     const docSnap = await getDoc(docRef);
     
     if (!docSnap.exists()) {
         console.log("No such document!");
-        alert("Invalid Group!");
+        alert("Invalid Group! Check the URL and try again.");
     }
     return docSnap.data();
 }
@@ -15,6 +15,7 @@ export const fetchGroupData = async (groupId) => {
 export const fetchGroupAvailability = async (groupData) => {
     const data = {};
     const querySnapshot = await getDocs(collection(db, "availability"));
+    // console.log('group data: ', groupData);
 
     querySnapshot.forEach((doc) => {
       const userID = doc.id;
@@ -36,6 +37,9 @@ export const fetchGroupAvailability = async (groupData) => {
           }
         }}
     })
+
+    data['numMembers'] = groupData.participants.length;
+    
     return data;
 }
 

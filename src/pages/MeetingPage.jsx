@@ -12,7 +12,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import { Button, ThemeProvider, createTheme, IconButton } from '@mui/material';
 import { useLocation } from 'react-router-dom';
 
-import { fetchGroupData } from '../utils/fetchGroupData';
+import { fetchGroupData, fetchGroupAvailability } from '../utils/fetchGroupData';
 import { addParticipantToGroup } from '../utils/addUserToGroup';
 import { db } from '../firebase.config';
 import { doc, getDoc } from 'firebase/firestore';
@@ -51,7 +51,8 @@ const MeetingPage = () => {
 
     // Get groupid from the URL
     const [groupId, setGroupId] = useState(null);
-    const [groupData, setGroupData] = useState({});
+    const [groupData, setGroupData] = useState(null);
+    const [groupAvailabilityData, setGroupAvailabilityData] = useState(null);
     const [eventTitle, setEvent] = useState('');
     const [StartDate, setStartDate] = useState('');
     const [EndDate, setEndDate] = useState('');
@@ -76,6 +77,20 @@ const MeetingPage = () => {
         const groupId = pathParts[pathParts.length - 1];
         console.log('Group ID from URL:', groupId); // Debugging log
         setGroupId(groupId);
+        
+        const fetchData = async () => {
+            const groupData = await fetchGroupData(groupId);
+            setGroupData(groupData);
+            // console.log('Group data:', groupData); // Debugging log
+
+            if (groupData) {
+                const availabilityData = await fetchGroupAvailability(groupData);
+                setGroupAvailabilityData(availabilityData);
+                // console.log('Availability data:', availabilityData); // Debugging log
+            }
+        };
+
+        fetchData();
 
         // Get the meeting data from the Firestore database
         const getMeetingData = async () => {
@@ -95,7 +110,7 @@ const MeetingPage = () => {
         };
 
         getMeetingData();
-        setGroupData(fetchGroupData(groupId));
+
 
         const initClient = async () => {
         try {
@@ -171,6 +186,7 @@ const MeetingPage = () => {
                 />
                 <GroupAvailability
                     groupData={groupData}
+                    groupAvailabilityData={groupAvailabilityData}
                     startDate={startDate}
                     endDate={endDate}
                     startTime={startTime}

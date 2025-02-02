@@ -10,7 +10,6 @@ import Draggable from 'react-draggable';
 
 import { collection, getDocs } from "firebase/firestore";
 import { db } from '../firebase';
-import { fetchGroupAvailability } from '../utils/fetchGroupData';
 
 const buttonTheme = createTheme({
   palette: {
@@ -43,17 +42,43 @@ function makeSlotKey(date, hourLabel, isHalfHour = false) {
   return `${iso} ${hourLabel}:${minutes}`;
 }
 
-function GroupSchedule({ groupData, startTime, endTime, startDate, endDate }) {
+// function to get the color of the cell based on the availability
+function getSlotColor(date, hourIndex, groupAvailabilityData) {
+  const iso = date.toISOString().split('T')[0];
+
+  if (!groupAvailabilityData) {
+    return 'bg-white';
+  }
+
+  const slots = groupAvailabilityData[iso];
+  if (!slots) {
+    return 'bg-white';
+  }
+
+  const numMembers = groupAvailabilityData.numMembers;
+  const slotVal = slots[hourIndex];
+  const pctAvail = slotVal / numMembers;
+
+  switch(true) {
+    case pctAvail === 1:
+      return 'bg-scale-4';
+    case pctAvail >= 0.75:
+      return 'bg-scale-3';
+    case pctAvail >= 0.4:
+      return 'bg-scale-2';
+    // case pctAvail >= 0.2:
+    //   return 'bg-scale-1';
+    default:
+      return 'bg-scale-none';
+  }
+}
+
+function GroupSchedule({ groupData, groupAvailabilityData, startTime, endTime, startDate, endDate }) {
   const [selectedBlocks, setSelectedBlocks] = useState(new Set());
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
-  const [groupAvailabilityData, setGroupAvailabilityData] = useState({});
   const [lockedDate, setLockedDate] = useState(null);
-  const numMembers = groupData.participants?.length || 0;
-
-  useEffect(() => {
-    setGroupAvailabilityData(fetchGroupAvailability(groupData));
-  }, []);
+  const numMembers = groupData?.participants.length || 0;
 
   // Generate all dates in range
   const getDatesInRange = (start, end) => {
@@ -67,30 +92,6 @@ function GroupSchedule({ groupData, startTime, endTime, startDate, endDate }) {
     return dates;
   };
   const dates = getDatesInRange(startDate, endDate);
-
-  // function to get the color of the cell based on the availability
-function getColor(date, hourIndex) {
-  const iso = date.toISOString().split('T')[0];
-  const slots = groupAvailabilityData[iso];
-  if (slots === undefined) {
-    return 'bg-white';
-  }
-  const slotVal = slots[hourIndex];
-  const pctAvail = slotVal / numMembers;
-
-  switch(true) {
-    case pctAvail === 1:
-      return 'bg-scale-4';
-    case pctAvail >= 0.75:
-      return 'bg-scale-3';
-    case pctAvail >= 0.4:
-      return 'bg-scale-2';
-    case pctAvail >= 0.2:
-      return 'bg-scale-1';
-    default:
-      return 'bg-scale-none';
-  }
-}
 
   // Generate hour labels
   const hourLabels = [];
@@ -207,7 +208,7 @@ function getColor(date, hourIndex) {
                   onMouseEnter={() => handleMouseEnter(date, hourLabel, false)}
                   className={`
                     border-t border-l border-gray-200
-                    ${isSelected ? 'bg-green-200' : getColor(date, hourIndex * 2)}
+                    ${isSelected ? 'bg-green-200' : getSlotColor(date, hourIndex * 2, groupAvailabilityData)}
                     hover:bg-green-50
                   `}
                   style={{ cursor: 'pointer' }}
@@ -226,7 +227,7 @@ function getColor(date, hourIndex) {
                   onMouseEnter={() => handleMouseEnter(date, hourLabel, true)}
                   className={`
                     border-l border-gray-200 border-t border-dashed
-                    ${isSelected ? 'bg-green-200' : getColor(date, hourIndex * 2 + 1)}
+                    ${isSelected ? 'bg-green-200' : getSlotColor(date, hourIndex * 2 + 1, groupAvailabilityData)}
                     hover:bg-green-50
                   `}
                   style={{ cursor: 'pointer' }}
@@ -256,7 +257,7 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers 
   const [availabilityCounts, setAvailabilityCounts] = useState({});
 
   useEffect(() => {
-    console.log("Selected Blocks:", selectedBlocks);
+    // console.log("Selected Blocks:", selectedBlocks);
     const fetchData = async () => {
       try {
         const usersRef = collection(db, "users");
@@ -282,7 +283,7 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers 
 
     // Count availability for each block
     const countAvailability = () => {
-      console.log("Counting availability for:", selectedBlocks);
+      // console.log("Counting availability for:", selectedBlocks);
     
       const counts = {};
       selectedBlocks.forEach(block => {
@@ -292,12 +293,12 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers 
         const totalMinutes = (parseInt(hour) % 12 + (block.includes('PM') ? 12 : 0)) * 60 + (ampmMinutes.includes(':30') ? 30 : 0);
         const hourIndex = (totalMinutes - 480) / 30;
     
-        console.log(`Checking availability for ${isoDate} at index ${hourIndex}`);
-        console.log("Data at this date:", groupAvailabilityData[isoDate]);
+        // console.log(`Checking availability for ${isoDate} at index ${hourIndex}`);
+        // console.log("Data at this date:", groupAvailabilityData[isoDate]);
     
         counts[block] = groupAvailabilityData[isoDate]?.[hourIndex] || 0;
       });
-      console.log("availabilityCounts: ", availabilityCounts);
+      // console.log("availabilityCounts: ", availabilityCounts);
     
       setAvailabilityCounts(counts);
     };
@@ -401,7 +402,7 @@ function formatYyyyMmDd(date) {
   return `${y}-${m}-${d}`;
 }
 
-export default function GroupAvailability({ groupData, startDate, endDate, startTime, endTime}) {
+export default function GroupAvailability({ groupData, groupAvailabilityData, startDate, endDate, startTime, endTime}) {
   const [weekStart, setWeekStart] = useState(() => new Date(startDate));
   const [weekEnd, setWeekEnd] = useState(() => new Date(endDate));
 
@@ -452,6 +453,7 @@ export default function GroupAvailability({ groupData, startDate, endDate, start
 
       <GroupSchedule
         groupData={groupData}
+        groupAvailabilityData={groupAvailabilityData}
         startTime={startTime}
         endTime={endTime}
         startDate={formatYyyyMmDd(weekStart)}
