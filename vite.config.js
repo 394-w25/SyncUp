@@ -16,8 +16,8 @@ export default defineConfig({
       },
     },
     headers: {
-      'Cross-Origin-Opener-Policy': 'unsafe-none', 
-      'Cross-Origin-Embedder-Policy': 'unsafe-none', 
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+      'Cross-Origin-Embedder-Policy': 'require-corp',
     },
   },
   test: {

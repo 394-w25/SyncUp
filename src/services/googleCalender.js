@@ -1,6 +1,29 @@
 import { getUsersEmails } from '../firebase';
 import { refreshGoogleToken } from '../services/googleAuth';
 
+// 1. 添加发送邮件的函数
+const sendEmailReminder = async (attendeeEmails) => {
+  try {
+    const response = await fetch('http://localhost:5174/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        emails: attendeeEmails,
+        subject: 'You have a new meeting invitation!',
+        text: 'Please check your Google Calendar to respond to the invitation.',
+      }),
+    });
+
+    if (response.ok) {
+      console.log("✅ Email reminder sent to:", attendeeEmails);
+    } else {
+      console.error("❌ Failed to send email reminder.");
+    }
+  } catch (error) {
+    console.error("❌ Error sending email reminder:", error);
+  }
+};
+
 export const initializeGAPIClient = async () => {
   try {
     await gapi.client.init({
@@ -74,26 +97,26 @@ const formatDateTime = (block) => {
 
 export const createGoogleCalendarEvent = async (selectedBlocks, users, availableUserIds) => {
   try {
-    await refreshGoogleToken();  
+    await refreshGoogleToken();
 
     const authInstance = gapi.auth2.getAuthInstance();
-    const user = authInstance.currentUser.get();
-    if (!user.isSignedIn()) {
+    const currentUser = authInstance.currentUser.get();
+    const currentUserEmail = currentUser.getBasicProfile().getEmail();
+
+    if (!currentUser.isSignedIn()) {
       alert("Please sign in with Google first!");
       return;
     }
 
-    console.log("📅 Creating events for selected time slots:", selectedBlocks);
-    console.log("✅ Available user IDs:", availableUserIds);
-
-    if (!Array.isArray(availableUserIds)) {
-      console.error("❌ availableUserIds is not an array:", availableUserIds);
-      return;
-    }
-
+    // 过滤出可用的参与者，排除当前用户自己
     const attendees = availableUserIds
-      .filter(userId => users[userId])  
-      .map(userId => ({ email: users[userId] }));  
+      .filter(userId => users[userId] && users[userId] !== currentUserEmail)
+      .map(userId => ({
+        email: users[userId],
+        responseStatus: "needsAction",  // 确保参会者需要响应
+        displayName: users[userId].split('@')[0]  // 添加显示名称（可选）
+      }));
+
 
     console.log("📩 Attendees list before sending:", attendees);
 
@@ -114,37 +137,43 @@ export const createGoogleCalendarEvent = async (selectedBlocks, users, available
         description: "Auto-scheduled meeting from Group Availability App",
         start: { dateTime: eventStart.toISOString(), timeZone: "America/Chicago" },
         end: { dateTime: eventEnd.toISOString(), timeZone: "America/Chicago" },
-        attendees: attendees,  
+        attendees: attendees,
+        guestsCanInviteOthers: false,   // 参会者不能邀请其他人
+        guestsCanModify: false,        // 参会者不能修改事件
+        guestsCanSeeOtherGuests: true, // 参会者可以看到其他人的邮件
+        reminders: { useDefault: true }
       };
+      
 
-      console.log(`📅 Creating event in primary calendar of user: ${user.getBasicProfile().getEmail()}`);
+      // 在当前用户的 Calendar 中创建事件，确保只发送邀请，不改变当前用户的日历视图
+      const response = await gapi.client.calendar.events.insert({
+        calendarId: "primary",
+        resource: event,
+        sendUpdates: "all",          // 发送更新通知
+        sendNotifications: true      // 发送电子邮件通知
+      });
+      
+      
+      if (response.result && response.result.id) {
+        console.log(`✅ Invitation sent successfully:`, response.result);
+        console.log("📧 Attendees:", response.result.attendees);
+        console.log("📬 Organizer:", response.result.organizer.email);
+        console.log("📅 Event Link:", response.result.htmlLink);
 
-      try {
-        const response = await gapi.client.calendar.events.insert({
-          calendarId: "primary",
-          resource: event,
-          sendUpdates: "all", 
-        });
-
-        if (response.result && response.result.id) {
-          console.log(`✅ Event successfully created:`, response.result);
-          console.log("📅 Event Title:", response.result.summary);
-          console.log("📧 Attendees:", response.result.attendees);
-          console.log("🗓 Start Time:", response.result.start.dateTime);
-          console.log("🕰 End Time:", response.result.end.dateTime);
-          console.log("🔗 Google Calendar Link:", response.result.htmlLink);
-        } else {
-          console.error(`❌ Failed to create event.`);
-        }
-      } catch (error) {
-        console.error(`❌ Error creating event:`, error);
+        await sendEmailReminder(attendees.map(a => a.email));
+      } else {
+        console.error(`❌ Failed to send invitation.`);
       }
+      
+      
     }
 
-    alert("📅 Meetings successfully scheduled on Google Calendar!");
+    alert("📩 Invitations successfully sent to attendees!");
   } catch (error) {
     console.error("❌ Google Calendar API Error:", error);
-    alert(`Failed to create event: ${error.message || error}`);
+    alert(`Failed to send invitation: ${error.message || error}`);
   }
 };
+
+
 

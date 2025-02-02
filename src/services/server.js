@@ -19,16 +19,18 @@ app.post('/send-email', (req, res) => {
   const { emails, subject, text } = req.body;
 
   const mailOptions = {
-    from: 'samnangnuonsineoun2025@u.northwester.edu',
-    to: emails.join(', '),
-    subject,
-    text,
+    from: 'samnangnuonsineoun2025@u.northwester.edu',  // 发送者邮箱
+    to: emails.join(', '),  // 目标邮箱
+    subject: subject || 'Meeting Invitation Reminder',
+    text: text || 'You have a new meeting invitation. Please check your Google Calendar.',
   };
 
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
+      console.error('❌ Error sending email:', error);
       return res.status(500).send(error.toString());
     }
+    console.log('✅ Email sent successfully:', info.response);
     res.status(200).send('Email sent: ' + info.response);
   });
 });

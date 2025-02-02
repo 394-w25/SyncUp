@@ -70,16 +70,28 @@ const App = () => {
 
   // Push availability data to Firestore
 
+  // const handleGoogleAuth = async () => {
+  //   try {
+  //     const user = await googleHandleAuth(setIsAuthenticated);
+  //     setUserId(user.uid);
+  //     localStorage.setItem('user-id', user.uid);
+  //     console.log('User ID set:', user.uid); // Debugging log
+  //   } catch (error) {
+  //     console.error('Error during authentication:', error);
+  //   }
+  // };
+
   const handleGoogleAuth = async () => {
     try {
-      const user = await googleHandleAuth(setIsAuthenticated);
+      const user = await googleHandleAuth(setIsAuthenticated, setUserId);  // 确保传入 setUserId
       setUserId(user.uid);
       localStorage.setItem('user-id', user.uid);
-      console.log('User ID set:', user.uid); // Debugging log
+      console.log('User ID set:', user.uid);
     } catch (error) {
       console.error('Error during authentication:', error);
     }
   };
+  
 
   const handleSignOut = async () => {
     await signOut(setIsAuthenticated, setUserId);
