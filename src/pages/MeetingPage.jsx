@@ -12,7 +12,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import { Button, ThemeProvider, createTheme, IconButton } from '@mui/material';
 import { useLocation } from 'react-router-dom';
 
-import { fetchGroupData, fetchGroupAvailability } from '../utils/fetchGroupData';
+import { fetchGroupData, fetchGroupAvailability, fetchUserDataInGroup } from '../utils/fetchGroupData';
 import { addParticipantToGroup } from '../utils/addUserToGroup';
 import { db } from '../firebase.config';
 import { doc, getDoc } from 'firebase/firestore';
@@ -53,6 +53,8 @@ const MeetingPage = () => {
     const [groupId, setGroupId] = useState(null);
     const [groupData, setGroupData] = useState(null);
     const [groupAvailabilityData, setGroupAvailabilityData] = useState(null);
+    const [participantsData, setParticipantsData] = useState({});
+
     const [eventTitle, setEvent] = useState('');
     const [StartDate, setStartDate] = useState('');
     const [EndDate, setEndDate] = useState('');
@@ -70,7 +72,6 @@ const MeetingPage = () => {
 
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userId, setUserId] = useState(null);
-    const [participants, setParticipants] = useState([]); // Dynamic participants
 
     useEffect(() => {
         const pathParts = location.pathname.split('/');
@@ -86,6 +87,9 @@ const MeetingPage = () => {
             if (groupData) {
                 const availabilityData = await fetchGroupAvailability(groupData);
                 setGroupAvailabilityData(availabilityData);
+
+                const groupParticipantsData = await fetchUserDataInGroup(groupData.participants);
+                setParticipantsData(groupParticipantsData);
                 // console.log('Availability data:', availabilityData); // Debugging log
             }
         };
@@ -147,22 +151,7 @@ const MeetingPage = () => {
 
     const handleSignOut = async () => {
         await signOut(setIsAuthenticated, setUserId);
-    }
-
-    useEffect(() => {
-        const loadParticipants = async () => {
-        try {
-            const data = await fetchParticipants(meetingId, event); // Fetch data for the given meetingId and event
-            setParticipants(data);
-            console.log("Fetched participants:", data); // Debugging log
-        } catch (error) {
-            console.error("Error fetching participants:", error);
-        }
-        };
-
-        loadParticipants();
-    }, [meetingId, event]);
-
+    };
 
     console.log('set up startTime', startTime);
     console.log('set up endTime', endTime);
@@ -185,7 +174,7 @@ const MeetingPage = () => {
                 <Legend 
                     meetingID={meetingId}
                     eventName={event}
-                    participants={participants}
+                    participantData={participantsData}
                 />
                 <GroupAvailability
                     groupData={groupData}
