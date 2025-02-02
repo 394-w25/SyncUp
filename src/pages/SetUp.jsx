@@ -13,6 +13,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DoneIcon from '@mui/icons-material/Done';
 import AddLinkRoundedIcon from '@mui/icons-material/AddLinkRounded';
+import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
 
 import { Calendar } from "react-multi-date-picker";
 import DatePanel from "react-multi-date-picker/plugins/date_panel";
@@ -225,16 +226,30 @@ const SetUp = () => {
                         <div className="bg-white rounded-lg shadow-md p-8">
                             <div className="flex flex-col sm:flex-row items-center gap-4">
                                 <h3 className="text-xl font-semibold">First,</h3>
-                                <ThemeProvider theme={buttonTheme}>
-                                    <Button 
+
+                                {!isAuthenticated ? (
+                                    <ThemeProvider theme={buttonTheme}>
+                                        <Button 
+                                            variant='outlined' 
+                                            color='secondary'
+                                            onClick={handleGoogleAuth}
+                                            style={{textTransform: 'none', fontSize: '16px'}}
+                                            startIcon={<GoogleIcon />}>
+                                                Sign in with Google
+                                        </Button>
+                                    </ThemeProvider>
+                                ) : (
+                                    <ThemeProvider theme={buttonTheme}>
+                                        <Button 
                                         variant='outlined' 
                                         color='secondary'
-                                        onClick={handleGoogleAuth}
-                                        style={{textTransform: 'none', fontSize: '16px'}}
-                                        startIcon={<GoogleIcon />}>
-                                            Sign in with Google
-                                    </Button>
-                                </ThemeProvider>
+                                        disabled={true}
+                                        style={{textTransform: 'none'}}
+                                        startIcon={<TaskAltRoundedIcon />}>
+                                            Signed In!
+                                        </Button>
+                                    </ThemeProvider>
+                                )}
                             </div>
                         </div>
 
