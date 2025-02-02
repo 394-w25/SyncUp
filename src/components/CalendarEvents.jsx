@@ -319,15 +319,85 @@ export default function CalendarEvents({
     return `${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   };
 
+  const isEventVisible = (event, startTime, endTime) => {
+    const evStart = event.start?.dateTime || event.start?.date;
+    const evEnd = event.end?.dateTime || event.end?.date;
+    const startHour = new Date(evStart).getHours();
+    const startMinute = new Date(evStart).getMinutes();
+    const endHour = new Date(evEnd).getHours();
+    const endMinute = new Date(evEnd).getMinutes();
+
+    const start = startHour + startMinute / 60;
+    const end = endHour + endMinute / 60;
+    return start >= startTime && end <= endTime;
+  };
+
   function renderEventsForDate(date, events, startTime, endTime) {
     const dayEvents = events?.filter((event) => {
       const evStart = event.start?.dateTime || event.start?.date;
+      const evEnd = event.end?.dateTime || event.end?.date;
       if (!evStart) return false;
+      if (!isEventVisible(event, startTime, endTime)) return false;
       const evDate = new Date(evStart);
+
       return (
         evDate.getFullYear() === date.getFullYear() &&
         evDate.getMonth() === date.getMonth() &&
         evDate.getDate() === date.getDate()
+      );
+    });
+
+    return dayEvents?.map((event, i) => {
+      const startDateTime = event.start?.dateTime;
+      const endDateTime = event.end?.dateTime;
+      if (!startDateTime || !endDateTime) return null;
+
+      const eventStartTime = new Date(startDateTime);
+      const eventEndTime = new Date(endDateTime);
+      const eventStartHour =
+        eventStartTime.getHours() + eventStartTime.getMinutes() / 60;
+      const eventEndHour =
+        eventEndTime.getHours() + eventEndTime.getMinutes() / 60;
+
+      // If outside the displayed range, skip or clamp
+      if (eventEndHour <= startTime || eventStartHour >= endTime) return null;
+
+      const visibleStart = Math.max(eventStartHour, startTime);
+      const visibleEnd = Math.min(eventEndHour, endTime);
+      const duration = visibleEnd - visibleStart;
+      if (duration <= 0) return null;
+
+      const pixelsPerHour = 48;
+      const topPosition = (visibleStart - startTime) * pixelsPerHour;
+      const height = duration * pixelsPerHour;
+
+      return (
+        <div
+          key={i}
+          className="absolute left-0 right-0 mr-1 rounded bg-neutral-200 border border-neutral-400 border-l-4 p-1 overflow-hidden"
+          style={{
+            top: `${topPosition}px`,
+            height: `${height}px`,
+            zIndex: 10,
+          }}
+        >
+          <p className="text-xs truncate text-neutral-800">
+            {event.summary || event.title}
+          </p>
+          <p className="text-xs truncate text-neutral-600">
+            {eventStartTime.toLocaleTimeString("en", {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            })}{" "}
+            -{" "}
+            {eventEndTime.toLocaleTimeString("en", {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            })}
+          </p>
+        </div>
       );
     });
   };

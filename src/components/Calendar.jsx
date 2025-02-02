@@ -100,21 +100,12 @@ const Calendar = ({
   const startDateISO = convertToISO(startDate);
   const endDateISO = convertToISO(endDate);
 
-  console.log('Calendar: weekStart', weekStart);
-  console.log('Calendar: startDate', startDateISO);
-  console.log('Calendar: weekEnd', weekEnd);
-  
-  console.log('Calendar: endDate', endDateISO);
-
   // Convert to timestamps for comparison
   const showPrevious = weekStart.getTime() !== startDateISO.getTime();
   const showNext = weekEnd.getTime() !== endDateISO.getTime();
-  console.log('Calendar: showPrevious', showPrevious);
-  console.log('Calendar: showNext', showNext);
 
   // WEEK TOGGLER HANDLERS
   const handlePreviousWeek = () => {
-    console.log('Calendar: handlePreviousWeek');
     const newStart = new Date(weekStart);
     newStart.setDate(newStart.getDate() - 7);
 
@@ -132,7 +123,6 @@ const Calendar = ({
   };
 
   const handleNextWeek = () => {
-    console.log('Calendar: handleNextWeek');
     const newStart = new Date(weekStart);
     newStart.setDate(newStart.getDate() + 7);
     
