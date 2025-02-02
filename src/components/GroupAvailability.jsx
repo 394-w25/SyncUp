@@ -252,39 +252,13 @@ function GroupSchedule({ groupData, groupAvailabilityData, startTime, endTime, s
 }
 
 function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers }) {
-  const [users, setUsers] = useState([]);
-  const [memberData, setMemberData] = useState([]);
   const [availabilityCounts, setAvailabilityCounts] = useState({});
 
   useEffect(() => {
-    // console.log("Selected Blocks:", selectedBlocks);
-    const fetchData = async () => {
-      try {
-        const usersRef = collection(db, "users");
-        const usersSnapshot = await getDocs(usersRef);
-        const userData = {};
-        usersSnapshot.docs.forEach((doc) => {
-          userData[doc.id] = doc.data().name;
-        });
-        setUsers(userData);
-
-        const availabilityRef = collection(db, "availability");
-        const availabilitySnapshot = await getDocs(availabilityRef);
-        const members = availabilitySnapshot.docs.map(doc => ({
-          id: doc.id,
-          availability: doc.data().availability
-        }));
-        setMemberData(members);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
-    fetchData();
-
+    console.log("Selected blocks: ", selectedBlocks);
     // Count availability for each block
     const countAvailability = () => {
-      // console.log("Counting availability for:", selectedBlocks);
-    
+      // console.log("Counting availability for:", selectedBlocks);    
       const counts = {};
       selectedBlocks.forEach(block => {
         const [dateStr, hour, ampmMinutes] = block.split(' ');
