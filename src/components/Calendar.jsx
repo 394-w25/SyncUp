@@ -7,6 +7,7 @@ import CalendarEvents from './CalendarEvents';
 import { importEvents } from '../utils/importEvents';
 import { calculateAvailability } from '../utils/availability';
 import { updateIsSynced } from '../services/googleAuth';
+import moment from 'moment';
 
 // for week toggler
 function formatYyyyMmDd(date) {
@@ -52,8 +53,8 @@ const Calendar = ({
   handleAuth, 
   startDate, 
   endDate,
-  startTime,
-  endTime,
+  startTime = 9,
+  endTime = 17,
   userId
 }) => {
   const [events, setEvents] = useState([]);
@@ -126,7 +127,7 @@ const Calendar = ({
       setIsLoading(false);
     }
   };
-
+  
   return (
     <div className="w-full h-full">
       <div className="w-full h-full flex flex-col bg-white px-8 py-8 gap-2 rounded-bl-[20px] rounded-br-[20px] shadow-[0px_7px_15.699999809265137px_0px_rgba(17,107,60,0.06)]">

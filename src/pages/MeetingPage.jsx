@@ -164,6 +164,9 @@ const MeetingPage = () => {
     }, [meetingId, event]);
 
 
+    console.log('set up startTime', startTime);
+    console.log('set up endTime', endTime);
+
     return (
         <div className="w-screen h-screen px-4 pb-4 bg-background relative">
             <div className="w-full h-full flex gap-4">

@@ -12,6 +12,7 @@ export default function CalendarEvents({
   endDate,
   events = [],
 }) {
+  
   const [highlightBlocks, setHighlightBlocks] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState(null);
