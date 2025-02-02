@@ -148,7 +148,7 @@ const SetUp = () => {
         setUserId(user.uid);
         setUserName(user.displayName);
         localStorage.setItem('user-id', user.uid);
-        console.log('User ID set:', user.uid); // Debugging log
+        // console.log('User ID set:', user.uid); // Debugging log
         } catch (error) {
         console.error('Error during authentication:', error);
         }

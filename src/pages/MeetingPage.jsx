@@ -76,7 +76,7 @@ const MeetingPage = () => {
     useEffect(() => {
         const pathParts = location.pathname.split('/');
         const groupId = pathParts[pathParts.length - 1];
-        console.log('Group ID from URL:', groupId); // Debugging log
+        // console.log('Group ID from URL:', groupId); // Debugging log
         setGroupId(groupId);
         
         const fetchData = async () => {
@@ -107,7 +107,7 @@ const MeetingPage = () => {
                 setEndDate(formatDate(data.proposedDays[data.proposedDays.length - 1].toDate()));
                 setStartTime(data.proposedStart);
                 setEndTime(data.proposedEnd);
-                console.log('Event title', data.title, 'Start Date', formatDate(data.proposedDays[0].toDate()), 'End Date',formatDate(data.proposedDays[data.proposedDays.length - 1].toDate()), 'Start Time', data.proposedStart, 'End Time', data.proposedEnd, 'created At', data.createdAt.toDate());
+                // console.log('Event title', data.title, 'Start Date', formatDate(data.proposedDays[0].toDate()), 'End Date',formatDate(data.proposedDays[data.proposedDays.length - 1].toDate()), 'Start Time', data.proposedStart, 'End Time', data.proposedEnd, 'created At', data.createdAt.toDate());
             } else {
                 console.log('No such document!');
             }
@@ -126,7 +126,7 @@ const MeetingPage = () => {
             setUserId(storedUserId);
             // add userid to the groupid
             addParticipantToGroup(groupId, storedUserId);
-            console.log('Stored user ID:', storedUserId); // Debugging log
+            // console.log('Stored user ID:', storedUserId); // Debugging log
             }
         } catch (error) {
             console.error('Error initializing GAPI client:', error);
@@ -143,7 +143,7 @@ const MeetingPage = () => {
         const user = await googleHandleAuth(setIsAuthenticated);
         setUserId(user.uid);
         localStorage.setItem('user-id', user.uid);
-        console.log('User ID set:', user.uid); // Debugging log
+        // console.log('User ID set:', user.uid); // Debugging log
         } catch (error) {
         console.error('Error during authentication:', error);
         }
@@ -153,8 +153,8 @@ const MeetingPage = () => {
         await signOut(setIsAuthenticated, setUserId);
     };
 
-    console.log('set up startTime', startTime);
-    console.log('set up endTime', endTime);
+    // console.log('set up startTime', startTime);
+    // console.log('set up endTime', endTime);
 
     return (
         <div className="w-screen h-screen px-4 pb-4 bg-background relative">

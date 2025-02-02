@@ -21,7 +21,7 @@ const CreateGroupButton = () => {
 
         try {
             const groupLink = await createGroup(groupData);
-            console.log('Group link:', groupLink);
+            // console.log('Group link:', groupLink);
             
         } catch (error) {
             console.error('Error creating group:', error);
