@@ -22,7 +22,6 @@ const signInWithGoogle = async () => {
         uid: user.uid,
         name: user.displayName,
         email: user.email,
-        isSynced: false,
       });
   
       console.log('User signed in and authenticated');
@@ -59,4 +58,4 @@ const signOut = async (setIsAuthenticated, setUserId) => {
   }
 };
 
-export { signInWithGoogle, handleAuth, updateIsSynced, signOut };
+export { signInWithGoogle, handleAuth, signOut };

@@ -6,7 +6,6 @@ import Box from '@mui/material/Box';
 import CalendarEvents from './CalendarEvents';
 import { importEvents } from '../utils/importEvents';
 import { calculateAvailability } from '../utils/availability';
-import { updateIsSynced } from '../services/googleAuth';
 import moment from 'moment';
 
 // for week toggler
