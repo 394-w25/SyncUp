@@ -183,6 +183,7 @@ const MeetingPage = () => {
                     endDate={endDate}
                     startTime={startTime}
                     endTime={endTime}
+                    eventName={event}
                     />
                 </div>
                 

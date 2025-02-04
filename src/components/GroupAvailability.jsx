@@ -33,6 +33,66 @@ const buttonTheme = createTheme({
   },
 });
 
+// Converts a block string (e.g., "2025-02-04 1 PM:00") into a Date object in America/Chicago time.
+// Adjust the logic if your block string format differs.
+function convertBlockToDate(block) {
+  // Split the block string into parts.
+  // Expected format: "YYYY-MM-DD H PM:MM"
+  const parts = block.split(" ");
+  const dateStr = parts[0];            // e.g., "2025-02-04"
+  const hourStr = parts[1];            // e.g., "1"
+  // parts[2] contains "PM:00" (or "AM:00"); split that further.
+  const [period, minuteStr] = parts[2].split(":");  // period e.g., "PM", minuteStr e.g., "00"
+
+  let hour = parseInt(hourStr, 10);
+  if (period === "PM" && hour !== 12) {
+    hour += 12;
+  } else if (period === "AM" && hour === 12) {
+    hour = 0;
+  }
+  // Create a Date using the America/Chicago offset (standard time assumed as -06:00).
+  // (Note: You may need to adjust for daylight saving time if necessary.)
+  return new Date(`${dateStr}T${hour.toString().padStart(2, '0')}:${minuteStr}:00-06:00`);
+}
+
+// Formats a Date object into the Google Calendar deep link format: YYYYMMDDTHHmmSSZ
+function formatDeepLinkDate(date) {
+  // Use the ISO string, remove dashes, colons, and fractional seconds.
+  return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+}
+
+// Builds the deep link URL and opens it in a new tab.
+function scheduleEventDeepLink(selectedBlock, durationMinutes, eventDetails, attendeeEmails) {
+  // Convert the selected block to a start Date.
+  const startDate = convertBlockToDate(selectedBlock);
+  // Calculate the event end date.
+  const endDate = new Date(startDate.getTime() + durationMinutes * 60000);
+  
+  // Format both dates.
+  const startDeep = formatDeepLinkDate(startDate);
+  const endDeep = formatDeepLinkDate(endDate);
+  
+  // Build the base URL.
+  const baseUrl = 'https://calendar.google.com/calendar/u/0/r/eventedit';
+  // Construct query parameters:
+  // - text: event title
+  // - dates: start/end in deep link format separated by a slash
+  // - details: event description
+  // - ctz: time zone identifier (America/Chicago)
+  // - add: comma-separated list of attendee emails
+  const params = new URLSearchParams({
+    text: eventDetails.title,
+    dates: `${startDeep}/${endDeep}`,
+    details: eventDetails.description,
+    ctz: 'America/Chicago',
+    add: attendeeEmails.join(','),
+  });
+  const deepLinkUrl = `${baseUrl}?${params.toString()}`;
+  
+  // Open the deep link URL in a new browser tab.
+  window.open(deepLinkUrl, '_blank');
+}
+
 // Convert "YYYY-MM-DD" to Date
 function dateParse(dateString) {
   const [y, m, d] = dateString.split('-').map(Number);
@@ -76,7 +136,7 @@ function getSlotColor(date, hourIndex, groupAvailabilityData) {
   }
 }
 
-function GroupSchedule({ groupData, groupAvailabilityData, startTime, endTime, startDate, endDate }) {
+function GroupSchedule({ groupData, groupAvailabilityData, startTime, endTime, startDate, endDate, eventName }) {
   const [selectedBlocks, setSelectedBlocks] = useState(new Set());
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
@@ -248,13 +308,14 @@ function GroupSchedule({ groupData, groupAvailabilityData, startTime, endTime, s
           onClose={() => setShowPopup(false)}
           groupAvailabilityData={groupAvailabilityData}
           numMembers={numMembers}
+          eventName={eventName}
         />
       )}
     </div>
   );
 }
 
-function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers }) {
+function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers, eventName}) {
   const [users, setUsers] = useState([]);
   const [memberData, setMemberData] = useState([]);
   const [availabilityCounts, setAvailabilityCounts] = useState({});
@@ -275,33 +336,44 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers 
 
   const handleConfirmSelection = async () => {
     console.log("Confirming selection:", selectedBlocks);
-    console.log("Available User IDs:", availableUserIds); // ✅ Debugging log
-
+    console.log("Available User IDs:", availableUserIds);
+  
+    // Optional: Check that Google API is initialized and the user is signed in.
     if (!gapi.auth2) {
       alert("Google API is not initialized. Please refresh and sign in again.");
       return;
     }
-
+    
     const authInstance = gapi.auth2.getAuthInstance();
     const isSignedIn = authInstance?.isSignedIn?.get();
-
     if (!isSignedIn) {
       alert("Please sign in with Google first!");
       return;
     }
-
-    try {
-      const user = authInstance.currentUser.get();
-      const authResponse = user.getAuthResponse();
-      gapi.client.setToken(authResponse);
-
-      await createGoogleCalendarEvent(selectedBlocks, users, availableUserIds);
-      alert("Meeting scheduled successfully!");
-    } catch (error) {
-      console.error("Error scheduling meeting:", error);
-      alert("Failed to schedule the meeting. Please try again.");
-    }
-};
+    
+    // For the deep link, we'll use the first selected time block.
+    const selectedBlock = selectedBlocks[0];
+    
+    // Define the event details (customize as needed).
+    const eventDetails = {
+      title: eventName || "Group Meeting",
+      description: "\n\nThis event was scheduled with SyncUp"
+    };
+    
+    // Build the attendee email list from availableUserIds using the 'users' object.
+    const attendeeEmails = availableUserIds
+      .filter(id => users[id])  // Ensure the email exists.
+      .map(id => users[id]);     // 'users' contains email addresses from Firestore.
+    
+    // Define the event duration in minutes (for example, 30 minutes).
+    const durationMinutes = 30;
+    
+    // Call the deep link helper to open the new event page.
+    scheduleEventDeepLink(selectedBlock, durationMinutes, eventDetails, attendeeEmails);
+    
+    // Optionally, update the UI or close the popup.
+  };
+  
 
   useEffect(() => {
     console.log("Selected Blocks:", selectedBlocks);
@@ -450,7 +522,8 @@ function formatYyyyMmDd(date) {
   return `${y}-${m}-${d}`;
 }
 
-export default function GroupAvailability({ groupData, groupAvailabilityData, startDate, endDate, startTime, endTime}) {
+export default function GroupAvailability({ groupData, groupAvailabilityData, startDate, endDate, startTime, endTime, eventName}) {
+  console.log("Event Name:", eventName);
   const [weekStart, setWeekStart] = useState(() => new Date(startDate));
   const [weekEnd, setWeekEnd] = useState(() => new Date(endDate));
 
@@ -506,6 +579,7 @@ export default function GroupAvailability({ groupData, groupAvailabilityData, st
         endTime={endTime}
         startDate={formatYyyyMmDd(weekStart)}
         endDate={formatYyyyMmDd(weekEnd)}
+        eventName={eventName} 
       />
     </div>
   );
