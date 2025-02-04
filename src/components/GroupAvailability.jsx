@@ -7,6 +7,9 @@ import EventRoundedIcon from '@mui/icons-material/EventRounded';
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import Draggable from 'react-draggable';
+import Button from '@mui/material/Button';
+import { createGoogleCalendarEvent } from '../services/googleCalender';
+
 
 import { collection, getDocs } from "firebase/firestore";
 import { db } from '../firebase';
@@ -255,16 +258,60 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers 
   const [users, setUsers] = useState([]);
   const [memberData, setMemberData] = useState([]);
   const [availabilityCounts, setAvailabilityCounts] = useState({});
+  // Extract available user IDs for the selected time slots
+  const availableUserIds = memberData.filter(member => 
+    selectedBlocks.some(block => {
+      const [dateStr] = block.split(" "); // Extract the date part
+      return member.availability[dateStr] && member.availability[dateStr].data.includes(1);
+    })
+  ).map(member => member.id);
 
   useEffect(() => {
-    // console.log("Selected Blocks:", selectedBlocks);
+    if (Object.keys(users).length > 0) {
+      console.log("✅ Users data is now available:", users);
+    }
+  }, [users]);
+  
+
+  const handleConfirmSelection = async () => {
+    console.log("Confirming selection:", selectedBlocks);
+    console.log("Available User IDs:", availableUserIds); // ✅ Debugging log
+
+    if (!gapi.auth2) {
+      alert("Google API is not initialized. Please refresh and sign in again.");
+      return;
+    }
+
+    const authInstance = gapi.auth2.getAuthInstance();
+    const isSignedIn = authInstance?.isSignedIn?.get();
+
+    if (!isSignedIn) {
+      alert("Please sign in with Google first!");
+      return;
+    }
+
+    try {
+      const user = authInstance.currentUser.get();
+      const authResponse = user.getAuthResponse();
+      gapi.client.setToken(authResponse);
+
+      await createGoogleCalendarEvent(selectedBlocks, users, availableUserIds);
+      alert("Meeting scheduled successfully!");
+    } catch (error) {
+      console.error("Error scheduling meeting:", error);
+      alert("Failed to schedule the meeting. Please try again.");
+    }
+};
+
+  useEffect(() => {
+    console.log("Selected Blocks:", selectedBlocks);
     const fetchData = async () => {
       try {
         const usersRef = collection(db, "users");
         const usersSnapshot = await getDocs(usersRef);
         const userData = {};
         usersSnapshot.docs.forEach((doc) => {
-          userData[doc.id] = doc.data().name;
+          userData[doc.id] = doc.data().email;
         });
         setUsers(userData);
 
@@ -272,8 +319,10 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers 
         const availabilitySnapshot = await getDocs(availabilityRef);
         const members = availabilitySnapshot.docs.map(doc => ({
           id: doc.id,
-          availability: doc.data().availability
+          availability: doc.data()
         }));
+        // console.log("availability: ", members[availability]);
+        console.log("members are: ", members);
         setMemberData(members);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -293,12 +342,8 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers 
         const totalMinutes = (parseInt(hour) % 12 + (block.includes('PM') ? 12 : 0)) * 60 + (ampmMinutes.includes(':30') ? 30 : 0);
         const hourIndex = (totalMinutes - 480) / 30;
     
-        // console.log(`Checking availability for ${isoDate} at index ${hourIndex}`);
-        // console.log("Data at this date:", groupAvailabilityData[isoDate]);
-    
         counts[block] = groupAvailabilityData[isoDate]?.[hourIndex] || 0;
       });
-      // console.log("availabilityCounts: ", availabilityCounts);
     
       setAvailabilityCounts(counts);
     };
@@ -388,6 +433,9 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers 
               ))}
             </ul>
           </div>
+          <Button variant="contained" color="primary" size="large" onClick={handleConfirmSelection}>
+            Confirm Selection
+          </Button>
         </div>
       </div>
     </Draggable>
