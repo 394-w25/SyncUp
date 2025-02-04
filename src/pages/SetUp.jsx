@@ -144,7 +144,7 @@ const SetUp = () => {
 
     const handleGoogleAuth = async () => {
         try {
-        const user = await handleAuth(setIsAuthenticated);
+        const user = await handleAuth(setIsAuthenticated, setUserId);
         setUserId(user.uid);
         setUserName(user.displayName);
         localStorage.setItem('user-id', user.uid);

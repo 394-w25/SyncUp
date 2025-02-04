@@ -5,33 +5,33 @@ import { db } from '../firebase'; // Assuming you have a firebase.js file for Fi
 
 const auth = getAuth();
 
-// const initializeGAPI = async () => {
-//   return new Promise((resolve, reject) => {
-//     console.log("🔄 Loading GAPI...");
-//     gapi.load("client:auth2", async () => {
-//       try {
-//         console.log("🚀 Initializing GAPI Client...");
-//         await gapi.client.init({
-//           clientId: "308692654908-c3sb5qvhs1nhc8t3lju2n1lqsem6123q.apps.googleusercontent.com",
-//           apiKey: "AIzaSyALwmIcPkkZnfIXKwbMQa0DBtQ-iqv6bho",
-//           scope: "https://www.googleapis.com/auth/calendar",
-//           discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"],
-//         });
+const initializeGAPI = async () => {
+  return new Promise((resolve, reject) => {
+    console.log("🔄 Loading GAPI...");
+    gapi.load("client:auth2", async () => {
+      try {
+        console.log("🚀 Initializing GAPI Client...");
+        await gapi.client.init({
+          clientId: "308692654908-c3sb5qvhs1nhc8t3lju2n1lqsem6123q.apps.googleusercontent.com",
+          apiKey: "AIzaSyALwmIcPkkZnfIXKwbMQa0DBtQ-iqv6bho",
+          scope: "https://www.googleapis.com/auth/calendar",
+          discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"],
+        });
 
-//         console.log("✅ GAPI Initialized!");
-//         resolve();
-//       } catch (error) {
-//         console.error("❌ GAPI Initialization Error:", error);
-//         reject(error);
-//       }
-//     });
-//   });
-// };
+        console.log("✅ GAPI Initialized!");
+        resolve();
+      } catch (error) {
+        console.error("❌ GAPI Initialization Error:", error);
+        reject(error);
+      }
+    });
+  });
+};
 
 const signInWithGoogle = async () => {
   try {
     console.log("⏳ Initializing GAPI...");
-    // await initializeGAPI(); 
+    await initializeGAPI(); 
     console.log("✅ GAPI Initialized!");
 
     console.log("⏳ Signing in with Firebase...");
@@ -99,6 +99,31 @@ const signInWithGoogle = async () => {
 //     }
 //   };
 
+const checkGoogleSignInStatus = async () => {
+  try {
+    console.log("🔍 Checking Google Sign-In Status...");
+
+    if (!gapi.auth2) {
+      console.log("❌ GAPI auth2 not initialized. Initializing now...");
+      await initializeGAPI();
+    }
+
+    const authInstance = gapi.auth2.getAuthInstance();
+    if (!authInstance) {
+      console.log("❌ GAPI auth instance not available.");
+      return false;
+    }
+
+    const isSignedIn = authInstance.isSignedIn.get();
+    console.log("🔑 Google API Sign-In Status:", isSignedIn);
+
+    return isSignedIn;
+  } catch (error) {
+    console.error("❌ Error checking Google sign-in status:", error);
+    return false;
+  }
+};
+
 
 // const checkGoogleSignInStatus = async () => {
 //   try {
@@ -137,6 +162,7 @@ const signInWithGoogle = async () => {
 //     return false;
 //   }
 // };
+
 const refreshGoogleToken = async () => {
   const authInstance = gapi.auth2.getAuthInstance();
   if (!authInstance) return;
@@ -157,7 +183,8 @@ const handleAuth = async (setIsAuthenticated, setUserId) => {
     try {
       const user = await signInWithGoogle();
       setIsAuthenticated(true);
-      setUserId(user.uid);
+      // setUserId(user.uid);
+      if (setUserId) setUserId(user.uid); 
       localStorage.setItem('google-auth', 'true');
       localStorage.setItem('user-id', user.uid); // Add this line
       return user;
@@ -211,9 +238,9 @@ const signOut = async (setIsAuthenticated, setUserId) => {
 // export { signInWithGoogle, handleAuth, updateIsSynced, signOut };
 export { 
   signInWithGoogle, 
-  // checkGoogleSignInStatus, 
+  checkGoogleSignInStatus, 
   refreshGoogleToken, 
-  // initializeGAPI, 
+  initializeGAPI, 
   signOut, 
   updateIsSynced, 
   handleAuth 

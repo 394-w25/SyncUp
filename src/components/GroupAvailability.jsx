@@ -8,7 +8,9 @@ import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import Draggable from 'react-draggable';
 import Button from '@mui/material/Button';
-import { createGoogleCalendarEvent } from '../services/googleCalender';
+import { handleAuth } from '../services/googleAuth';  // Adjust the path if needed
+
+// import { createGoogleCalendarEvent } from '../services/googleCalender';
 
 
 import { collection, getDocs } from "firebase/firestore";
@@ -137,7 +139,7 @@ function getSlotColor(date, hourIndex, groupAvailabilityData) {
   }
 }
 
-function GroupSchedule({ groupData, groupAvailabilityData, startTime, endTime, startDate, endDate, eventName }) {
+function GroupSchedule({ groupData, groupAvailabilityData, startTime, endTime, startDate, endDate, eventName, isAuthenticated, setIsAuthenticated, userId, setUserId }) {
   const [selectedBlocks, setSelectedBlocks] = useState(new Set());
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
@@ -310,13 +312,17 @@ function GroupSchedule({ groupData, groupAvailabilityData, startTime, endTime, s
           groupAvailabilityData={groupAvailabilityData}
           numMembers={numMembers}
           eventName={eventName}
+          isAuthenticated={isAuthenticated}
+          setIsAuthenticated={setIsAuthenticated}
+          userId={userId}
+          setUserId={setUserId}
         />
       )}
     </div>
   );
 }
 
-function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers, eventName}) {
+function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers, eventName, isAuthenticated, setIsAuthenticated, userId, setUserId}) {
   const [users, setUsers] = useState([]);
   const [memberData, setMemberData] = useState([]);
   const [availabilityCounts, setAvailabilityCounts] = useState({});
@@ -334,58 +340,125 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
     }
   }, [users]);
   
-
   const handleConfirmSelection = async () => {
-    console.log("Confirming selection:", selectedBlocks);
-    console.log("Available User IDs:", availableUserIds);
-    
-    if (!gapi.auth2) {
-      alert("Google API is not initialized. Please refresh and sign in again.");
-      return;
-    }
-    
-    const authInstance = gapi.auth2.getAuthInstance();
-    const isSignedIn = authInstance?.isSignedIn?.get();
-    if (!isSignedIn) {
+    const isAuthenticated = localStorage.getItem('google-auth') === 'true';
+  
+    if (!isAuthenticated) {
       alert("Please sign in with Google first!");
       return;
     }
-    
-    // Compute the start and end times based on selected blocks.
-    // Assume each block represents a 30-minute slot.
-    const sortedBlocks = Array.from(selectedBlocks).sort((a, b) => {
-      // You can sort by converting to Date objects.
-      return convertBlockToDate(a) - convertBlockToDate(b);
-    });
-    
+  
+    // Proceed with scheduling after confirming the user is signed in
+    const sortedBlocks = Array.from(selectedBlocks).sort((a, b) => convertBlockToDate(a) - convertBlockToDate(b));
     const startBlock = sortedBlocks[0];
     const endBlock = sortedBlocks[sortedBlocks.length - 1];
-    
-    // Convert blocks to Date objects.
     const startDateObj = convertBlockToDate(startBlock);
-    const endDateObj = convertBlockToDate(endBlock);
-    // Add one block's duration (30 minutes) to the last block to get the true end time.
-    const trueEndDateObj = new Date(endDateObj.getTime() + 30 * 60000);
-    
-    // Compute duration in minutes.
-    const durationMinutes = (trueEndDateObj.getTime() - startDateObj.getTime()) / 60000;
-    
-    // Define the event details using the passed eventName.
+    const endDateObj = new Date(convertBlockToDate(endBlock).getTime() + 30 * 60000);
+  
+    const durationMinutes = (endDateObj - startDateObj) / 60000;
+  
     const eventDetails = {
       title: eventName || "Group Meeting",
       description: "\n\nThis event was scheduled with SyncUp"
     };
-    
-    // Build the attendee email list.
-    const attendeeEmails = availableUserIds
-      .filter(id => users[id])  // Ensure the email exists.
-      .map(id => users[id]);
-    
-    // Now call the deep link helper using the earliest selected block and computed duration.
+  
+    const attendeeEmails = availableUserIds.filter(id => users[id]).map(id => users[id]);
+  
     scheduleEventDeepLink(startBlock, durationMinutes, eventDetails, attendeeEmails);
-    
-    // Optionally, update the UI or close the popup.
   };
+  
+
+  // const handleConfirmSelection = async () => {
+  //   if (!gapi.auth2) {
+  //     alert("Google API is not initialized. Please refresh and sign in again.");
+  //     return;
+  //   }
+    
+  //   const authInstance = gapi.auth2.getAuthInstance();
+  //   const isSignedIn = authInstance?.isSignedIn?.get();
+    
+  //   if (!isSignedIn) {
+  //     // User is not signed in, so handle sign-in with both state setters
+  //     try {
+  //       const user = await handleAuth(setIsAuthenticated, setUserId);  // Pass both here
+  //       console.log('User authenticated:', user);
+  //     } catch (error) {
+  //       console.error('Authentication failed:', error);
+  //       alert('Failed to sign in. Please try again.');
+  //       return;
+  //     }
+  //   }
+    
+  //   // Proceed with scheduling after successful authentication
+  //   const sortedBlocks = Array.from(selectedBlocks).sort((a, b) => convertBlockToDate(a) - convertBlockToDate(b));
+  //   const startBlock = sortedBlocks[0];
+  //   const endBlock = sortedBlocks[sortedBlocks.length - 1];
+  //   const startDateObj = convertBlockToDate(startBlock);
+  //   const endDateObj = new Date(convertBlockToDate(endBlock).getTime() + 30 * 60000);
+    
+  //   const durationMinutes = (endDateObj - startDateObj) / 60000;
+    
+  //   const eventDetails = {
+  //     title: eventName || "Group Meeting",
+  //     description: "\n\nThis event was scheduled with SyncUp"
+  //   };
+    
+  //   const attendeeEmails = availableUserIds.filter(id => users[id]).map(id => users[id]);
+    
+  //   scheduleEventDeepLink(startBlock, durationMinutes, eventDetails, attendeeEmails);
+  // };
+  
+  // const handleConfirmSelection = async () => {
+  //   console.log("Confirming selection:", selectedBlocks);
+  //   console.log("Available User IDs:", availableUserIds);
+    
+  //   if (!gapi.auth2) {
+  //     alert("Google API is not initialized. Please refresh and sign in again.");
+  //     return;
+  //   }
+    
+  //   const authInstance = gapi.auth2.getAuthInstance();
+  //   const isSignedIn = authInstance?.isSignedIn?.get();
+  //   if (!isSignedIn) {
+  //     alert("Please sign in with Google first!");
+  //     return;
+  //   }
+    
+  //   // Compute the start and end times based on selected blocks.
+  //   // Assume each block represents a 30-minute slot.
+  //   const sortedBlocks = Array.from(selectedBlocks).sort((a, b) => {
+  //     // You can sort by converting to Date objects.
+  //     return convertBlockToDate(a) - convertBlockToDate(b);
+  //   });
+    
+  //   const startBlock = sortedBlocks[0];
+  //   const endBlock = sortedBlocks[sortedBlocks.length - 1];
+    
+  //   // Convert blocks to Date objects.
+  //   const startDateObj = convertBlockToDate(startBlock);
+  //   const endDateObj = convertBlockToDate(endBlock);
+  //   // Add one block's duration (30 minutes) to the last block to get the true end time.
+  //   const trueEndDateObj = new Date(endDateObj.getTime() + 30 * 60000);
+    
+  //   // Compute duration in minutes.
+  //   const durationMinutes = (trueEndDateObj.getTime() - startDateObj.getTime()) / 60000;
+    
+  //   // Define the event details using the passed eventName.
+  //   const eventDetails = {
+  //     title: eventName || "Group Meeting",
+  //     description: "\n\nThis event was scheduled with SyncUp"
+  //   };
+    
+  //   // Build the attendee email list.
+  //   const attendeeEmails = availableUserIds
+  //     .filter(id => users[id])  // Ensure the email exists.
+  //     .map(id => users[id]);
+    
+  //   // Now call the deep link helper using the earliest selected block and computed duration.
+  //   scheduleEventDeepLink(startBlock, durationMinutes, eventDetails, attendeeEmails);
+    
+  //   // Optionally, update the UI or close the popup.
+  // };
   
   
 
@@ -537,6 +610,9 @@ function formatYyyyMmDd(date) {
 }
 
 export default function GroupAvailability({ groupData, groupAvailabilityData, startDate, endDate, startTime, endTime, eventName}) {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userId, setUserId] = useState(null); 
+
   console.log("Event Name:", eventName);
   const [weekStart, setWeekStart] = useState(() => new Date(startDate));
   const [weekEnd, setWeekEnd] = useState(() => new Date(endDate));
@@ -594,6 +670,10 @@ export default function GroupAvailability({ groupData, groupAvailabilityData, st
         startDate={formatYyyyMmDd(weekStart)}
         endDate={formatYyyyMmDd(weekEnd)}
         eventName={eventName} 
+        isAuthenticated={isAuthenticated}
+        setIsAuthenticated={setIsAuthenticated}
+        userId={userId}
+        setUserId={setUserId}
       />
     </div>
   );
