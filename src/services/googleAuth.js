@@ -5,33 +5,33 @@ import { db } from '../firebase'; // Assuming you have a firebase.js file for Fi
 
 const auth = getAuth();
 
-const initializeGAPI = async () => {
-  return new Promise((resolve, reject) => {
-    console.log("🔄 Loading GAPI...");
-    gapi.load("client:auth2", async () => {
-      try {
-        console.log("🚀 Initializing GAPI Client...");
-        await gapi.client.init({
-          clientId: "308692654908-c3sb5qvhs1nhc8t3lju2n1lqsem6123q.apps.googleusercontent.com",
-          apiKey: "AIzaSyALwmIcPkkZnfIXKwbMQa0DBtQ-iqv6bho",
-          scope: "https://www.googleapis.com/auth/calendar",
-          discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"],
-        });
+// const initializeGAPI = async () => {
+//   return new Promise((resolve, reject) => {
+//     console.log("🔄 Loading GAPI...");
+//     gapi.load("client:auth2", async () => {
+//       try {
+//         console.log("🚀 Initializing GAPI Client...");
+//         await gapi.client.init({
+//           clientId: "308692654908-c3sb5qvhs1nhc8t3lju2n1lqsem6123q.apps.googleusercontent.com",
+//           apiKey: "AIzaSyALwmIcPkkZnfIXKwbMQa0DBtQ-iqv6bho",
+//           scope: "https://www.googleapis.com/auth/calendar",
+//           discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"],
+//         });
 
-        console.log("✅ GAPI Initialized!");
-        resolve();
-      } catch (error) {
-        console.error("❌ GAPI Initialization Error:", error);
-        reject(error);
-      }
-    });
-  });
-};
+//         console.log("✅ GAPI Initialized!");
+//         resolve();
+//       } catch (error) {
+//         console.error("❌ GAPI Initialization Error:", error);
+//         reject(error);
+//       }
+//     });
+//   });
+// };
 
 const signInWithGoogle = async () => {
   try {
     console.log("⏳ Initializing GAPI...");
-    await initializeGAPI(); 
+    // await initializeGAPI(); 
     console.log("✅ GAPI Initialized!");
 
     console.log("⏳ Signing in with Firebase...");
@@ -100,43 +100,43 @@ const signInWithGoogle = async () => {
 //   };
 
 
-const checkGoogleSignInStatus = async () => {
-  try {
-    console.log("🔍 Checking Google Sign-In Status...");
+// const checkGoogleSignInStatus = async () => {
+//   try {
+//     console.log("🔍 Checking Google Sign-In Status...");
 
-    if (!gapi.client) {
-      console.log("❌ GAPI client not initialized. Initializing now...");
-      await initializeGAPI();
-    }
+//     if (!gapi.client) {
+//       console.log("❌ GAPI client not initialized. Initializing now...");
+//       await initializeGAPI();
+//     }
 
-    const authInstance = gapi.auth2?.getAuthInstance();
-    if (!authInstance) {
-      console.log("❌ GAPI auth instance not available. Reinitializing...");
-      await initializeGAPI();
-      return false;
-    }
+//     const authInstance = gapi.auth2?.getAuthInstance();
+//     if (!authInstance) {
+//       console.log("❌ GAPI auth instance not available. Reinitializing...");
+//       await initializeGAPI();
+//       return false;
+//     }
 
-    let isSignedIn = authInstance.isSignedIn.get();
-    console.log("🔑 Google API Sign-In Status:", isSignedIn);
+//     let isSignedIn = authInstance.isSignedIn.get();
+//     console.log("🔑 Google API Sign-In Status:", isSignedIn);
 
-    if (!isSignedIn) {
-      console.warn("⚠️ User not signed in. Attempting sign-in...");
-      try {
-        await authInstance.signIn();
-        isSignedIn = authInstance.isSignedIn.get();
-        console.log("✅ User signed in successfully:", isSignedIn);
-      } catch (error) {
-        console.error("❌ Error signing in user:", error);
-        return false;
-      }
-    }
+//     if (!isSignedIn) {
+//       console.warn("⚠️ User not signed in. Attempting sign-in...");
+//       try {
+//         await authInstance.signIn();
+//         isSignedIn = authInstance.isSignedIn.get();
+//         console.log("✅ User signed in successfully:", isSignedIn);
+//       } catch (error) {
+//         console.error("❌ Error signing in user:", error);
+//         return false;
+//       }
+//     }
 
-    return isSignedIn;
-  } catch (error) {
-    console.error("❌ Error checking Google sign-in status:", error);
-    return false;
-  }
-};
+//     return isSignedIn;
+//   } catch (error) {
+//     console.error("❌ Error checking Google sign-in status:", error);
+//     return false;
+//   }
+// };
 const refreshGoogleToken = async () => {
   const authInstance = gapi.auth2.getAuthInstance();
   if (!authInstance) return;
@@ -211,9 +211,9 @@ const signOut = async (setIsAuthenticated, setUserId) => {
 // export { signInWithGoogle, handleAuth, updateIsSynced, signOut };
 export { 
   signInWithGoogle, 
-  checkGoogleSignInStatus, 
+  // checkGoogleSignInStatus, 
   refreshGoogleToken, 
-  initializeGAPI, 
+  // initializeGAPI, 
   signOut, 
   updateIsSynced, 
   handleAuth 

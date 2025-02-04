@@ -87,8 +87,9 @@ function scheduleEventDeepLink(selectedBlock, durationMinutes, eventDetails, att
     ctz: 'America/Chicago',
     add: attendeeEmails.join(','),
   });
+  console.log("params: ", params.dates);
   const deepLinkUrl = `${baseUrl}?${params.toString()}`;
-  
+  console.log("deepLinkUrl: ", deepLinkUrl);
   // Open the deep link URL in a new browser tab.
   window.open(deepLinkUrl, '_blank');
 }
@@ -337,8 +338,7 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
   const handleConfirmSelection = async () => {
     console.log("Confirming selection:", selectedBlocks);
     console.log("Available User IDs:", availableUserIds);
-  
-    // Optional: Check that Google API is initialized and the user is signed in.
+    
     if (!gapi.auth2) {
       alert("Google API is not initialized. Please refresh and sign in again.");
       return;
@@ -351,28 +351,42 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
       return;
     }
     
-    // For the deep link, we'll use the first selected time block.
-    const selectedBlock = selectedBlocks[0];
+    // Compute the start and end times based on selected blocks.
+    // Assume each block represents a 30-minute slot.
+    const sortedBlocks = Array.from(selectedBlocks).sort((a, b) => {
+      // You can sort by converting to Date objects.
+      return convertBlockToDate(a) - convertBlockToDate(b);
+    });
     
-    // Define the event details (customize as needed).
+    const startBlock = sortedBlocks[0];
+    const endBlock = sortedBlocks[sortedBlocks.length - 1];
+    
+    // Convert blocks to Date objects.
+    const startDateObj = convertBlockToDate(startBlock);
+    const endDateObj = convertBlockToDate(endBlock);
+    // Add one block's duration (30 minutes) to the last block to get the true end time.
+    const trueEndDateObj = new Date(endDateObj.getTime() + 30 * 60000);
+    
+    // Compute duration in minutes.
+    const durationMinutes = (trueEndDateObj.getTime() - startDateObj.getTime()) / 60000;
+    
+    // Define the event details using the passed eventName.
     const eventDetails = {
       title: eventName || "Group Meeting",
       description: "\n\nThis event was scheduled with SyncUp"
     };
     
-    // Build the attendee email list from availableUserIds using the 'users' object.
+    // Build the attendee email list.
     const attendeeEmails = availableUserIds
       .filter(id => users[id])  // Ensure the email exists.
-      .map(id => users[id]);     // 'users' contains email addresses from Firestore.
+      .map(id => users[id]);
     
-    // Define the event duration in minutes (for example, 30 minutes).
-    const durationMinutes = 30;
-    
-    // Call the deep link helper to open the new event page.
-    scheduleEventDeepLink(selectedBlock, durationMinutes, eventDetails, attendeeEmails);
+    // Now call the deep link helper using the earliest selected block and computed duration.
+    scheduleEventDeepLink(startBlock, durationMinutes, eventDetails, attendeeEmails);
     
     // Optionally, update the UI or close the popup.
   };
+  
   
 
   useEffect(() => {
