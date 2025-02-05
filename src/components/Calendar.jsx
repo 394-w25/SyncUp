@@ -6,19 +6,9 @@ import Box from '@mui/material/Box';
 import CalendarEvents from './CalendarEvents';
 import { importEvents } from '../utils/importEvents';
 import { calculateAvailability } from '../utils/availability';
-import { updateIsSynced } from '../services/googleAuth';
-import moment from 'moment';
 
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
-
-// for week toggler
-function formatYyyyMmDd(date) {
-  const yyyy = date.getFullYear();
-  const mm = String(date.getMonth() + 1).padStart(2, "0");
-  const dd = String(date.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
 
 const buttonTheme = createTheme({
   palette: {
@@ -138,18 +128,18 @@ const Calendar = ({
     setWeekEnd(newEnd);
   };
 
-  useEffect(() => {
-    if (startDate && endDate && startTime && endTime) {
-      console.log('Calendar: Received props', {
-        startDate,
-        endDate,
-        startTime,
-        endTime,
-        weekStart,
-        weekEnd
-      });
-    }
-  }, [startDate, endDate, startTime, endTime, weekStart, weekEnd]);
+  // useEffect(() => {
+  //   if (startDate && endDate && startTime && endTime) {
+  //     console.log('Calendar: Received props', {
+  //       startDate,
+  //       endDate,
+  //       startTime,
+  //       endTime,
+  //       weekStart,
+  //       weekEnd
+  //     });
+  //   }
+  // }, [startDate, endDate, startTime, endTime, weekStart, weekEnd]);
 
   if (!startDate || !endDate || startTime === undefined || endTime === undefined) {
     return null;
@@ -162,7 +152,7 @@ const Calendar = ({
         throw new Error('User ID is null or undefined');
       }
 
-      console.log('Import dates: ', convertToISO(startDate), convertToISO(endDate));
+      // console.log('Import dates: ', convertToISO(startDate), convertToISO(endDate));
       const events = await importEvents(
         userId, 
         convertToISO(startDate), 
@@ -171,7 +161,6 @@ const Calendar = ({
       setEvents(events);
       const availability = calculateAvailability(events, userId);
       setAvailability(availability);
-      await updateIsSynced(userId);
     } catch (error) {
       console.error('Error importing events:', error);
     } finally {

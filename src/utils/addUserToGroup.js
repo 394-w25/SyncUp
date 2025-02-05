@@ -8,6 +8,6 @@ export const addParticipantToGroup = async (groupId, participant) => {
         participants: arrayUnion(participant)
     });
 
-    console.log('Participant added to group:', groupId);
-    console.log('Participant:', participant);
+    // console.log('Participant added to group:', groupId);
+    // console.log('Participant:', participant);
 };

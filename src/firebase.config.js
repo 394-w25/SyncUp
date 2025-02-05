@@ -28,7 +28,7 @@ export const fetchParticipants = async (meetingId, event) => {
     const snapshot = await getDocs(participantsRef);
     const participants = snapshot.docs.map((doc) => ({
       id: doc.id,
-      ...doc.data(), // Includes 'name' and 'isSynced'
+      ...doc.data(), // Includes 'name', 'email'
     }));
     return participants;
   } catch (error) {

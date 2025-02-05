@@ -52,7 +52,7 @@ const MeetingPage = () => {
     // Get groupId from the URL
     const [groupId, setGroupId] = useState(null);
     const [groupData, setGroupData] = useState(null);
-    const [groupAvailabilityData, setGroupAvailabilityData] = useState(null);
+    const [groupAvailabilityData, setGroupAvailabilityData] = useState({});
     const [participantsData, setParticipantsData] = useState({});
 
     const [eventTitle, setEvent] = useState('');
@@ -74,7 +74,7 @@ const MeetingPage = () => {
     const [userId, setUserId] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
 
-    useEffect(() => {
+    useEffect(() => {                
         const initializePage = async () => {
             setIsLoading(true);
             const pathParts = location.pathname.split('/');
@@ -86,7 +86,6 @@ const MeetingPage = () => {
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists) {
                     const data = docSnap.data();
-                    console.log('data', data);
 
                     const formattedStart = formatDate(data.proposedDays[0].toDate());
                     const formattedEnd = formatDate(data.proposedDays[data.proposedDays.length - 1].toDate());
@@ -96,7 +95,7 @@ const MeetingPage = () => {
                     setEndDate(formattedEnd);
                     setStartTime(data.proposedStart);
                     setEndTime(data.proposedEnd);
-                    console.log('Event title', data.title, 'Start Date', formatDate(data.proposedDays[0].toDate()), 'End Date',formatDate(data.proposedDays[data.proposedDays.length - 1].toDate()), 'Start Time', data.proposedStart, 'End Time', data.proposedEnd, 'created At', data.createdAt.toDate());
+                    // console.log('Event title', data.title, 'Start Date', formatDate(data.proposedDays[0].toDate()), 'End Date',formatDate(data.proposedDays[data.proposedDays.length - 1].toDate()), 'Start Time', data.proposedStart, 'End Time', data.proposedEnd, 'created At', data.createdAt.toDate());
                 }
             } catch (error) {
                 console.error('Error fetching meeting data:', error);
@@ -115,7 +114,7 @@ const MeetingPage = () => {
             if (storedAuth === 'true' && storedUserId) {
             setIsAuthenticated(true);
             setUserId(storedUserId);
-            console.log('Stored user ID:', storedUserId);
+            // console.log('Stored user ID:', storedUserId);
             // add userid to the groupid
             addParticipantToGroup(groupId, storedUserId);
             // console.log('Stored user ID:', storedUserId);
@@ -128,6 +127,7 @@ const MeetingPage = () => {
         gapi.load('client:auth2', initClient);
     }, []);
 
+    // Fetches group data, group availability data, and participants data
     useEffect(() => {
         const getGroupData = async () => {
             const groupData = await fetchGroupData(groupId);
@@ -146,14 +146,14 @@ const MeetingPage = () => {
     }, [userId, meetingId, event]);
 
     // debugging
-    useEffect(() => {
-        console.log('States updated:', {
-            startDate,
-            endDate,
-            startTime,
-            endTime
-        });
-    }, [startDate, endDate, startTime, endTime]);
+    // useEffect(() => {
+    //     console.log('States updated:', {
+    //         startDate,
+    //         endDate,
+    //         startTime,
+    //         endTime
+    //     });
+    // }, [startDate, endDate, startTime, endTime]);
 
     // Push availability data to Firestore
 

@@ -27,18 +27,18 @@ export default function CalendarEvents({
 
   const { dates } = generateDateRange(startDate, endDate);
 
-  useEffect(() => {
-    if (startDate && endDate && startTime && endTime) {
-      console.log('CalendarEvents: Received props', {
-        startDate,
-        endDate,
-        startTime,
-        endTime,
-        dates,
-        events
-      });
-    }
-  }, [startDate, endDate, startTime, endTime, dates, events]);
+  // useEffect(() => {
+  //   if (startDate && endDate && startTime && endTime) {
+  //     console.log('CalendarEvents: Received props', {
+  //       startDate,
+  //       endDate,
+  //       startTime,
+  //       endTime,
+  //       dates,
+  //       events
+  //     });
+  //   }
+  // }, [startDate, endDate, startTime, endTime, dates, events]);
 
   // Create an array of label times (8 AM, 9 AM, etc.)
   const times = [];

@@ -4,7 +4,7 @@ import { db } from '../firebase'; // Assuming you have a firebase.js file for Fi
 
 export const importEvents = async (userId, startDate, endDate) => {
   try {
-    console.log('Received user ID:', userId);
+    // console.log('Received user ID:', userId);
     if (!userId) {
       throw new Error('User ID is null or undefined');
     }
@@ -15,8 +15,8 @@ export const importEvents = async (userId, startDate, endDate) => {
     const start = new Date(startDate.toISOString().split('T')[0] + 'T00:00:00');
     const end = new Date(endDate.toISOString().split('T')[0] + 'T23:59:59');
 
-    console.log('Input dates:', { startDate, endDate });
-    console.log('Fetching events between:', start, 'and', end);
+    // console.log('Input dates:', { startDate, endDate });
+    // console.log('Fetching events between:', start, 'and', end);
     
     const events = await getGoogleCalendarEvents(start, end);
     const eventsByDate = {};
@@ -46,7 +46,7 @@ export const importEvents = async (userId, startDate, endDate) => {
     // Save events to Firestore
     for (const [date, events] of Object.entries(eventsByDate)) {
       const docId = `${userId}_${date}`;
-      console.log('Saving document with ID:', docId);
+      // console.log('Saving document with ID:', docId);
       await setDoc(doc(db, "calendarEvents", docId), {
         userId,
         date: new Date(date),
