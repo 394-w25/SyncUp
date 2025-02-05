@@ -100,7 +100,7 @@ const MeetingPage = () => {
                 const groupParticipantsData = await fetchUserDataInGroup(groupData.participants);
                 
               
-              Data(groupParticipantsData);
+              setParticipantsData(groupParticipantsData);
                 // console.log('Availability data:', availabilityData); // Debugging log
             }
         };
@@ -124,10 +124,10 @@ const MeetingPage = () => {
             }
         };
 
-        initializePage();
-    }, [location]);
+        getMeetingData();
 
-    useEffect(() => {
+        // initializePage();
+    // }, [location]);
         const initClient = async () => {
         try {
             await initializeGAPIClient();
@@ -198,48 +198,48 @@ const MeetingPage = () => {
         <div className="w-screen h-screen px-4 pb-4 bg-background relative">
             <div className="w-full h-full flex gap-4">
                 <div className='w-full h-full flex flex-col gap-4'>
-                <Calendar
-                    isAuthenticated={isAuthenticated}
-                    handleAuth={handleGoogleAuth}
-                    startDate={startDate}
-                    endDate={endDate}
-                    startTime={startTime}
-                    endTime={endTime}
-                    userId={userId}
-                />
-                </div>
-                <div className='w-[30%] h-full flex flex-col gap-4'>
-                <Legend 
-                    meetingID={meetingId}
-                    eventName={event}
-                    participantData={participantsData}
-                />
-                <GroupAvailability
-                    groupData={groupData}
-                    groupAvailabilityData={groupAvailabilityData}
-                    startDate={startDate}
-                    endDate={endDate}
-                    startTime={startTime}
-                    endTime={endTime}
+                    <Calendar
+                        isAuthenticated={isAuthenticated}
+                        handleAuth={handleGoogleAuth}
+                        startDate={startDate}
+                        endDate={endDate}
+                        startTime={startTime}
+                        endTime={endTime}
+                        userId={userId}
                     />
                 </div>
-            )}
-
-            {/* Sign out button in bottom left corner */}
-            {isAuthenticated && (
-                <div className="absolute bottom-4 right-4">
-                <ThemeProvider theme={buttonTheme}>
-                    <IconButton
-                    onClick={handleSignOut}
-                    color="secondary"
-                    size="small"
-                    title="Sign Out"
-                    >
-                    <LogoutIcon />
-                    </IconButton>
-                </ThemeProvider>
+                <div className='w-[30%] h-full flex flex-col gap-4'>
+                    <Legend 
+                        meetingID={meetingId}
+                        eventName={event}
+                        participantData={participantsData}
+                    />
+                    <GroupAvailability
+                        groupData={groupData}
+                        groupAvailabilityData={groupAvailabilityData}
+                        startDate={startDate}
+                        endDate={endDate}
+                        startTime={startTime}
+                        endTime={endTime}
+                        />
                 </div>
-            )}
+
+                {/* Sign out button in bottom left corner */}
+                {isAuthenticated && (
+                    <div className="absolute bottom-4 right-4">
+                    <ThemeProvider theme={buttonTheme}>
+                        <IconButton
+                        onClick={handleSignOut}
+                        color="secondary"
+                        size="small"
+                        title="Sign Out"
+                        >
+                        <LogoutIcon />
+                        </IconButton>
+                    </ThemeProvider>
+                    </div>
+                )};
+            </div>
         </div>
     );
 };

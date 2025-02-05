@@ -227,8 +227,6 @@ const SetUp = () => {
                     <div className="flex flex-col gap-9">
                         <div className="bg-white rounded-lg shadow-md p-8">
                             <div className="flex flex-col sm:flex-row items-center gap-4">
-//                                 {!isAuthenticated ? (
-                                    <ThemeProvider theme={buttonTheme}>
                                 
                             <ThemeProvider theme={buttonTheme}>
                                 {!userName ? (
@@ -239,21 +237,13 @@ const SetUp = () => {
                                             color='secondary'
                                             onClick={handleGoogleAuth}
                                             style={{textTransform: 'none', fontSize: '16px'}}
-                                            startIcon={<GoogleIcon />}>
-//                                         <Button 
-//                                         variant='outlined' 
-//                                         color='secondary'
-//                                         disabled={true}
-//                                         style={{textTransform: 'none'}}
-//                                         startIcon={<TaskAltRoundedIcon />}>
-//                                             Signed In!
-//                                         </Button>
-//                                 )}
+                                            startIcon={<GoogleIcon />}
+                                        >
                                             Sign in with Google
                                         </Button>
                                     </>
                                 ) : (
-                                    <h3 className="text-xl font-semibold">Welcome, {userName}</h3>
+                                    <h3 className="text-xl font-semibold">Welcome, {userName}!</h3>
                                 )}
                             </ThemeProvider>
                             </div>
