@@ -30,27 +30,18 @@ const initializeGAPI = async () => {
 
 const signInWithGoogle = async () => {
   try {
-    console.log("⏳ Initializing GAPI...");
     await initializeGAPI(); 
-    console.log("✅ GAPI Initialized!");
-
-    console.log("⏳ Signing in with Firebase...");
     const provider = new GoogleAuthProvider();
     provider.addScope("https://www.googleapis.com/auth/calendar");
     provider.addScope("https://www.googleapis.com/auth/calendar.events");
 
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
-    console.log("✅ Firebase sign-in success:", user);
-
     const credential = GoogleAuthProvider.credentialFromResult(result);
     const accessToken = credential.accessToken;
 
     gapi.client.setToken({ access_token: accessToken });
-    console.log("✅ Google API Token set from Firebase:", accessToken);
-
     localStorage.setItem("google-email", user.email);
-    console.log("✅ Current signed-in email stored:", user.email);
     
     await setDoc(doc(db, "users", user.uid), {
       uid: user.uid,
@@ -59,10 +50,10 @@ const signInWithGoogle = async () => {
       isSynced: false,
     });
 
-    console.log("✅ User signed in and authenticated with GAPI.");
+    console.log('User signed in and authenticated');
     return user;
   } catch (error) {
-    console.error("❌ Error signing in with Google:", error);
+    console.error('Error signing in with Google:', error);
     throw error;
   }
 };
@@ -70,10 +61,10 @@ const signInWithGoogle = async () => {
 
 const checkGoogleSignInStatus = async () => {
   try {
-    console.log("🔍 Checking Google Sign-In Status...");
+    console.log("Checking Google Sign-In Status...");
 
     if (!gapi.auth2) {
-      console.log("❌ GAPI auth2 not initialized. Initializing now...");
+      console.log("GAPI auth2 not initialized. Initializing now...");
       await initializeGAPI();
     }
 

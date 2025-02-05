@@ -25,12 +25,12 @@ export const getGoogleCalendarEvents = async (startDate, endDate) => {
       const start = startDate instanceof Date ? startDate : new Date(startDate);
       const end = endDate instanceof Date ? endDate : new Date(endDate);
       
-      console.log('Requesting events from Google Calendar:', {
-        timeMin: start.toISOString(),
-        timeMax: end.toISOString(),
-        startDate: start.toLocaleString(),
-        endDate: end.toLocaleString()
-      });
+      // console.log('Requesting events from Google Calendar:', {
+      //   timeMin: start.toISOString(),
+      //   timeMax: end.toISOString(),
+      //   startDate: start.toLocaleString(),
+      //   endDate: end.toLocaleString()
+      // });
 
       const response = await gapi.client.calendar.events.list({
         calendarId: 'primary',

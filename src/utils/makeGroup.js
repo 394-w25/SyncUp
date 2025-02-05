@@ -26,6 +26,6 @@ export const createGroup = async (groupData) => {
         participants: groupData.participants || [],
     });
 
-    console.log('Group created:', groupLink);
+    // console.log('Group created:', groupLink);
     return { link: groupLink, id: groupId };
 };

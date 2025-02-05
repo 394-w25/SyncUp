@@ -129,11 +129,11 @@ function makeSlotKey(date, hourLabel, isHalfHour = false) {
 function getSlotColor(date, hourIndex, groupAvailabilityData) {
   const iso = date.toISOString().split('T')[0];
 
-  if (!groupAvailabilityData) {
+  if (!groupAvailabilityData['data']) {
     return 'bg-white';
   }
 
-  const slots = groupAvailabilityData[iso];
+  const slots = groupAvailabilityData['data'][iso];
   if (!slots) {
     return 'bg-white';
   }
@@ -149,10 +149,11 @@ function getSlotColor(date, hourIndex, groupAvailabilityData) {
       return 'bg-scale-3';
     case pctAvail >= 0.4:
       return 'bg-scale-2';
-    // case pctAvail >= 0.2:
-    //   return 'bg-scale-1';
+    case pctAvail >= 0.2:
+      return 'bg-scale-1';
     default:
-      return 'bg-scale-none';
+      // return 'bg-scale-none';
+      return 'bg-white';
   }
 }
 
@@ -223,12 +224,6 @@ function GroupSchedule({ groupData, groupAvailabilityData, startTime, endTime, s
       setShowPopup(true);
     }
   };
-
-  // Grid Layout
-  const columns = 1 + dates.length; // one col for hour labels, plus one for each date
-  const rows = 1 + hourLabels.length; // one header row, plus one for each hour
-
-  // Format for convenience
 
   return (
     <div 
@@ -444,10 +439,10 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
 
   const blocks = selectedBlocks.map(block => {
     const [dateStr, hour, ampmMinutes] = block.split(' ');
-    const [_, minutes] = ampmMinutes.split(':');
+    const [ampm, minutes] = ampmMinutes.split(':');
     const formattedTime = `${hour}:${minutes}`;
     const date = new Date(dateStr + 'T12:00:00');
-    return { date, time: formattedTime, block };
+    return { date, time: formattedTime, block, ampm, hour, minutes };
   });
 
   const uniqueDates = [...new Set(blocks.map(b => b.date.toLocaleDateString('en-US', {
@@ -472,7 +467,24 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
 
   const endTime = `${endHour}:${endMinutes === 0 ? '00' : endMinutes}`;
   const timeDisplay = `${times[0]} - ${endTime}`;
-  const minAvailability = Math.min(...Object.values(availabilityCounts));
+
+  const firstBlock = blocks[0];
+  const lastBlock = blocks[blocks.length - 1];
+  const dateString = firstBlock.date.toISOString().split('T')[0];
+  const selectedStartTime = Number(firstBlock['hour']) + (Number(firstBlock['minutes']) / 60) + ((firstBlock['ampm'] === 'PM' && firstBlock['hour'] != 12) ? 12 : 0);
+  const selectedEndTime = endHour + (endMinutes / 60) + ((lastBlock['ampm'] === 'PM' && ![12, 13].includes(endHour)) ? 12 : 0);
+  // console.log('selected from: ', selectedStartTime, ' to: ', selectedEndTime);
+  
+  const availabilityArrayOnDate = groupAvailabilityData['data'][dateString];
+  const availabilityStartTime = groupAvailabilityData['startTime'];
+  const availabilityIntervalMins = groupAvailabilityData['intervalMins'];
+
+  const startIndex = Math.floor((selectedStartTime - availabilityStartTime) * 60 / availabilityIntervalMins);
+  const endIndex = Math.floor((selectedEndTime - availabilityStartTime) * 60 / availabilityIntervalMins);
+  const selectedAvailability = availabilityArrayOnDate ? availabilityArrayOnDate.slice(startIndex, endIndex) : [];
+
+  const minAvailability = Math.min(...selectedAvailability);
+  // console.log('min availability: ', minAvailability);
   
   return (
     <Draggable 
@@ -486,7 +498,7 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
               <IconButton 
                 color="primary" 
                 aria-label="close" 
-                onClick={onClose} 
+                onClick={onClose}
                 className="text-white hover:bg-green-500"
               >
                 <CloseIcon />
@@ -509,16 +521,16 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
           </div>
           <div className="flex items-center gap-3">
             <GroupsRoundedIcon className="text-neutral-1000" />
-            <span>{minAvailability} teammate(s) available</span>
+            <span>{minAvailability} / {numMembers} teammates available</span>
           </div>
           {/* Add count for each member */}
-          <div className="flex flex-col w-full">
+          {/* <div className="flex flex-col w-full">
             <h3 className="text-lg font-bold mb-2">Selected Time Slots</h3>
             <ul className="text-sm text-neutral-800">
               {blocks.map(({ block, time }) => (
                 <li key={block} className="flex justify-between">
                   <span>{time}</span>
-                  <span>{availabilityCounts[block]} / {numMembers} available</span>
+                  <span>{} / {numMembers} available</span>
                 </li>
               ))}
             </ul>

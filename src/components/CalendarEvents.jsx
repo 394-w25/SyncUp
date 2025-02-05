@@ -14,9 +14,6 @@ export default function CalendarEvents({
 }) {
   
   const [highlightBlocks, setHighlightBlocks] = useState([]);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState(null);
-  const [currentBlock, setCurrentBlock] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const userId = localStorage.getItem('user-id');
@@ -29,6 +26,19 @@ export default function CalendarEvents({
   });
 
   const { dates } = generateDateRange(startDate, endDate);
+
+  // useEffect(() => {
+  //   if (startDate && endDate && startTime && endTime) {
+  //     console.log('CalendarEvents: Received props', {
+  //       startDate,
+  //       endDate,
+  //       startTime,
+  //       endTime,
+  //       dates,
+  //       events
+  //     });
+  //   }
+  // }, [startDate, endDate, startTime, endTime, dates, events]);
 
   // Create an array of label times (8 AM, 9 AM, etc.)
   const times = [];
@@ -310,7 +320,95 @@ export default function CalendarEvents({
     return `${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   };
 
-  // RENDER
+  const isEventVisible = (event, startTime, endTime) => {
+    const evStart = event.start?.dateTime || event.start?.date;
+    const evEnd = event.end?.dateTime || event.end?.date;
+    const startHour = new Date(evStart).getHours();
+    const startMinute = new Date(evStart).getMinutes();
+    const endHour = new Date(evEnd).getHours();
+    const endMinute = new Date(evEnd).getMinutes();
+
+    const start = startHour + startMinute / 60;
+    const end = endHour + endMinute / 60;
+    return start >= startTime && end <= endTime;
+  };
+
+  function renderEventsForDate(date, events, startTime, endTime) {
+    const dayEvents = events?.filter((event) => {
+      const evStart = event.start?.dateTime || event.start?.date;
+      const evEnd = event.end?.dateTime || event.end?.date;
+      if (!evStart) return false;
+      if (!isEventVisible(event, startTime, endTime)) return false;
+      const evDate = new Date(evStart);
+
+      return (
+        evDate.getFullYear() === date.getFullYear() &&
+        evDate.getMonth() === date.getMonth() &&
+        evDate.getDate() === date.getDate()
+      );
+    });
+
+    return dayEvents?.map((event, i) => {
+      const startDateTime = event.start?.dateTime;
+      const endDateTime = event.end?.dateTime;
+      if (!startDateTime || !endDateTime) return null;
+
+      const eventStartTime = new Date(startDateTime);
+      const eventEndTime = new Date(endDateTime);
+      const eventStartHour =
+        eventStartTime.getHours() + eventStartTime.getMinutes() / 60;
+      const eventEndHour =
+        eventEndTime.getHours() + eventEndTime.getMinutes() / 60;
+
+      // If outside the displayed range, skip or clamp
+      if (eventEndHour <= startTime || eventStartHour >= endTime) return null;
+
+      const visibleStart = Math.max(eventStartHour, startTime);
+      const visibleEnd = Math.min(eventEndHour, endTime);
+      const duration = visibleEnd - visibleStart;
+      if (duration <= 0) return null;
+
+      const pixelsPerHour = 48;
+      const topPosition = (visibleStart - startTime) * pixelsPerHour;
+      const height = duration * pixelsPerHour;
+
+      return (
+        <div
+          key={i}
+          className="absolute left-0 right-0 mr-1 rounded bg-neutral-200 border border-neutral-400 border-l-4 p-1 overflow-hidden"
+          style={{
+            top: `${topPosition}px`,
+            height: `${height}px`,
+            zIndex: 10,
+          }}
+        >
+          <p className="text-xs truncate text-neutral-800">
+            {event.summary || event.title}
+          </p>
+          <p className="text-xs truncate text-neutral-600">
+            {eventStartTime.toLocaleTimeString("en", {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            })}{" "}
+            -{" "}
+            {eventEndTime.toLocaleTimeString("en", {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            })}
+          </p>
+        </div>
+      );
+    });
+  };
+
+  
+
+  if (!startDate || !endDate || startTime === undefined || endTime === undefined) {
+    return null;
+  }
+
   return (
     <div className="flex flex-col">
 
@@ -429,74 +527,6 @@ export default function CalendarEvents({
   );
 }
 
-// Renders Google Calendar events in the day column
-function renderEventsForDate(date, events, startTime, endTime) {
-  const dayEvents = events?.filter((event) => {
-    const evStart = event.start?.dateTime || event.start?.date;
-    if (!evStart) return false;
-    const evDate = new Date(evStart);
-    return (
-      evDate.getFullYear() === date.getFullYear() &&
-      evDate.getMonth() === date.getMonth() &&
-      evDate.getDate() === date.getDate()
-    );
-  });
-
-  return dayEvents?.map((event, i) => {
-    const startDateTime = event.start?.dateTime;
-    const endDateTime = event.end?.dateTime;
-    if (!startDateTime || !endDateTime) return null;
-
-    const eventStartTime = new Date(startDateTime);
-    const eventEndTime = new Date(endDateTime);
-    const eventStartHour =
-      eventStartTime.getHours() + eventStartTime.getMinutes() / 60;
-    const eventEndHour =
-      eventEndTime.getHours() + eventEndTime.getMinutes() / 60;
-
-    // If outside the displayed range, skip or clamp
-    if (eventEndHour <= startTime || eventStartHour >= endTime) return null;
-
-    const visibleStart = Math.max(eventStartHour, startTime);
-    const visibleEnd = Math.min(eventEndHour, endTime);
-    const duration = visibleEnd - visibleStart;
-    if (duration <= 0) return null;
-
-    const pixelsPerHour = 48;
-    const topPosition = (visibleStart - startTime) * pixelsPerHour;
-    const height = duration * pixelsPerHour;
-
-    return (
-      <div
-        key={i}
-        className="absolute left-0 right-0 mr-1 rounded bg-neutral-200 border border-neutral-400 border-l-4 p-1 overflow-hidden"
-        style={{
-          top: `${topPosition}px`,
-          height: `${height}px`,
-          zIndex: 10,
-        }}
-      >
-        <p className="text-xs truncate text-neutral-800">
-          {event.summary || event.title}
-        </p>
-        <p className="text-xs truncate text-neutral-600">
-          {eventStartTime.toLocaleTimeString("en", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true,
-          })}{" "}
-          -{" "}
-          {eventEndTime.toLocaleTimeString("en", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true,
-          })}
-        </p>
-      </div>
-    );
-  });
-}
-
 function DragSelectionBlock({ dragData }) {
   const { startY, endY } = dragData;
   const top = Math.min(startY, endY);
@@ -525,19 +555,18 @@ function snapTo30Min(yPos) {
 }
 
 function generateDateRange(start, end) {
-  const startDate = dateParse(start);
-  const endDate = dateParse(end);
+  // Create dates at midnight in local timezone
+  
+  const startDate = new Date(start);
+  const endDate = new Date(end);
   const dates = [];
-  while (startDate <= endDate) {
-    dates.push(new Date(startDate));
-    startDate.setDate(startDate.getDate() + 1);
+  
+  const currentDate = new Date(startDate);
+  while (currentDate <= endDate) {
+    dates.push(new Date(currentDate));
+    currentDate.setDate(currentDate.getDate() + 1);
   }
   return { dates };
-}
-
-function dateParse(dateString) {
-  const [year, month, day] = dateString.split("-").map(Number);
-  return new Date(year, month - 1, day);
 }
 
 function formatTime(hour) {
