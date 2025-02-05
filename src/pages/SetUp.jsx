@@ -119,6 +119,7 @@ const customTheme = (outerTheme) =>
 const SetUp = () => {
     const [meetingName, setMeetingName] = useState("");
     const [selectedDate, setSelectedDate] = useState([]);
+    const [userName, setUserName] = useState("");
     const [selectedStartTime, setSelectedStartTime] = useState(null);
     const [selectedEndTime, setSelectedEndTime] = useState(null);
     const [timeError, setTimeError] = useState('');
@@ -146,6 +147,7 @@ const SetUp = () => {
         try {
         const user = await handleAuth(setIsAuthenticated);
         setUserId(user.uid);
+        setUserName(user.displayName);
         localStorage.setItem('user-id', user.uid);
         // console.log('User ID set:', user.uid); // Debugging log
         } catch (error) {
@@ -225,31 +227,35 @@ const SetUp = () => {
                     <div className="flex flex-col gap-9">
                         <div className="bg-white rounded-lg shadow-md p-8">
                             <div className="flex flex-col sm:flex-row items-center gap-4">
-                                <h3 className="text-xl font-semibold">First,</h3>
-
-                                {!isAuthenticated ? (
+//                                 {!isAuthenticated ? (
                                     <ThemeProvider theme={buttonTheme}>
+                                
+                            <ThemeProvider theme={buttonTheme}>
+                                {!userName ? (
+                                    <>
+                                        <h3 className="text-xl font-semibold">First,</h3>
                                         <Button 
                                             variant='outlined' 
                                             color='secondary'
                                             onClick={handleGoogleAuth}
                                             style={{textTransform: 'none', fontSize: '16px'}}
                                             startIcon={<GoogleIcon />}>
-                                                Sign in with Google
+//                                         <Button 
+//                                         variant='outlined' 
+//                                         color='secondary'
+//                                         disabled={true}
+//                                         style={{textTransform: 'none'}}
+//                                         startIcon={<TaskAltRoundedIcon />}>
+//                                             Signed In!
+//                                         </Button>
+//                                 )}
+                                            Sign in with Google
                                         </Button>
-                                    </ThemeProvider>
+                                    </>
                                 ) : (
-                                    <ThemeProvider theme={buttonTheme}>
-                                        <Button 
-                                        variant='outlined' 
-                                        color='secondary'
-                                        disabled={true}
-                                        style={{textTransform: 'none'}}
-                                        startIcon={<TaskAltRoundedIcon />}>
-                                            Signed In!
-                                        </Button>
-                                    </ThemeProvider>
+                                    <h3 className="text-xl font-semibold">Welcome, {userName}</h3>
                                 )}
+                            </ThemeProvider>
                             </div>
                         </div>
 
