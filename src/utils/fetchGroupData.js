@@ -13,15 +13,17 @@ export async function fetchGroupData(groupId) {
 }
 
 export async function fetchGroupAvailability(groupData) {
+    const groupAvailabilityData = {};  
     const data = {};
     const querySnapshot = await getDocs(collection(db, "availability"));
     // console.log('group data: ', groupData);
 
     querySnapshot.forEach((doc) => {
+      // console.log(doc.data());
       const userID = doc.id;
       if (groupData.participants && groupData.participants.includes(userID)) {
-        for (const date in doc.data()) {
-          const slots = doc.data()[date]['data'];
+        for (const dateStr in doc.data()) {
+          const slots = doc.data()[dateStr]['data'];
           if (slots === undefined) continue;
 
           const compressedSlots = [];
@@ -30,17 +32,20 @@ export async function fetchGroupAvailability(groupData) {
             compressedSlots.push(group.every(slot => slot === 1) ? 1 : 0);
           }
 
-          if (date in data) {
-            data[date] = data[date].map((num, index) => num + compressedSlots[index]);
+          if (dateStr in data) {
+            data[dateStr] = data[dateStr].map((num, index) => num + compressedSlots[index]);
           } else {
-            data[date] = compressedSlots;
+            data[dateStr] = compressedSlots;
           }
         }}
-    })
-
-    data['numMembers'] = groupData.participants.length;
+      })
+      
+    groupAvailabilityData['intervalMins'] = 30;
+    groupAvailabilityData['data'] = data;
+    groupAvailabilityData['numMembers'] = groupData.participants.length;
+    groupAvailabilityData['startTime'] = groupData.proposedStart;
     
-    return data;
+    return groupAvailabilityData;
 }
 
 export async function fetchUserDataInGroup(participants) {

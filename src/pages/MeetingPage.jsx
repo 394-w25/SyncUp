@@ -52,7 +52,7 @@ const MeetingPage = () => {
     // Get groupid from the URL
     const [groupId, setGroupId] = useState(null);
     const [groupData, setGroupData] = useState(null);
-    const [groupAvailabilityData, setGroupAvailabilityData] = useState(null);
+    const [groupAvailabilityData, setGroupAvailabilityData] = useState({});
     const [participantsData, setParticipantsData] = useState({});
 
     const [eventTitle, setEvent] = useState('');
