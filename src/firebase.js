@@ -18,7 +18,7 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// ✅ Fix: Ensure `collection` is properly imported
+
 const getUsersEmails = async () => {
   try {
     const usersRef = collection(db, "users"); // This was causing the "collection is not defined" error
@@ -41,5 +41,4 @@ const getUsersEmails = async () => {
 };
 
 
-// export { auth, db, GoogleAuthProvider, signInWithPopup };
 export { auth, db, GoogleAuthProvider, signInWithPopup, getUsersEmails };
