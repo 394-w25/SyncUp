@@ -13,6 +13,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DoneIcon from '@mui/icons-material/Done';
 import AddLinkRoundedIcon from '@mui/icons-material/AddLinkRounded';
+import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
 
 import { Calendar } from "react-multi-date-picker";
 import DatePanel from "react-multi-date-picker/plugins/date_panel";
@@ -148,7 +149,7 @@ const SetUp = () => {
         setUserId(user.uid);
         setUserName(user.displayName);
         localStorage.setItem('user-id', user.uid);
-        console.log('User ID set:', user.uid); // Debugging log
+        // console.log('User ID set:', user.uid); // Debugging log
         } catch (error) {
         console.error('Error during authentication:', error);
         }
@@ -226,6 +227,8 @@ const SetUp = () => {
                     <div className="flex flex-col gap-9">
                         <div className="bg-white rounded-lg shadow-md p-8">
                             <div className="flex flex-col sm:flex-row items-center gap-4">
+//                                 {!isAuthenticated ? (
+                                    <ThemeProvider theme={buttonTheme}>
                                 
                             <ThemeProvider theme={buttonTheme}>
                                 {!userName ? (
@@ -237,6 +240,15 @@ const SetUp = () => {
                                             onClick={handleGoogleAuth}
                                             style={{textTransform: 'none', fontSize: '16px'}}
                                             startIcon={<GoogleIcon />}>
+//                                         <Button 
+//                                         variant='outlined' 
+//                                         color='secondary'
+//                                         disabled={true}
+//                                         style={{textTransform: 'none'}}
+//                                         startIcon={<TaskAltRoundedIcon />}>
+//                                             Signed In!
+//                                         </Button>
+//                                 )}
                                             Sign in with Google
                                         </Button>
                                     </>
@@ -383,6 +395,7 @@ const SetUp = () => {
                                             const firstDate = moment(selectedDate[0].toDate()).format('YYYY-MM-DD');
                                             const lastDate = moment(selectedDate[selectedDate.length - 1].toDate()).format('YYYY-MM-DD');
                                             
+                                            console.log('SETUP ')
                                             navigate(`/group/${groupLink.split('/').pop()}`, {
                                                 state: {
                                                     startDate: firstDate,

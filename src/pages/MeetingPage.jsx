@@ -41,15 +41,15 @@ const buttonTheme = createTheme({
 
 function formatDate(input) {
     const date = new Date(input);
-    const offset = date.getTimezoneOffset();
-    const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+    // Create date at midnight in local timezone
+    const localDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     return localDate.toISOString().split('T')[0];
 }
 
 const MeetingPage = () => {
     const location = useLocation();
 
-    // Get groupid from the URL
+    // Get groupId from the URL
     const [groupId, setGroupId] = useState(null);
     const [groupData, setGroupData] = useState(null);
     const [groupAvailabilityData, setGroupAvailabilityData] = useState(null);
@@ -72,6 +72,15 @@ const MeetingPage = () => {
 
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userId, setUserId] = useState(null);
+//     const [participants, setParticipants] = useState([]); // Dynamic participants
+//     const [isLoading, setIsLoading] = useState(true);
+
+//     useEffect(() => {
+//         const initializePage = async () => {
+//             setIsLoading(true);
+//             const pathParts = location.pathname.split('/');
+//             const groupId = pathParts[pathParts.length - 1];
+//             setGroupId(groupId);
 
     useEffect(() => {
         const pathParts = location.pathname.split('/');
@@ -89,7 +98,9 @@ const MeetingPage = () => {
                 setGroupAvailabilityData(availabilityData);
 
                 const groupParticipantsData = await fetchUserDataInGroup(groupData.participants);
-                setParticipantsData(groupParticipantsData);
+                
+              
+              Data(groupParticipantsData);
                 // console.log('Availability data:', availabilityData); // Debugging log
             }
         };
@@ -113,9 +124,10 @@ const MeetingPage = () => {
             }
         };
 
-        getMeetingData();
+        initializePage();
+    }, [location]);
 
-
+    useEffect(() => {
         const initClient = async () => {
         try {
             await initializeGAPIClient();
@@ -126,7 +138,7 @@ const MeetingPage = () => {
             setUserId(storedUserId);
             // add userid to the groupid
             addParticipantToGroup(groupId, storedUserId);
-            console.log('Stored user ID:', storedUserId); // Debugging log
+            // console.log('Stored user ID:', storedUserId);
             }
         } catch (error) {
             console.error('Error initializing GAPI client:', error);
@@ -136,6 +148,16 @@ const MeetingPage = () => {
         gapi.load('client:auth2', initClient);
     }, []);
 
+    // debugging
+    useEffect(() => {
+        console.log('States updated:', {
+            startDate,
+            endDate,
+            startTime,
+            endTime
+        });
+    }, [startDate, endDate, startTime, endTime]);
+
     // Push availability data to Firestore
 
     const handleGoogleAuth = async () => {
@@ -143,7 +165,7 @@ const MeetingPage = () => {
         const user = await googleHandleAuth(setIsAuthenticated);
         setUserId(user.uid);
         localStorage.setItem('user-id', user.uid);
-        console.log('User ID set:', user.uid); // Debugging log
+        // console.log('User ID set:', user.uid);
         } catch (error) {
         console.error('Error during authentication:', error);
         }
@@ -151,7 +173,23 @@ const MeetingPage = () => {
 
     const handleSignOut = async () => {
         await signOut(setIsAuthenticated, setUserId);
-    };
+    }
+
+//     useEffect(() => {
+//         const loadParticipants = async () => {
+//         try {
+//             const data = await fetchParticipants(meetingId, event); // Fetch data for the given meetingId and event
+//             setParticipants(data);
+//             // console.log("Fetched participants:", data);
+//         } catch (error) {
+//             console.error("Error fetching participants:", error);
+//         }
+//         };
+
+//         loadParticipants();
+//     }, [meetingId, event]);
+
+//     };
 
     console.log('set up startTime', startTime);
     console.log('set up endTime', endTime);
@@ -185,8 +223,7 @@ const MeetingPage = () => {
                     endTime={endTime}
                     />
                 </div>
-                
-            </div>
+            )}
 
             {/* Sign out button in bottom left corner */}
             {isAuthenticated && (
