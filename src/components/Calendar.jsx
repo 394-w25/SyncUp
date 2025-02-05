@@ -184,8 +184,8 @@ const Calendar = ({
       <div className="w-full h-full flex flex-col bg-white px-8 py-8 gap-2 rounded-bl-[20px] rounded-br-[20px] shadow-[0px_7px_15.699999809265137px_0px_rgba(17,107,60,0.06)]">
         
         <div className='month-header flex items-center gap-4'>
-          <span className='text-green-800 font-nunito font-bold text-[32pt]'>Jan</span>
-          <p className='text-green-800 font-nunito text-[32pt]'>2025</p>
+          <span className='text-green-800 font-nunito font-bold text-[32pt]'>{weekStart.toLocaleString('default', { month: 'long' })}</span>
+          <p className='text-green-800 font-nunito text-[32pt]'>{weekStart.getFullYear()}</p>
         </div>
 
         <div className='row-button flex justify-between'>
