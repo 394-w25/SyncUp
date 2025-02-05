@@ -6,7 +6,7 @@ export async function fetchGroupData(groupId) {
     const docSnap = await getDoc(docRef);
     
     if (!docSnap.exists()) {
-        console.log("No such document!");
+        console.error("No such document!");
         alert("Invalid Group! Check the URL and try again.");
     }
     return docSnap.data();
