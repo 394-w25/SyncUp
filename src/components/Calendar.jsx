@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import Button from '@mui/material/Button';
 import { ThemeProvider, createTheme } from "@mui/material/styles";
@@ -6,15 +6,9 @@ import Box from '@mui/material/Box';
 import CalendarEvents from './CalendarEvents';
 import { importEvents } from '../utils/importEvents';
 import { calculateAvailability } from '../utils/availability';
-import moment from 'moment';
 
-// for week toggler
-function formatYyyyMmDd(date) {
-  const yyyy = date.getFullYear();
-  const mm = String(date.getMonth() + 1).padStart(2, "0");
-  const dd = String(date.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
+import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
+import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
 
 const buttonTheme = createTheme({
   palette: {
@@ -61,59 +55,108 @@ const Calendar = ({
   const [isLoading, setIsLoading] = useState(false);
 
   // for week toggler, store active week range
-  const initialStart = new Date(startDate);
-  const initialEnd = new Date(endDate);
+  const [weekStart, setWeekStart] = useState(() => {
+    if (!startDate) return new Date();
+    const [y, m, d] = startDate.split('-');
+    return new Date(y, parseInt(m) - 1, d);
+  });
 
-  const [weekStart, setWeekStart] = useState(initialStart);
-  const [weekEnd, setWeekEnd] = useState(initialEnd);
-  const [currentMonth, setCurrentMonth] = useState(initialStart.toLocaleString('default', { month: 'long' }));
-  const [currentYear, setCurrentYear] = useState(initialStart.getFullYear());
+  const [weekEnd, setWeekEnd] = useState(() => {
+    if (!endDate) return new Date();
+    const [y, m, d] = endDate.split('-');
+    const endDateObj = new Date(y, parseInt(m) - 1, d);
+    endDateObj.setHours(23, 59, 59);
+    
+    if (!startDate) return endDateObj;
+    
+    const startDateObj = new Date(startDate);
+    if ((endDateObj - startDateObj) / (1000 * 60 * 60 * 24) <= 7) {
+      return endDateObj;
+    }
+    
+    const weekEnd = new Date(startDateObj);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+    weekEnd.setHours(23, 59, 59);
+    return weekEnd;
+  });
+
+  const totalDays = Math.floor(Math.abs(new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 *24));
+  const showNavigation = totalDays > 7;
+
+  const convertToISO = (date) => {
+    return new Date(new Date(date).toISOString().replace(/T/, ' ').replace(/\..+/, ''));
+  }
+
+  const startDateISO = convertToISO(startDate);
+  const endDateISO = convertToISO(endDate);
+
+  // Convert to timestamps for comparison
+  const showPrevious = weekStart.getTime() !== startDateISO.getTime();
+  const showNext = weekEnd.getTime() !== endDateISO.getTime();
 
   // WEEK TOGGLER HANDLERS
   const handlePreviousWeek = () => {
-    setWeekStart(prev => {
-      const d = new Date(prev);
-      d.setDate(d.getDate() - 7);
-      if (d.getMonth() !== prev.getMonth()) {
-        setCurrentMonth(d.toLocaleString('default', { month: 'long' }));
-        setCurrentYear(d.getFullYear());
-      }
-      return d;
-    });
-    setWeekEnd(prev => {
-      const d = new Date(prev);
-      d.setDate(d.getDate() - 7);
-      return d;
-    });
+    const newStart = new Date(weekStart);
+    newStart.setDate(newStart.getDate() - 7);
+
+    if (newStart < weekStart) {
+      setWeekStart(startDateISO);
+      const newEnd = new Date(startDateISO);
+      newEnd.setDate(newEnd.getDate() + 6);
+      setWeekEnd(newEnd);
+      return;
+    }
+    setWeekStart(newStart);
+    const newEnd = new Date(newStart);
+    newEnd.setDate(newEnd.getDate() + 6);
+    setWeekEnd(newEnd);
   };
+
   const handleNextWeek = () => {
-    setWeekStart(prev => {
-      const d = new Date(prev);
-      d.setDate(d.getDate() + 7);
-      if (d.getMonth() !== prev.getMonth()) {
-        setCurrentMonth(d.toLocaleString('default', { month: 'long' }));
-        setCurrentYear(d.getFullYear());
-      }
-      return d;
-    });
-    setWeekEnd(prev => {
-      const d = new Date(prev);
-      d.setDate(d.getDate() + 7);
-      return d;
-    });
+    const newStart = new Date(weekStart);
+    newStart.setDate(newStart.getDate() + 7);
+    
+    const newEnd = new Date(newStart);
+    newEnd.setDate(newEnd.getDate() + 6);
+
+    if (newEnd > weekEnd) {
+      setWeekStart(newStart);
+      setWeekEnd(endDateISO);
+      return;
+    }
+    setWeekStart(newStart);
+    setWeekEnd(newEnd);
   };
+
+  // useEffect(() => {
+  //   if (startDate && endDate && startTime && endTime) {
+  //     console.log('Calendar: Received props', {
+  //       startDate,
+  //       endDate,
+  //       startTime,
+  //       endTime,
+  //       weekStart,
+  //       weekEnd
+  //     });
+  //   }
+  // }, [startDate, endDate, startTime, endTime, weekStart, weekEnd]);
+
+  if (!startDate || !endDate || startTime === undefined || endTime === undefined) {
+    return null;
+  }
 
   const handleImportEvents = async () => {
     try {
       setIsLoading(true);
-      console.log('Importing events for user ID:', userId);
       if (!userId) {
         throw new Error('User ID is null or undefined');
       }
+
+      // console.log('Import dates: ', convertToISO(startDate), convertToISO(endDate));
       const events = await importEvents(
         userId, 
-        formatYyyyMmDd(weekStart), 
-        formatYyyyMmDd(weekEnd)
+        convertToISO(startDate), 
+        convertToISO(endDate)
       );
       setEvents(events);
       const availability = calculateAvailability(events, userId);
@@ -130,8 +173,8 @@ const Calendar = ({
       <div className="w-full h-full flex flex-col bg-white px-8 py-8 gap-2 rounded-bl-[20px] rounded-br-[20px] shadow-[0px_7px_15.699999809265137px_0px_rgba(17,107,60,0.06)]">
         
         <div className='month-header flex items-center gap-4'>
-          <span className='text-green-800 font-nunito font-bold text-[32pt]'>Jan</span>
-          <p className='text-green-800 font-nunito text-[32pt]'>2025</p>
+          <span className='text-green-800 font-nunito font-bold text-[32pt]'>{weekStart.toLocaleString('default', { month: 'long' })}</span>
+          <p className='text-green-800 font-nunito text-[32pt]'>{weekStart.getFullYear()}</p>
         </div>
 
         <div className='row-button flex justify-between'>
@@ -172,22 +215,54 @@ const Calendar = ({
           </div>
         </div>
         {/* WEEK-NAVIGATION BUTTONS */}
-        <div className='flex justify-between gap-4'>
+        {showNavigation && (
+          <div className='flex justify-between gap-4'>
             <ThemeProvider theme={buttonTheme}>
-              <Button variant='outlined' onClick={handlePreviousWeek}>
-                &lt; Previous Week
+              {showPrevious 
+              ? (
+                <Button 
+                  variant='outlined' 
+                  onClick={handlePreviousWeek}
+                  startIcon={<ArrowBackIosNewRoundedIcon />}>
+                    Previous Week
+                </Button>
+              )
+              : (
+                <Button 
+                  variant='outlined' 
+                  // onClick={handlePreviousWeek}
+                  disabled
+                  startIcon={<ArrowBackIosNewRoundedIcon />}>
+                    Previous Week
+                </Button>
+              )
+            }
+              {showNext 
+              ? (
+                <Button 
+                  variant='outlined' 
+                  onClick={handleNextWeek}
+                  endIcon={<ArrowForwardIosRoundedIcon />}>
+                  Next Week
               </Button>
-              <Button variant='outlined' onClick={handleNextWeek}>
-                Next Week &gt;
+              )
+              : (
+                <Button 
+                  variant='outlined' 
+                  // onClick={handleNextWeek}
+                  disabled
+                  endIcon={<ArrowForwardIosRoundedIcon />}>
+                  Next Week
               </Button>
+              )}
             </ThemeProvider>
-        </div>
-        
+          </div>
+        )}
         <CalendarEvents 
           startTime={startTime} 
           endTime={endTime} 
-          startDate={formatYyyyMmDd(weekStart)} 
-          endDate={formatYyyyMmDd(weekEnd)}
+          startDate={weekStart} 
+          endDate={weekEnd}
           events={events}
         />
 
