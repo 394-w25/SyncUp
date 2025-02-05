@@ -130,18 +130,6 @@ const SetUp = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userId, setUserId] = useState(null);
 
-    // const handleGoogleSignIn = async () => {
-    //     try {
-    //         const user = await signInWithGoogle();
-    //         localStorage.setItem('google-auth', 'true');
-    //         localStorage.setItem('user-id', user.uid); // Add this line
-    //         return user;
-    //       } catch (error) {
-    //         console.error('Error during authentication:', error);
-    //         throw error;
-    //       }
-    // };
-
     const handleGoogleAuth = async () => {
         try {
         const user = await handleAuth(setIsAuthenticated, setUserId);

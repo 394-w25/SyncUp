@@ -184,6 +184,7 @@ const MeetingPage = () => {
                     startTime={startTime}
                     endTime={endTime}
                     eventName={event}
+                    meetingId={meetingId}
                     />
                 </div>
                 
