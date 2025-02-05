@@ -72,62 +72,41 @@ const MeetingPage = () => {
 
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userId, setUserId] = useState(null);
-//     const [participants, setParticipants] = useState([]); // Dynamic participants
-//     const [isLoading, setIsLoading] = useState(true);
-
-//     useEffect(() => {
-//         const initializePage = async () => {
-//             setIsLoading(true);
-//             const pathParts = location.pathname.split('/');
-//             const groupId = pathParts[pathParts.length - 1];
-//             setGroupId(groupId);
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
-        const pathParts = location.pathname.split('/');
-        const groupId = pathParts[pathParts.length - 1];
-        console.log('Group ID from URL:', groupId); // Debugging log
-        setGroupId(groupId);
-        
-        const fetchData = async () => {
-            const groupData = await fetchGroupData(groupId);
-            setGroupData(groupData);
-            // console.log('Group data:', groupData); // Debugging log
+        const initializePage = async () => {
+            setIsLoading(true);
+            const pathParts = location.pathname.split('/');
+            const groupId = pathParts[pathParts.length - 1];
+            setGroupId(groupId);
 
-            if (groupData) {
-                const availabilityData = await fetchGroupAvailability(groupData);
-                setGroupAvailabilityData(availabilityData);
+            try {
+                const docRef = doc(db, 'groups', groupId);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists) {
+                    const data = docSnap.data();
+                    console.log('data', data);
 
-                const groupParticipantsData = await fetchUserDataInGroup(groupData.participants);
-                
-              
-              setParticipantsData(groupParticipantsData);
-                // console.log('Availability data:', availabilityData); // Debugging log
+                    const formattedStart = formatDate(data.proposedDays[0].toDate());
+                    const formattedEnd = formatDate(data.proposedDays[data.proposedDays.length - 1].toDate());
+                    
+                    setEvent(data.title);
+                    setStartDate(formattedStart);
+                    setEndDate(formattedEnd);
+                    setStartTime(data.proposedStart);
+                    setEndTime(data.proposedEnd);
+                    console.log('Event title', data.title, 'Start Date', formatDate(data.proposedDays[0].toDate()), 'End Date',formatDate(data.proposedDays[data.proposedDays.length - 1].toDate()), 'Start Time', data.proposedStart, 'End Time', data.proposedEnd, 'created At', data.createdAt.toDate());
+                }
+            } catch (error) {
+                console.error('Error fetching meeting data:', error);
+            } finally {
+                setIsLoading(false);
             }
         };
 
-        fetchData();
+        initializePage();
 
-        // Get the meeting data from the Firestore database
-        const getMeetingData = async () => {
-            const docRef = doc(db, 'groups', groupId);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists) {
-                const data = docSnap.data();
-                setEvent(data.title);
-                setStartDate(formatDate(data.proposedDays[0].toDate()));
-                setEndDate(formatDate(data.proposedDays[data.proposedDays.length - 1].toDate()));
-                setStartTime(data.proposedStart);
-                setEndTime(data.proposedEnd);
-                console.log('Event title', data.title, 'Start Date', formatDate(data.proposedDays[0].toDate()), 'End Date',formatDate(data.proposedDays[data.proposedDays.length - 1].toDate()), 'Start Time', data.proposedStart, 'End Time', data.proposedEnd, 'created At', data.createdAt.toDate());
-            } else {
-                console.log('No such document!');
-            }
-        };
-
-        getMeetingData();
-
-        // initializePage();
-    // }, [location]);
         const initClient = async () => {
         try {
             await initializeGAPIClient();
@@ -136,6 +115,7 @@ const MeetingPage = () => {
             if (storedAuth === 'true' && storedUserId) {
             setIsAuthenticated(true);
             setUserId(storedUserId);
+            console.log('Stored user ID:', storedUserId);
             // add userid to the groupid
             addParticipantToGroup(groupId, storedUserId);
             // console.log('Stored user ID:', storedUserId);
@@ -147,6 +127,23 @@ const MeetingPage = () => {
 
         gapi.load('client:auth2', initClient);
     }, []);
+
+    useEffect(() => {
+        const getGroupData = async () => {
+            const groupData = await fetchGroupData(groupId);
+            setGroupData(groupData);
+
+            if (groupData) {
+                const availabilityData = await fetchGroupAvailability(groupData);
+                setGroupAvailabilityData(availabilityData);
+
+                const groupParticipantsData = await fetchUserDataInGroup(groupData.participants);
+                
+                setParticipantsData(groupParticipantsData);
+            }
+        };
+        getGroupData();
+    }, [userId, meetingId, event]);
 
     // debugging
     useEffect(() => {
@@ -165,7 +162,6 @@ const MeetingPage = () => {
         const user = await googleHandleAuth(setIsAuthenticated);
         setUserId(user.uid);
         localStorage.setItem('user-id', user.uid);
-        // console.log('User ID set:', user.uid);
         } catch (error) {
         console.error('Error during authentication:', error);
         }
@@ -175,38 +171,38 @@ const MeetingPage = () => {
         await signOut(setIsAuthenticated, setUserId);
     }
 
-//     useEffect(() => {
-//         const loadParticipants = async () => {
-//         try {
-//             const data = await fetchParticipants(meetingId, event); // Fetch data for the given meetingId and event
-//             setParticipants(data);
-//             // console.log("Fetched participants:", data);
-//         } catch (error) {
-//             console.error("Error fetching participants:", error);
-//         }
-//         };
-
-//         loadParticipants();
-//     }, [meetingId, event]);
-
-//     };
-
-    console.log('set up startTime', startTime);
-    console.log('set up endTime', endTime);
+    // console.log('set up startTime', startTime);
+    // console.log('set up endTime', endTime);
+    // console.log('set up groupData', groupData);
+    // console.log('set up groupAvailabilityData', groupAvailabilityData);
+    // console.log('set up participantsData', participantsData);
+    // console.log('set up isAuthenticated', isAuthenticated);
+    // console.log('set up userId', userId);
+    // console.log('set up startDate', startDate);
+    // console.log('set up endDate', endDate);
+    // console.log('set up event', event);
 
     return (
         <div className="w-screen h-screen px-4 pb-4 bg-background relative">
             <div className="w-full h-full flex gap-4">
                 <div className='w-full h-full flex flex-col gap-4'>
-                    <Calendar
-                        isAuthenticated={isAuthenticated}
-                        handleAuth={handleGoogleAuth}
-                        startDate={startDate}
-                        endDate={endDate}
-                        startTime={startTime}
-                        endTime={endTime}
-                        userId={userId}
-                    />
+                    {startDate && endDate && startTime && endTime ? (
+                        <Calendar
+                            isAuthenticated={isAuthenticated}
+                            handleAuth={handleGoogleAuth}
+                            startDate={startDate}
+                            endDate={endDate}
+                            startTime={startTime}
+                            endTime={endTime}
+                            userId={userId}
+                        />
+                    ) : (
+                        <div className='w-full h-full flex justify-center items-center'>
+                            <p className='text-2xl font-bold'>Loading...</p>
+                        </div>
+                    )
+                }
+                    
                 </div>
                 <div className='w-[30%] h-full flex flex-col gap-4'>
                     <Legend 
@@ -229,16 +225,16 @@ const MeetingPage = () => {
                     <div className="absolute bottom-4 right-4">
                     <ThemeProvider theme={buttonTheme}>
                         <IconButton
-                        onClick={handleSignOut}
-                        color="secondary"
-                        size="small"
-                        title="Sign Out"
+                            onClick={handleSignOut}
+                            color="secondary"
+                            size="small"
+                            title="Sign Out"
                         >
-                        <LogoutIcon />
+                            <LogoutIcon />
                         </IconButton>
                     </ThemeProvider>
                     </div>
-                )};
+                )}
             </div>
         </div>
     );
