@@ -524,7 +524,7 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
             <span>{minAvailability} / {numMembers} teammates available</span>
           </div>
           {/* Add count for each member */}
-          {/* <div className="flex flex-col w-full">
+          /* <div className="flex flex-col w-full">
             <h3 className="text-lg font-bold mb-2">Selected Time Slots</h3>
             <ul className="text-sm text-neutral-800">
               {blocks.map(({ block, time }) => (

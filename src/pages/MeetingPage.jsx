@@ -220,14 +220,6 @@ const MeetingPage = () => {
                     eventName={event}
                     meetingId={meetingId}
                     />
-                    <GroupAvailability
-                        groupData={groupData}
-                        groupAvailabilityData={groupAvailabilityData}
-                        startDate={startDate}
-                        endDate={endDate}
-                        startTime={startTime}
-                        endTime={endTime}
-                        />
                 </div>
 
                 {/* Sign out button in bottom left corner */}
