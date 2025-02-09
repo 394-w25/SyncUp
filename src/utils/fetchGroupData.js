@@ -2,6 +2,7 @@ import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 
 export async function fetchGroupData(groupId) {
+    if (!groupId) return;
     const docRef = doc(db, "groups", groupId);
     const docSnap = await getDoc(docRef);
     
