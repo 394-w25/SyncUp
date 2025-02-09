@@ -130,17 +130,13 @@ const MeetingPage = () => {
     // Fetches group data, group availability data, and participants data
     useEffect(() => {
         const getGroupData = async () => {
-            const groupData = await fetchGroupData(groupId);
-            setGroupData(groupData);
-
-            if (groupData) {
-                const availabilityData = await fetchGroupAvailability(groupData);
-                setGroupAvailabilityData(availabilityData);
-
-                const groupParticipantsData = await fetchUserDataInGroup(groupData.participants);
-                
-                setParticipantsData(groupParticipantsData);
-            }
+            const groupDataFromFetch = await fetchGroupData(groupId);
+            const groupParticipantsData = await fetchUserDataInGroup(groupDataFromFetch.participants);
+            const availabilityData = await fetchGroupAvailability(groupDataFromFetch, groupParticipantsData);
+            
+            setParticipantsData(groupParticipantsData);
+            setGroupAvailabilityData(availabilityData);
+            setGroupData(groupDataFromFetch);
         };
         getGroupData();
     }, [userId, meetingId, event]);
