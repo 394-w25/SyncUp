@@ -13,7 +13,7 @@ export async function fetchGroupData(groupId) {
     return docSnap.data();
 }
 
-export async function fetchGroupAvailability(groupData) {
+export async function fetchGroupAvailability(groupData, participantsData) {
     const groupAvailabilityData = {};  
     const data = {};
     const querySnapshot = await getDocs(collection(db, "availability"));
@@ -22,7 +22,10 @@ export async function fetchGroupAvailability(groupData) {
     querySnapshot.forEach((doc) => {
       // console.log(doc.data());
       const userID = doc.id;
+      
       if (groupData.participants && groupData.participants.includes(userID)) {
+        const userName = participantsData[userID].name
+        
         for (const dateStr in doc.data()) {
           const slots = doc.data()[dateStr]['data'];
           if (slots === undefined) continue;
@@ -34,9 +37,9 @@ export async function fetchGroupAvailability(groupData) {
           }
 
           if (dateStr in data) {
-            data[dateStr] = data[dateStr].map((num, index) => num + compressedSlots[index]);
+            data[dateStr] = data[dateStr].map((slot, index) => compressedSlots[index] ? slot.push(userName) : slot);
           } else {
-            data[dateStr] = compressedSlots;
+            data[dateStr] = compressedSlots.map((slot) => slot ? [userName] : []);
           }
         }}
       })
