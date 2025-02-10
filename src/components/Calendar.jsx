@@ -5,7 +5,6 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import Box from '@mui/material/Box';
 import CalendarEvents from './CalendarEvents';
 import { importEvents } from '../utils/importEvents';
-import { calculateAvailability } from '../utils/availability';
 
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
@@ -51,7 +50,6 @@ const Calendar = ({
   userId
 }) => {
   const [events, setEvents] = useState([]);
-  const [availability, setAvailability] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
   // for week toggler, store active week range
@@ -159,8 +157,6 @@ const Calendar = ({
         convertToISO(endDate)
       );
       setEvents(events);
-      const availability = calculateAvailability(events, userId);
-      setAvailability(availability);
     } catch (error) {
       console.error('Error importing events:', error);
     } finally {
