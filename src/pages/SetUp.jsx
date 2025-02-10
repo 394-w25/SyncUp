@@ -13,7 +13,6 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DoneIcon from '@mui/icons-material/Done';
 import AddLinkRoundedIcon from '@mui/icons-material/AddLinkRounded';
-import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
 
 import { Calendar } from "react-multi-date-picker";
 import DatePanel from "react-multi-date-picker/plugins/date_panel";
@@ -120,8 +119,8 @@ const SetUp = () => {
     const [meetingName, setMeetingName] = useState("");
     const [selectedDate, setSelectedDate] = useState([]);
     const [userName, setUserName] = useState("");
-    const [selectedStartTime, setSelectedStartTime] = useState(null);
-    const [selectedEndTime, setSelectedEndTime] = useState(null);
+    const [selectedStartTime, setSelectedStartTime] = useState(moment().set({ hour: 9, minute: 0 }).toDate());
+    const [selectedEndTime, setSelectedEndTime] = useState(moment().set({ hour: 18, minute: 0 }).toDate());
     const [timeError, setTimeError] = useState('');
     const [groupLink, setGroupLink] = useState("");
     const outerTheme = useTheme();
@@ -133,16 +132,15 @@ const SetUp = () => {
 
     const handleGoogleAuth = async () => {
         try {
-        const user = await handleAuth(setIsAuthenticated, setUserId);
-        setUserId(user.uid);
-        setUserName(user.displayName);
-        localStorage.setItem('user-id', user.uid);
-        // console.log('User ID set:', user.uid); // Debugging log
+            const user = await handleAuth(setIsAuthenticated, setUserId);
+            // setUserId(user.uid);
+            setUserName(user.displayName);
+            localStorage.setItem('user-id', user.uid);
+            // console.log('User ID set:', user.uid); // Debugging log
         } catch (error) {
-        console.error('Error during authentication:', error);
+            console.error('Error during authentication:', error);
         }
     };
-
 
     const validateTimeRange = (start, end) => {
         if (!start || !end) return false;
@@ -170,8 +168,8 @@ const SetUp = () => {
     };
 
     const handleStart = async () => {
-        if (!meetingName || selectedDate.length === 0 || !selectedStartTime || !selectedEndTime) {
-            alert("Please fill in all fields");
+        if (!meetingName || selectedDate.length === 0 || !selectedStartTime || !selectedEndTime || !isAuthenticated) {
+            alert("Please sign in with Google and fill in all fields.");
             return;
         }
 
@@ -188,10 +186,11 @@ const SetUp = () => {
             proposedStart: startHour,
             proposedEnd: endHour,
             creator: userId,
-            participants: []
+            participants: [userId]
         };
 
         try {
+            console.log('Creating group with data:', groupData);
             const result = await createGroup(groupData);
             setGroupLink(result.link);
         } catch (error) {
@@ -238,7 +237,7 @@ const SetUp = () => {
                         </div>
 
                         <div className="bg-white rounded-lg shadow-md p-8">
-                            <h3 className="text-xl font-semibold mb-8 text-center">What days would you like to meet?</h3>
+                            <h3 className="text-xl font-semibold mb-8 text-center">What days might work for you?</h3>
                             <div className="flex justify-center py-8">
                                 <Calendar 
                                     multiple
@@ -273,7 +272,7 @@ const SetUp = () => {
                         </div>
 
                         <div className="bg-white rounded-lg shadow-md p-8 pb-12 pt-8">
-                            <h3 className="text-xl font-semibold mb-6 text-center">What times would you like to meet?</h3>
+                            <h3 className="text-xl font-semibold mb-6 text-center">What times might work for you?</h3>
                             <div className="flex flex-col sm:flex-row justify-center items-end gap-8 text-lg">
                                 <ThemeProvider theme={customTheme(outerTheme)}>
                                     <LocalizationProvider dateAdapter={AdapterMoment}>
@@ -281,6 +280,7 @@ const SetUp = () => {
                                             label="Start Time" 
                                             views={['hours', 'minutes']} 
                                             format="hh:mm A" 
+                                            value={moment(selectedStartTime)}
                                             viewRenderers={{
                                                 hours: renderTimeViewClock,
                                                 minutes: renderTimeViewClock,
@@ -301,6 +301,7 @@ const SetUp = () => {
                                             label="End Time" 
                                             views={['hours', 'minutes']} 
                                             format="hh:mm A" 
+                                            value={moment(selectedEndTime)}
                                             viewRenderers={{
                                                 hours: renderTimeViewClock,
                                                 minutes: renderTimeViewClock,

@@ -2,6 +2,7 @@ import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 
 export async function fetchGroupData(groupId) {
+    if (!groupId) return;
     const docRef = doc(db, "groups", groupId);
     const docSnap = await getDoc(docRef);
     
@@ -12,7 +13,7 @@ export async function fetchGroupData(groupId) {
     return docSnap.data();
 }
 
-export async function fetchGroupAvailability(groupData) {
+export async function fetchGroupAvailability(groupData, participantsData) {
     const groupAvailabilityData = {};  
     const data = {};
     const querySnapshot = await getDocs(collection(db, "availability"));
@@ -21,7 +22,10 @@ export async function fetchGroupAvailability(groupData) {
     querySnapshot.forEach((doc) => {
       // console.log(doc.data());
       const userID = doc.id;
+      
       if (groupData.participants && groupData.participants.includes(userID)) {
+        const userName = participantsData[userID].name
+        
         for (const dateStr in doc.data()) {
           const slots = doc.data()[dateStr]['data'];
           if (slots === undefined) continue;
@@ -33,9 +37,9 @@ export async function fetchGroupAvailability(groupData) {
           }
 
           if (dateStr in data) {
-            data[dateStr] = data[dateStr].map((num, index) => num + compressedSlots[index]);
+            data[dateStr] = data[dateStr].map((slot, index) => compressedSlots[index] ? slot.push(userName) : slot);
           } else {
-            data[dateStr] = compressedSlots;
+            data[dateStr] = compressedSlots.map((slot) => slot ? [userName] : []);
           }
         }}
       })
@@ -52,13 +56,11 @@ export async function fetchUserDataInGroup(participants) {
   const data = {};
   const querySnapshot = await getDocs(collection(db, "users"));
 
-  for (const userId of participants) {
-    querySnapshot.forEach((doc) => {
-      if (doc.id === userId) {
-        data[userId] = doc.data();
-      }
-    });
-  }
+  querySnapshot.forEach((doc) => {
+    if (participants.includes(doc.id)) {
+      data[doc.id] = doc.data();
+    }
+  });
 
   return data;
 }

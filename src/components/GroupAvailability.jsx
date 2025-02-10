@@ -139,7 +139,7 @@ function getSlotColor(date, hourIndex, groupAvailabilityData) {
   }
 
   const numMembers = groupAvailabilityData.numMembers;
-  const slotVal = slots[hourIndex];
+  const slotVal = slots[hourIndex]?.length;
   const pctAvail = slotVal / numMembers;
 
   switch(true) {
@@ -468,6 +468,7 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
   const endTime = `${endHour}:${endMinutes === 0 ? '00' : endMinutes}`;
   const timeDisplay = `${times[0]} - ${endTime}`;
 
+  // Structures block data to report group availability for selected time range
   const firstBlock = blocks[0];
   const lastBlock = blocks[blocks.length - 1];
   const dateString = firstBlock.date.toISOString().split('T')[0];
@@ -482,10 +483,15 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
   const startIndex = Math.floor((selectedStartTime - availabilityStartTime) * 60 / availabilityIntervalMins);
   const endIndex = Math.floor((selectedEndTime - availabilityStartTime) * 60 / availabilityIntervalMins);
   const selectedAvailability = availabilityArrayOnDate ? availabilityArrayOnDate.slice(startIndex, endIndex) : [];
-
-  const minAvailability = Math.min(...selectedAvailability);
-  // console.log('min availability: ', minAvailability);
   
+  // Find participants available in all selected blocks
+  let commonElements = new Set(selectedAvailability[0]);
+  for (let i = 1; i < selectedAvailability.length; i++) {
+    commonElements = new Set([...commonElements].filter(x => selectedAvailability[i].includes(x)));
+  } 
+  const availableParticipants = Array.from(commonElements);
+  const minAvailabilityCount = availableParticipants.length;
+
   return (
     <Draggable 
       handle="#draggable-header"
@@ -521,16 +527,15 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
           </div>
           <div className="flex items-center gap-3">
             <GroupsRoundedIcon className="text-neutral-1000" />
-            <span>{minAvailability} / {numMembers} teammates available</span>
+            <span>{minAvailabilityCount} / {numMembers} teammates available</span>
           </div>
           {/* Add count for each member */}
-          /* <div className="flex flex-col w-full">
-            <h3 className="text-lg font-bold mb-2">Selected Time Slots</h3>
+          <div className="flex flex-col w-full">
+            <h3 className="text-lg font-bold mb-2">Available Members</h3>
             <ul className="text-sm text-neutral-800">
-              {blocks.map(({ block, time }) => (
-                <li key={block} className="flex justify-between">
-                  <span>{time}</span>
-                  <span>{} / {numMembers} available</span>
+              {availableParticipants.map((name, index) => (
+                <li key={index} className="flex justify-between">
+                  <span>{name}</span>
                 </li>
               ))}
             </ul>

@@ -10,7 +10,6 @@ function generateGroupLink(groupId) {
     return `${window.location.origin}/group/${groupId}`;
 }
 
-
 export const createGroup = async (groupData) => {
     const groupId = generateUniqueId();
     const groupLink = generateGroupLink(groupId);

@@ -75,8 +75,11 @@ const Legend = ({meetingID, eventName, participantData}) => {
                         )}
                     </div>
                     <div className="flex flex-col gap-2" style={{ maxHeight: '160px', overflowY: 'auto' }}>
-                        {Object.values(participantData).map(data => (
-                            <div className="flex gap-2 items-center">
+                        <div className="flex gap-2 items-center">
+                            <p className="truncate max-w-[150px]">Participants:</p>
+                        </div>
+                        {Object.values(participantData).map((data, index) => (
+                            <div key={index} className="flex gap-2 items-center">
                                 <p className="truncate max-w-[150px]">{data.name}</p>
                             </div>
                         ))}
