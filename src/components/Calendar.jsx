@@ -47,7 +47,13 @@ const Calendar = ({
   endDate,
   startTime = 9,
   endTime = 17,
-  userId
+  startMin,
+  endMin,
+  userId,
+  activeWeekStart,
+  activeWeekEnd,
+  setActiveWeekStart,
+  setActiveWeekEnd
 }) => {
   const [events, setEvents] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -97,17 +103,22 @@ const Calendar = ({
     const newStart = new Date(weekStart);
     newStart.setDate(newStart.getDate() - 7);
 
-    if (newStart < weekStart) {
+    if (newStart < startDateISO) {
       setWeekStart(startDateISO);
+      setActiveWeekStart(startDateISO);
       const newEnd = new Date(startDateISO);
       newEnd.setDate(newEnd.getDate() + 6);
       setWeekEnd(newEnd);
+      setActiveWeekEnd(newEnd);
       return;
     }
+
     setWeekStart(newStart);
+    setActiveWeekStart(newStart);
     const newEnd = new Date(newStart);
     newEnd.setDate(newEnd.getDate() + 6);
     setWeekEnd(newEnd);
+    setActiveWeekEnd(newEnd);
   };
 
   const handleNextWeek = () => {
@@ -117,27 +128,19 @@ const Calendar = ({
     const newEnd = new Date(newStart);
     newEnd.setDate(newEnd.getDate() + 6);
 
-    if (newEnd > weekEnd) {
+    if (newEnd > endDateISO) {
       setWeekStart(newStart);
+      setActiveWeekStart(newStart);
       setWeekEnd(endDateISO);
+      setActiveWeekEnd(endDateISO);
       return;
     }
-    setWeekStart(newStart);
-    setWeekEnd(newEnd);
-  };
 
-  // useEffect(() => {
-  //   if (startDate && endDate && startTime && endTime) {
-  //     console.log('Calendar: Received props', {
-  //       startDate,
-  //       endDate,
-  //       startTime,
-  //       endTime,
-  //       weekStart,
-  //       weekEnd
-  //     });
-  //   }
-  // }, [startDate, endDate, startTime, endTime, weekStart, weekEnd]);
+    setWeekStart(newStart);
+    setActiveWeekStart(newStart);
+    setWeekEnd(newEnd);
+    setActiveWeekEnd(newEnd);
+  };
 
   if (!startDate || !endDate || startTime === undefined || endTime === undefined) {
     return null;
@@ -257,6 +260,8 @@ const Calendar = ({
         <CalendarEvents 
           startTime={startTime} 
           endTime={endTime} 
+          startMin={startMin}
+          endMin={endMin}
           startDate={weekStart} 
           endDate={weekEnd}
           events={events}
