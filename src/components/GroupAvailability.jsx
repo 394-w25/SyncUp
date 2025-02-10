@@ -7,6 +7,15 @@ import EventRoundedIcon from '@mui/icons-material/EventRounded';
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import Draggable from 'react-draggable';
+import Button from '@mui/material/Button';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+
+// import { createGoogleCalendarEvent } from '../services/googleCalender';
+
+
+import { collection, getDocs } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from '../firebase';
 
 const buttonTheme = createTheme({
   palette: {
@@ -26,6 +35,83 @@ const buttonTheme = createTheme({
     fontFamily: 'Nunito',
   },
 });
+
+
+
+// Function to get participants for a specific group
+const fetchGroupParticipants = async (groupId) => {
+  const groupRef = doc(db, "groups", groupId);
+  const groupDoc = await getDoc(groupRef);
+
+  if (groupDoc.exists()) {
+    const groupData = groupDoc.data();
+    return groupData.participants || [];
+  } else {
+    console.error("Group does not exist!");
+    return [];
+  }
+};
+
+// Converts a block string (e.g., "2025-02-04 1 PM:00") into a Date object in America/Chicago time.
+// Adjust the logic if your block string format differs.
+function convertBlockToDate(block) {
+  // Split the block string into parts.
+  // Expected format: "YYYY-MM-DD H PM:MM"
+  const parts = block.split(" ");
+  const dateStr = parts[0];            // e.g., "2025-02-04"
+  const hourStr = parts[1];            // e.g., "1"
+  // parts[2] contains "PM:00" (or "AM:00"); split that further.
+  const [period, minuteStr] = parts[2].split(":");  // period e.g., "PM", minuteStr e.g., "00"
+
+  let hour = parseInt(hourStr, 10);
+  if (period === "PM" && hour !== 12) {
+    hour += 12;
+  } else if (period === "AM" && hour === 12) {
+    hour = 0;
+  }
+  // Create a Date using the America/Chicago offset (standard time assumed as -06:00).
+  // (Note: You may need to adjust for daylight saving time if necessary.)
+  return new Date(`${dateStr}T${hour.toString().padStart(2, '0')}:${minuteStr}:00-06:00`);
+}
+
+// Formats a Date object into the Google Calendar deep link format: YYYYMMDDTHHmmSSZ
+function formatDeepLinkDate(date) {
+  // Use the ISO string, remove dashes, colons, and fractional seconds.
+  return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+}
+
+// Builds the deep link URL and opens it in a new tab.
+function scheduleEventDeepLink(selectedBlock, durationMinutes, eventDetails, meetingId, attendeeEmails) {
+  // Convert the selected block to a start Date.
+  const startDate = convertBlockToDate(selectedBlock);
+  // Calculate the event end date.
+  const endDate = new Date(startDate.getTime() + durationMinutes * 60000);
+  
+  // Format both dates.
+  const startDeep = formatDeepLinkDate(startDate);
+  const endDeep = formatDeepLinkDate(endDate);
+  
+  // Build the base URL.
+  const baseUrl = 'https://calendar.google.com/calendar/u/0/r/eventedit';
+  // Construct query parameters:
+  // - text: event title
+  // - dates: start/end in deep link format separated by a slash
+  // - details: event description
+  // - ctz: time zone identifier (America/Chicago)
+  // - add: comma-separated list of attendee emails
+  const params = new URLSearchParams({
+    text: eventDetails.title,
+    dates: `${startDeep}/${endDeep}`,
+    details: eventDetails.description,
+    ctz: 'America/Chicago',
+    add: attendeeEmails.join(','),
+  });
+  console.log("params: ", params.dates);
+  const deepLinkUrl = `${baseUrl}?${params.toString()}`;
+  console.log("deepLinkUrl: ", deepLinkUrl);
+  // Open the deep link URL in a new browser tab.
+  window.open(deepLinkUrl, '_blank');
+}
 
 // Convert "YYYY-MM-DD" to Date
 function dateParse(dateString) {
@@ -71,7 +157,7 @@ function getSlotColor(date, hourIndex, groupAvailabilityData) {
   }
 }
 
-function GroupSchedule({ groupData, groupAvailabilityData, startTime, endTime, startDate, endDate }) {
+function GroupSchedule({ groupData, groupAvailabilityData, startTime, endTime, startDate, endDate, eventName, meetingId, isAuthenticated, setIsAuthenticated, userId, setUserId }) {
   const [selectedBlocks, setSelectedBlocks] = useState(new Set());
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
@@ -237,13 +323,119 @@ function GroupSchedule({ groupData, groupAvailabilityData, startTime, endTime, s
           onClose={() => setShowPopup(false)}
           groupAvailabilityData={groupAvailabilityData}
           numMembers={numMembers}
+          eventName={eventName}
+          meetingId={meetingId}
+          isAuthenticated={isAuthenticated}
+          setIsAuthenticated={setIsAuthenticated}
+          userId={userId}
+          setUserId={setUserId}
         />
       )}
     </div>
   );
 }
 
-function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers }) {
+function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers, eventName, meetingId, isAuthenticated, setIsAuthenticated, userId, setUserId}) {
+  const [users, setUsers] = useState([]);
+  const [memberData, setMemberData] = useState([]);
+  const [availabilityCounts, setAvailabilityCounts] = useState({});
+  // Extract available user IDs for the selected time slots
+  const availableUserIds = memberData.filter(member => 
+    selectedBlocks.some(block => {
+      const [dateStr] = block.split(" "); // Extract the date part
+      return member.availability[dateStr] && member.availability[dateStr].data.includes(1);
+    })
+  ).map(member => member.id);
+
+  useEffect(() => {
+    if (Object.keys(users).length > 0) {
+      console.log("✅ Users data is now available:", users);
+    }
+  }, [users]);
+  
+  const handleConfirmSelection = async () => {
+    const isAuthenticated = localStorage.getItem('google-auth') === 'true';
+    if (!isAuthenticated) {
+      alert("Please sign in with Google first!");
+      return;
+    }
+  
+    // Fetch participants from the group
+    const groupParticipants = await fetchGroupParticipants(meetingId);
+  
+    // Filter availableUserIds to include only those in the group participants
+    const attendeeEmails = availableUserIds
+      .filter(id => groupParticipants.includes(id) && users[id])  // Ensure user is a participant and email exists
+      .map(id => users[id]);
+  
+    console.log("Attendees for this event:", attendeeEmails);
+  
+    // Proceed with scheduling
+    const sortedBlocks = Array.from(selectedBlocks).sort((a, b) => convertBlockToDate(a) - convertBlockToDate(b));
+    const startBlock = sortedBlocks[0];
+    const endBlock = sortedBlocks[sortedBlocks.length - 1];
+    const startDateObj = convertBlockToDate(startBlock);
+    const endDateObj = new Date(convertBlockToDate(endBlock).getTime() + 30 * 60000);
+    const durationMinutes = (endDateObj - startDateObj) / 60000;
+  
+    const eventDetails = {
+      title: eventName || "Group Meeting",
+      description: "\n\nThis event was scheduled with https://syncup-5bc71.web.app/group/" + meetingId
+    };
+  
+    scheduleEventDeepLink(startBlock, durationMinutes, eventDetails, meetingId, attendeeEmails);
+  };
+  
+
+
+  useEffect(() => {
+    console.log("Selected Blocks:", selectedBlocks);
+    const fetchData = async () => {
+      try {
+        const usersRef = collection(db, "users");
+        const usersSnapshot = await getDocs(usersRef);
+        const userData = {};
+        usersSnapshot.docs.forEach((doc) => {
+          userData[doc.id] = doc.data().email;
+        });
+        setUsers(userData);
+
+        const availabilityRef = collection(db, "availability");
+        const availabilitySnapshot = await getDocs(availabilityRef);
+        const members = availabilitySnapshot.docs.map(doc => ({
+          id: doc.id,
+          availability: doc.data()
+        }));
+        // console.log("availability: ", members[availability]);
+        console.log("members are: ", members);
+        setMemberData(members);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchData();
+
+    // Count availability for each block
+    const countAvailability = () => {
+      // console.log("Counting availability for:", selectedBlocks);
+    
+      const counts = {};
+      selectedBlocks.forEach(block => {
+        const [dateStr, hour, ampmMinutes] = block.split(' ');
+        const isoDate = dateStr;
+    
+        const totalMinutes = (parseInt(hour) % 12 + (block.includes('PM') ? 12 : 0)) * 60 + (ampmMinutes.includes(':30') ? 30 : 0);
+        const hourIndex = (totalMinutes - 480) / 30;
+    
+        counts[block] = groupAvailabilityData[isoDate]?.[hourIndex] || 0;
+      });
+    
+      setAvailabilityCounts(counts);
+    };
+    
+
+    countAvailability();
+  }, [selectedBlocks, groupAvailabilityData]);
 
   const blocks = selectedBlocks.map(block => {
     const [dateStr, hour, ampmMinutes] = block.split(' ');
@@ -348,6 +540,31 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers 
               ))}
             </ul>
           </div>
+
+          {/* SCHEDULE BUTTON */}
+          <div className="flex flex-col items-center gap-3 text-[18px]">
+            {/* <span className="text-neutral-1000">Schedule now?</span> */}
+            <ThemeProvider theme={buttonTheme}>
+              <Button 
+                variant="contained" 
+                color="secondary"
+                style={{
+                  textTransform: 'none',
+                  borderRadius: 50,
+                  color: 'white',
+                  fontWeight: 'bold',
+                  padding: '8px 32px',
+                  fontSize: '16px'
+                }}
+                onClick={handleConfirmSelection}
+                endIcon={<ArrowForwardIcon />}
+                disableElevation
+              >
+                Schedule now
+              </Button>
+            </ThemeProvider>
+          </div>
+
         </div>
       </div>
     </Draggable>
@@ -362,32 +579,13 @@ function formatYyyyMmDd(date) {
   return `${y}-${m}-${d}`;
 }
 
-export default function GroupAvailability({ groupData, groupAvailabilityData, startDate, endDate, startTime, endTime}) {
-  // console.log('GroupAvailability received:', {
-  //   startDate,
-  //   endDate,
-  //   startDateType: typeof startDate,
-  //   endDateType: typeof endDate
-  // });
+export default function GroupAvailability({ groupData, groupAvailabilityData, startDate, endDate, startTime, endTime, eventName, meetingId}) {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userId, setUserId] = useState(null); 
 
-  const [weekStart, setWeekStart] = useState(() => {
-    if (!startDate) return new Date();
-    return new Date(startDate);
-  });
-  
-  const [weekEnd, setWeekEnd] = useState(() => {
-    if (!endDate) return new Date();
-    return new Date(endDate);
-  });
-
-  useEffect(() => {
-    if (startDate) {
-      setWeekStart(new Date(startDate));
-    }
-    if (endDate) {
-      setWeekEnd(new Date(endDate));
-    }
-  }, [startDate, endDate]);
+  console.log("Event Name:", eventName);
+  const [weekStart, setWeekStart] = useState(() => new Date(startDate));
+  const [weekEnd, setWeekEnd] = useState(() => new Date(endDate));
 
   const handlePreviousWeek = () => {
     setWeekStart(prev => {
@@ -441,6 +639,12 @@ export default function GroupAvailability({ groupData, groupAvailabilityData, st
         endTime={endTime}
         startDate={formatYyyyMmDd(weekStart)}
         endDate={formatYyyyMmDd(weekEnd)}
+        eventName={eventName}
+        meetingId={meetingId}
+        isAuthenticated={isAuthenticated}
+        setIsAuthenticated={setIsAuthenticated}
+        userId={userId}
+        setUserId={setUserId}
       />
     </div>
   );

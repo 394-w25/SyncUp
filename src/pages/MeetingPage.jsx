@@ -171,19 +171,21 @@ const MeetingPage = () => {
                     
                 </div>
                 <div className='w-[30%] h-full flex flex-col gap-4'>
-                    <Legend 
-                        meetingID={meetingId}
-                        eventName={event}
-                        participantData={participantsData}
+                <Legend 
+                    meetingID={meetingId}
+                    eventName={event}
+                    participantData={participantsData}
+                />
+                <GroupAvailability
+                    groupData={groupData}
+                    groupAvailabilityData={groupAvailabilityData}
+                    startDate={startDate}
+                    endDate={endDate}
+                    startTime={startTime}
+                    endTime={endTime}
+                    eventName={event}
+                    meetingId={meetingId}
                     />
-                    <GroupAvailability
-                        groupData={groupData}
-                        groupAvailabilityData={groupAvailabilityData}
-                        startDate={startDate}
-                        endDate={endDate}
-                        startTime={startTime}
-                        endTime={endTime}
-                        />
                 </div>
 
                 {/* Sign out button in bottom left corner */}

@@ -1,3 +1,7 @@
+import { getUsersEmails } from '../firebase';
+// import { refreshGoogleToken } from '../services/googleAuth';
+
+// same
 export const initializeGAPIClient = async () => {
     try {
       await gapi.client.init({
@@ -14,7 +18,7 @@ export const initializeGAPIClient = async () => {
     }
   };
 
-  
+//same  
 export const getGoogleCalendarEvents = async (startDate, endDate) => {
     try {
       // Ensure we're working with Date objects and proper timezone handling
@@ -45,3 +49,28 @@ export const getGoogleCalendarEvents = async (startDate, endDate) => {
       throw error;
     }
   };
+
+const formatDateTime = (block) => {
+  try {
+    const [dateStr, hourStr, ampmMinutes] = block.split(" ");
+    const [ampm, minutes] = ampmMinutes.split(":");
+
+    let hour = parseInt(hourStr, 10);
+    if (ampm === "PM" && hour !== 12) hour += 12;
+    if (ampm === "AM" && hour === 12) hour = 0;
+
+    if (!minutes) {
+      console.error("❌ Invalid time format, missing minutes:", block);
+      throw new Error("Invalid time format");
+    }
+
+    const chicagoTime = new Date(`${dateStr}T${hour.toString().padStart(2, "0")}:${minutes.padStart(2, "0")}:00-06:00`);
+    const isoString = chicagoTime.toISOString();
+    
+    console.log("🌍 Converted Chicago Time:", chicagoTime, "ISO:", isoString);
+    return isoString;
+  } catch (error) {
+    console.error("❌ Error formatting date:", block, error);
+    throw error;
+  }
+};

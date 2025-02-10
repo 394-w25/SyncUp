@@ -132,10 +132,11 @@ const SetUp = () => {
 
     const handleGoogleAuth = async () => {
         try {
-            const user = await handleAuth(setIsAuthenticated);
-            setUserId(user.uid);
+            const user = await handleAuth(setIsAuthenticated, setUserId);
+            // setUserId(user.uid);
             setUserName(user.displayName);
             localStorage.setItem('user-id', user.uid);
+            // console.log('User ID set:', user.uid); // Debugging log
         } catch (error) {
             console.error('Error during authentication:', error);
         }
