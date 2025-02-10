@@ -8,6 +8,8 @@ import { importEvents } from '../utils/importEvents';
 
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
 
 const buttonTheme = createTheme({
   palette: {
@@ -47,10 +49,23 @@ const Calendar = ({
   endDate,
   startTime = 9,
   endTime = 17,
-  userId
+  userId,
+  meetingID
 }) => {
   const [events, setEvents] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopyLink = () => {
+      const meetingLink = `syncup-5bc71.web.app/group/${meetingID}`; 
+      // TODO: fix meetingLink 
+      navigator.clipboard.writeText(meetingLink);
+      setIsCopied(true);
+
+      setTimeout(() => {
+          setIsCopied(false);
+      }, 2000);
+  }
 
   // for week toggler, store active week range
   const [weekStart, setWeekStart] = useState(() => {
@@ -197,6 +212,31 @@ const Calendar = ({
                 {isLoading ? 'Importing...' : 'Import Events'}
               </Button>
             </ThemeProvider>
+          )}
+
+          {isCopied ? (
+              <ThemeProvider theme={buttonTheme}>
+                  <Button 
+                      variant='outlined' 
+                      color='primary' 
+                      style={{textTransform: 'none'}}
+                      endIcon={<TaskAltRoundedIcon />}
+                      disabled={true}
+                  >
+                      Copied to clipboard
+                  </Button>
+              </ThemeProvider>
+          ) : (
+              <ThemeProvider theme={buttonTheme}>
+                  <Button 
+                      variant='outlined' 
+              color='primary'
+              style={{textTransform: 'none'}}
+              onClick={handleCopyLink}
+              endIcon={<ContentCopyIcon />}>
+                  Copy Share Link
+              </Button>
+          </ThemeProvider>
           )}
 
           <div className='flex gap-8'>
