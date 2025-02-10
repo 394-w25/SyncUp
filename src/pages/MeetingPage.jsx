@@ -91,8 +91,8 @@ const MeetingPage = () => {
             
             // console.log('groupIdFromPath', groupIdFromPath);
             console.log('groupDataFromFetch', groupDataFromFetch);
-            console.log('groupParticipantsData', groupParticipantsData);
-            console.log('availabilityData', availabilityData);
+            // console.log('groupParticipantsData', groupParticipantsData);
+            // console.log('availabilityData', availabilityData);
             
             setParticipantsData(groupParticipantsData);
             setGroupAvailabilityData(availabilityData);
@@ -166,26 +166,24 @@ const MeetingPage = () => {
                         <div className='w-full h-full flex justify-center items-center'>
                             <p className='text-2xl font-bold'>Loading...</p>
                         </div>
-                    )
-                }
-                    
+                    )}                    
                 </div>
                 <div className='w-[30%] h-full flex flex-col gap-4'>
-                <Legend 
-                    meetingID={meetingId}
-                    eventName={event}
-                    participantData={participantsData}
-                />
-                <GroupAvailability
-                    groupData={groupData}
-                    groupAvailabilityData={groupAvailabilityData}
-                    startDate={startDate}
-                    endDate={endDate}
-                    startTime={startTime}
-                    endTime={endTime}
-                    eventName={event}
-                    meetingId={meetingId}
+                    <Legend 
+                        meetingID={meetingId}
+                        eventName={event}
+                        participantData={participantsData}
                     />
+                    {groupData ? (
+                        <GroupAvailability
+                            groupData={groupData}
+                            groupAvailabilityData={groupAvailabilityData}
+                        />
+                    ) : (
+                        <div className='w-full h-full flex justify-center items-center'>
+                            <p className='text-2xl font-bold'>Loading...</p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Sign out button in bottom left corner */}

@@ -347,11 +347,11 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
     })
   ).map(member => member.id);
 
-  useEffect(() => {
-    if (Object.keys(users).length > 0) {
-      console.log("✅ Users data is now available:", users);
-    }
-  }, [users]);
+  // useEffect(() => {
+  //   if (Object.keys(users).length > 0) {
+  //     console.log("✅ Users data is now available:", users);
+  //   }
+  // }, [users]);
   
   const handleConfirmSelection = async () => {
     const isAuthenticated = localStorage.getItem('google-auth') === 'true';
@@ -389,7 +389,7 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
 
 
   useEffect(() => {
-    console.log("Selected Blocks:", selectedBlocks);
+    // console.log("Selected Blocks:", selectedBlocks);
     const fetchData = async () => {
       try {
         const usersRef = collection(db, "users");
@@ -407,7 +407,6 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
           availability: doc.data()
         }));
         // console.log("availability: ", members[availability]);
-        console.log("members are: ", members);
         setMemberData(members);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -579,13 +578,12 @@ function formatYyyyMmDd(date) {
   return `${y}-${m}-${d}`;
 }
 
-export default function GroupAvailability({ groupData, groupAvailabilityData, startDate, endDate, startTime, endTime, eventName, meetingId}) {
+export default function GroupAvailability({ groupData, groupAvailabilityData }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userId, setUserId] = useState(null); 
 
-  console.log("Event Name:", eventName);
-  const [weekStart, setWeekStart] = useState(() => new Date(startDate));
-  const [weekEnd, setWeekEnd] = useState(() => new Date(endDate));
+  const [weekStart, setWeekStart] = useState(groupData.proposedDays[0].toDate());
+  const [weekEnd, setWeekEnd] = useState(groupData.proposedDays[groupData.proposedDays.length - 1].toDate());
 
   const handlePreviousWeek = () => {
     setWeekStart(prev => {
@@ -635,12 +633,12 @@ export default function GroupAvailability({ groupData, groupAvailabilityData, st
       <GroupSchedule
         groupData={groupData}
         groupAvailabilityData={groupAvailabilityData}
-        startTime={startTime}
-        endTime={endTime}
+        startTime={groupData.proposedStart}
+        endTime={groupData.proposedEnd}
         startDate={formatYyyyMmDd(weekStart)}
         endDate={formatYyyyMmDd(weekEnd)}
-        eventName={eventName}
-        meetingId={meetingId}
+        eventName={groupData.title}
+        meetingId={groupData.groupId}
         isAuthenticated={isAuthenticated}
         setIsAuthenticated={setIsAuthenticated}
         userId={userId}

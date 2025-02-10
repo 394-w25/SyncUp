@@ -36,8 +36,13 @@ export async function fetchGroupAvailability(groupData, participantsData) {
             compressedSlots.push(group.every(slot => slot === 1) ? 1 : 0);
           }
 
+          // append userName to the list in slots corresponding to availability
           if (dateStr in data) {
-            data[dateStr] = data[dateStr].map((slot, index) => compressedSlots[index] ? slot.push(userName) : slot);
+            for (let i = 0; i < compressedSlots.length; i++) {
+              if (compressedSlots[i]) {
+                data[dateStr][i].push(userName);
+              }
+            }
           } else {
             data[dateStr] = compressedSlots.map((slot) => slot ? [userName] : []);
           }
