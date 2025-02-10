@@ -56,13 +56,11 @@ export async function fetchUserDataInGroup(participants) {
   const data = {};
   const querySnapshot = await getDocs(collection(db, "users"));
 
-  for (const userId of participants) {
-    querySnapshot.forEach((doc) => {
-      if (doc.id === userId) {
-        data[userId] = doc.data();
-      }
-    });
-  }
+  querySnapshot.forEach((doc) => {
+    if (participants.includes(doc.id)) {
+      data[doc.id] = doc.data();
+    }
+  });
 
   return data;
 }

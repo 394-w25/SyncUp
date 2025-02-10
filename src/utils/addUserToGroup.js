@@ -8,7 +8,4 @@ export const addParticipantToGroup = async (groupId, participant) => {
     await updateDoc(groupRef, {
         participants: arrayUnion(participant)
     });
-
-    // console.log('Participant added to group:', groupId);
-    // console.log('Participant:', participant);
 };
