@@ -8,7 +8,7 @@ import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import Draggable from 'react-draggable';
 import Button from '@mui/material/Button';
-import { handleAuth } from '../services/googleAuth';  // Adjust the path if needed
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 // import { createGoogleCalendarEvent } from '../services/googleCalender';
 
@@ -540,9 +540,31 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
               ))}
             </ul>
           </div>
-          <Button variant="contained" color="primary" size="large" onClick={handleConfirmSelection}>
-            Confirm Selection
-          </Button>
+
+          {/* SCHEDULE BUTTON */}
+          <div className="flex flex-col items-center gap-3 text-[18px]">
+            {/* <span className="text-neutral-1000">Schedule now?</span> */}
+            <ThemeProvider theme={buttonTheme}>
+              <Button 
+                variant="contained" 
+                color="secondary"
+                style={{
+                  textTransform: 'none',
+                  borderRadius: 50,
+                  color: 'white',
+                  fontWeight: 'bold',
+                  padding: '8px 32px',
+                  fontSize: '16px'
+                }}
+                onClick={handleConfirmSelection}
+                endIcon={<ArrowForwardIcon />}
+                disableElevation
+              >
+                Schedule now
+              </Button>
+            </ThemeProvider>
+          </div>
+
         </div>
       </div>
     </Draggable>
