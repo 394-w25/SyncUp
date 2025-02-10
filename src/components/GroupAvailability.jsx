@@ -372,7 +372,7 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
     const groupParticipants = await fetchGroupParticipants(meetingId);
   
     // Filter availableUserIds to include only those in the group participants
-    const attendeeEmails = availableUserIds
+    const attendeeEmails = groupParticipants
       .filter(id => groupParticipants.includes(id) && users[id])  // Ensure user is a participant and email exists
       .map(id => users[id]);
   

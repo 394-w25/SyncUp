@@ -310,11 +310,7 @@ export default function CalendarEvents({
         return top < bBottom && bottom > bTop;
       });
 
-    const hasOverlapWithGcal = googleBlocksByDay[dayIndex]?.some((block) => {
-      return top < block.bottom && bottom > block.top;
-    });
-
-    if (hasOverlapWithUserBlocks || hasOverlapWithGcal) {
+    if (hasOverlapWithUserBlocks) {
       resetDrag();
       return;
     }

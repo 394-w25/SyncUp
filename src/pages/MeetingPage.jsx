@@ -156,6 +156,7 @@ const MeetingPage = () => {
                             activeWeekEnd={activeWeekEnd}
                             setActiveWeekStart={setActiveWeekStart}
                             setActiveWeekEnd={setActiveWeekEnd}
+                            meetingID={meetingId}
                         />
                     ) : (
                         <div className='w-full h-full flex justify-center items-center'>
