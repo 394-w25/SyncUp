@@ -92,7 +92,7 @@ export const calculateAvailability = (events, userId, startHour = 8, endHour = 1
 
     try {
       await setDoc(doc(db, "availability", docId), availabilityDoc);
-      console.log("Availability written to Firestore:", availabilityDoc);
+      // console.log("Availability written to Firestore:", availabilityDoc);
     } catch (error) {
       console.error("Error writing availability to Firestore:", error);
     }

@@ -2,26 +2,32 @@ import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 
 export async function fetchGroupData(groupId) {
+    if (!groupId) return;
     const docRef = doc(db, "groups", groupId);
     const docSnap = await getDoc(docRef);
     
     if (!docSnap.exists()) {
-        console.log("No such document!");
+        console.error("No such document!");
         alert("Invalid Group! Check the URL and try again.");
     }
     return docSnap.data();
 }
 
-export async function fetchGroupAvailability(groupData) {
+export async function fetchGroupAvailability(groupData, participantsData) {
+    const groupAvailabilityData = {};  
     const data = {};
     const querySnapshot = await getDocs(collection(db, "availability"));
     // console.log('group data: ', groupData);
 
     querySnapshot.forEach((doc) => {
+      // console.log(doc.data());
       const userID = doc.id;
+      
       if (groupData.participants && groupData.participants.includes(userID)) {
-        for (const date in doc.data()) {
-          const slots = doc.data()[date]['data'];
+        const userName = participantsData[userID].name
+        
+        for (const dateStr in doc.data()) {
+          const slots = doc.data()[dateStr]['data'];
           if (slots === undefined) continue;
 
           const compressedSlots = [];
@@ -30,30 +36,31 @@ export async function fetchGroupAvailability(groupData) {
             compressedSlots.push(group.every(slot => slot === 1) ? 1 : 0);
           }
 
-          if (date in data) {
-            data[date] = data[date].map((num, index) => num + compressedSlots[index]);
+          if (dateStr in data) {
+            data[dateStr] = data[dateStr].map((slot, index) => compressedSlots[index] ? slot.push(userName) : slot);
           } else {
-            data[date] = compressedSlots;
+            data[dateStr] = compressedSlots.map((slot) => slot ? [userName] : []);
           }
         }}
-    })
-
-    data['numMembers'] = groupData.participants.length;
+      })
+      
+    groupAvailabilityData['intervalMins'] = 30;
+    groupAvailabilityData['data'] = data;
+    groupAvailabilityData['numMembers'] = groupData.participants.length;
+    groupAvailabilityData['startTime'] = groupData.proposedStart;
     
-    return data;
+    return groupAvailabilityData;
 }
 
 export async function fetchUserDataInGroup(participants) {
   const data = {};
   const querySnapshot = await getDocs(collection(db, "users"));
 
-  for (const userId of participants) {
-    querySnapshot.forEach((doc) => {
-      if (doc.id === userId) {
-        data[userId] = doc.data();
-      }
-    });
-  }
+  querySnapshot.forEach((doc) => {
+    if (participants.includes(doc.id)) {
+      data[doc.id] = doc.data();
+    }
+  });
 
   return data;
 }

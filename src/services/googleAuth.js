@@ -21,7 +21,6 @@ const signInWithGoogle = async () => {
         uid: user.uid,
         name: user.displayName,
         email: user.email,
-        isSynced: false,
       });
   
       console.log('User signed in and authenticated');
@@ -45,18 +44,6 @@ const handleAuth = async (setIsAuthenticated) => {
     }
 };
 
-const updateIsSynced = async (userId) => {
-  try {
-    const userDoc = doc(db, "users", userId);
-    await updateDoc(userDoc, {
-      isSynced: true
-    });
-    console.log('User calendar sync status updated to true');
-  } catch (error) {
-    console.error('Error updating sync status:', error);
-  }
-};
-
 const signOut = async (setIsAuthenticated, setUserId) => {
   try {
     await firebaseSignOut(auth);
@@ -70,4 +57,4 @@ const signOut = async (setIsAuthenticated, setUserId) => {
   }
 };
 
-export { signInWithGoogle, handleAuth, updateIsSynced, signOut };
+export { signInWithGoogle, handleAuth, signOut };

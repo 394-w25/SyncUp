@@ -8,9 +8,6 @@ import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import Draggable from 'react-draggable';
 
-import { collection, getDocs } from "firebase/firestore";
-import { db } from '../firebase';
-
 const buttonTheme = createTheme({
   palette: {
     mode: 'light',
@@ -46,17 +43,17 @@ function makeSlotKey(date, hourLabel, isHalfHour = false) {
 function getSlotColor(date, hourIndex, groupAvailabilityData) {
   const iso = date.toISOString().split('T')[0];
 
-  if (!groupAvailabilityData) {
+  if (!groupAvailabilityData['data']) {
     return 'bg-white';
   }
 
-  const slots = groupAvailabilityData[iso];
+  const slots = groupAvailabilityData['data'][iso];
   if (!slots) {
     return 'bg-white';
   }
 
   const numMembers = groupAvailabilityData.numMembers;
-  const slotVal = slots[hourIndex];
+  const slotVal = slots[hourIndex]?.length;
   const pctAvail = slotVal / numMembers;
 
   switch(true) {
@@ -66,10 +63,11 @@ function getSlotColor(date, hourIndex, groupAvailabilityData) {
       return 'bg-scale-3';
     case pctAvail >= 0.4:
       return 'bg-scale-2';
-    // case pctAvail >= 0.2:
-    //   return 'bg-scale-1';
+    case pctAvail >= 0.2:
+      return 'bg-scale-1';
     default:
-      return 'bg-scale-none';
+      // return 'bg-scale-none';
+      return 'bg-white';
   }
 }
 
@@ -140,12 +138,6 @@ function GroupSchedule({ groupData, groupAvailabilityData, startTime, endTime, s
       setShowPopup(true);
     }
   };
-
-  // Grid Layout
-  const columns = 1 + dates.length; // one col for hour labels, plus one for each date
-  const rows = 1 + hourLabels.length; // one header row, plus one for each hour
-
-  // Format for convenience
 
   return (
     <div 
@@ -252,67 +244,13 @@ function GroupSchedule({ groupData, groupAvailabilityData, startTime, endTime, s
 }
 
 function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers }) {
-  const [users, setUsers] = useState([]);
-  const [memberData, setMemberData] = useState([]);
-  const [availabilityCounts, setAvailabilityCounts] = useState({});
-
-  useEffect(() => {
-    // console.log("Selected Blocks:", selectedBlocks);
-    const fetchData = async () => {
-      try {
-        const usersRef = collection(db, "users");
-        const usersSnapshot = await getDocs(usersRef);
-        const userData = {};
-        usersSnapshot.docs.forEach((doc) => {
-          userData[doc.id] = doc.data().name;
-        });
-        setUsers(userData);
-
-        const availabilityRef = collection(db, "availability");
-        const availabilitySnapshot = await getDocs(availabilityRef);
-        const members = availabilitySnapshot.docs.map(doc => ({
-          id: doc.id,
-          availability: doc.data().availability
-        }));
-        setMemberData(members);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
-    fetchData();
-
-    // Count availability for each block
-    const countAvailability = () => {
-      // console.log("Counting availability for:", selectedBlocks);
-    
-      const counts = {};
-      selectedBlocks.forEach(block => {
-        const [dateStr, hour, ampmMinutes] = block.split(' ');
-        const isoDate = dateStr;
-    
-        const totalMinutes = (parseInt(hour) % 12 + (block.includes('PM') ? 12 : 0)) * 60 + (ampmMinutes.includes(':30') ? 30 : 0);
-        const hourIndex = (totalMinutes - 480) / 30;
-    
-        // console.log(`Checking availability for ${isoDate} at index ${hourIndex}`);
-        // console.log("Data at this date:", groupAvailabilityData[isoDate]);
-    
-        counts[block] = groupAvailabilityData[isoDate]?.[hourIndex] || 0;
-      });
-      // console.log("availabilityCounts: ", availabilityCounts);
-    
-      setAvailabilityCounts(counts);
-    };
-    
-
-    countAvailability();
-  }, [selectedBlocks, groupAvailabilityData]);
 
   const blocks = selectedBlocks.map(block => {
     const [dateStr, hour, ampmMinutes] = block.split(' ');
-    const [_, minutes] = ampmMinutes.split(':');
+    const [ampm, minutes] = ampmMinutes.split(':');
     const formattedTime = `${hour}:${minutes}`;
     const date = new Date(dateStr + 'T12:00:00');
-    return { date, time: formattedTime, block };
+    return { date, time: formattedTime, block, ampm, hour, minutes };
   });
 
   const uniqueDates = [...new Set(blocks.map(b => b.date.toLocaleDateString('en-US', {
@@ -337,8 +275,31 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers 
 
   const endTime = `${endHour}:${endMinutes === 0 ? '00' : endMinutes}`;
   const timeDisplay = `${times[0]} - ${endTime}`;
-  const minAvailability = Math.min(...Object.values(availabilityCounts));
+
+  // Structures block data to report group availability for selected time range
+  const firstBlock = blocks[0];
+  const lastBlock = blocks[blocks.length - 1];
+  const dateString = firstBlock.date.toISOString().split('T')[0];
+  const selectedStartTime = Number(firstBlock['hour']) + (Number(firstBlock['minutes']) / 60) + ((firstBlock['ampm'] === 'PM' && firstBlock['hour'] != 12) ? 12 : 0);
+  const selectedEndTime = endHour + (endMinutes / 60) + ((lastBlock['ampm'] === 'PM' && ![12, 13].includes(endHour)) ? 12 : 0);
+  // console.log('selected from: ', selectedStartTime, ' to: ', selectedEndTime);
   
+  const availabilityArrayOnDate = groupAvailabilityData['data'][dateString];
+  const availabilityStartTime = groupAvailabilityData['startTime'];
+  const availabilityIntervalMins = groupAvailabilityData['intervalMins'];
+
+  const startIndex = Math.floor((selectedStartTime - availabilityStartTime) * 60 / availabilityIntervalMins);
+  const endIndex = Math.floor((selectedEndTime - availabilityStartTime) * 60 / availabilityIntervalMins);
+  const selectedAvailability = availabilityArrayOnDate ? availabilityArrayOnDate.slice(startIndex, endIndex) : [];
+  
+  // Find participants available in all selected blocks
+  let commonElements = new Set(selectedAvailability[0]);
+  for (let i = 1; i < selectedAvailability.length; i++) {
+    commonElements = new Set([...commonElements].filter(x => selectedAvailability[i].includes(x)));
+  } 
+  const availableParticipants = Array.from(commonElements);
+  const minAvailabilityCount = availableParticipants.length;
+
   return (
     <Draggable 
       handle="#draggable-header"
@@ -351,7 +312,7 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers 
               <IconButton 
                 color="primary" 
                 aria-label="close" 
-                onClick={onClose} 
+                onClick={onClose}
                 className="text-white hover:bg-green-500"
               >
                 <CloseIcon />
@@ -374,16 +335,15 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers 
           </div>
           <div className="flex items-center gap-3">
             <GroupsRoundedIcon className="text-neutral-1000" />
-            <span>{minAvailability} teammate(s) available</span>
+            <span>{minAvailabilityCount} / {numMembers} teammates available</span>
           </div>
           {/* Add count for each member */}
           <div className="flex flex-col w-full">
-            <h3 className="text-lg font-bold mb-2">Selected Time Slots</h3>
+            <h3 className="text-lg font-bold mb-2">Available Members</h3>
             <ul className="text-sm text-neutral-800">
-              {blocks.map(({ block, time }) => (
-                <li key={block} className="flex justify-between">
-                  <span>{time}</span>
-                  <span>{availabilityCounts[block]} / {numMembers} available</span>
+              {availableParticipants.map((name, index) => (
+                <li key={index} className="flex justify-between">
+                  <span>{name}</span>
                 </li>
               ))}
             </ul>
@@ -403,8 +363,31 @@ function formatYyyyMmDd(date) {
 }
 
 export default function GroupAvailability({ groupData, groupAvailabilityData, startDate, endDate, startTime, endTime}) {
-  const [weekStart, setWeekStart] = useState(() => new Date(startDate));
-  const [weekEnd, setWeekEnd] = useState(() => new Date(endDate));
+  // console.log('GroupAvailability received:', {
+  //   startDate,
+  //   endDate,
+  //   startDateType: typeof startDate,
+  //   endDateType: typeof endDate
+  // });
+
+  const [weekStart, setWeekStart] = useState(() => {
+    if (!startDate) return new Date();
+    return new Date(startDate);
+  });
+  
+  const [weekEnd, setWeekEnd] = useState(() => {
+    if (!endDate) return new Date();
+    return new Date(endDate);
+  });
+
+  useEffect(() => {
+    if (startDate) {
+      setWeekStart(new Date(startDate));
+    }
+    if (endDate) {
+      setWeekEnd(new Date(endDate));
+    }
+  }, [startDate, endDate]);
 
   const handlePreviousWeek = () => {
     setWeekStart(prev => {

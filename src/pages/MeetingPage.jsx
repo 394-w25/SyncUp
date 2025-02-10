@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from 'react';
+import { gapi } from 'gapi-script';
 import { handleAuth as googleHandleAuth, signOut } from '../services/googleAuth';
+import { initializeGAPIClient } from '../services/googleCalender';
 import GroupAvailability from '../components/GroupAvailability';
 import Legend from '../components/Legend';
 import Calendar from '../components/Calendar';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { ThemeProvider, createTheme, IconButton } from '@mui/material';
 import { useLocation } from 'react-router-dom';
+
 import { fetchGroupData, fetchGroupAvailability, fetchUserDataInGroup } from '../utils/fetchGroupData';
+import { addParticipantToGroup } from '../utils/addUserToGroup';
 
 const buttonTheme = createTheme({
   palette: {
@@ -32,117 +36,172 @@ const buttonTheme = createTheme({
 
 function formatDate(input) {
     const date = new Date(input);
-    const offset = date.getTimezoneOffset();
-    const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+    // Create date at midnight in local timezone
+    const localDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     return localDate.toISOString().split('T')[0];
 }
 
 const MeetingPage = () => {
     const location = useLocation();
+
+    // Get groupId from the URL
     const [groupId, setGroupId] = useState(null);
     const [groupData, setGroupData] = useState(null);
-    const [groupAvailabilityData, setGroupAvailabilityData] = useState(null);
+    const [groupAvailabilityData, setGroupAvailabilityData] = useState({});
     const [participantsData, setParticipantsData] = useState({});
+
     const [eventTitle, setEvent] = useState('');
     const [StartDate, setStartDate] = useState('');
     const [EndDate, setEndDate] = useState('');
     const [StartTime, setStartTime] = useState('');
     const [EndTime, setEndTime] = useState('');
+
+    const { startDate, endDate, startTime, endTime, meetingId, event } = location.state || {
+        startDate: StartDate,
+        endDate:  EndDate,
+        startTime: StartTime,
+        endTime: EndTime,
+        meetingId: groupId,
+        event: eventTitle
+    };
+
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userId, setUserId] = useState(null);
 
-    useEffect(() => {
-        const pathParts = location.pathname.split('/');
-        const groupId = pathParts[pathParts.length - 1];
-        console.log('Group ID from URL:', groupId); // Debugging log
-        setGroupId(groupId);
-        
-        const fetchData = async () => {
-            const groupData = await fetchGroupData(groupId);
-            setGroupData(groupData);
-
-            // Get meeting data from the group data
-            setEvent(groupData.title); // Set the event title
-            setStartDate(formatDate(groupData.proposedDays[0].toDate())); // Set the start date
-            setEndDate(formatDate(groupData.proposedDays[groupData.proposedDays.length - 1].toDate())); // Set the end date
-            setStartTime(groupData.proposedStart); // Set the start time
-            setEndTime(groupData.proposedEnd); // Set the end time
-
-
-            if (groupData) {
-                const availabilityData = await fetchGroupAvailability(groupData);
-                setGroupAvailabilityData(availabilityData);
-
-                const groupParticipantsData = await fetchUserDataInGroup(groupData.participants);
-                setParticipantsData(groupParticipantsData);
+    // Fetches group data, group availability data, and participants data
+    useEffect(() => {   
+        const initClient = async () => {
+            await initializeGAPIClient();
+            const storedAuth = localStorage.getItem('google-auth');
+            const storedUserId = localStorage.getItem('user-id');
+            if (storedAuth === 'true' && storedUserId) {
+                setIsAuthenticated(true);
+                setUserId(storedUserId);
+                addParticipantToGroup(groupId, storedUserId);
+                // console.log('Stored user ID:', storedUserId);
             }
         };
+        gapi.load('client:auth2', initClient);
 
-        fetchData();
+        const getGroupData = async () => {
+            const groupIdFromPath = location.pathname.split('/').pop();
+            const groupDataFromFetch = await fetchGroupData(groupIdFromPath);
+            const groupParticipantsData = await fetchUserDataInGroup(groupDataFromFetch.participants);
+            const availabilityData = await fetchGroupAvailability(groupDataFromFetch, groupParticipantsData);
+            
+            // console.log('groupIdFromPath', groupIdFromPath);
+            console.log('groupDataFromFetch', groupDataFromFetch);
+            console.log('groupParticipantsData', groupParticipantsData);
+            console.log('availabilityData', availabilityData);
+            
+            setParticipantsData(groupParticipantsData);
+            setGroupAvailabilityData(availabilityData);
+            setGroupData(groupDataFromFetch);
+            setGroupId(groupIdFromPath);
+            
+            // junk code but its necessary
+            setEvent(groupDataFromFetch.title);
+            setStartDate(formatDate(groupDataFromFetch.proposedDays[0].toDate()));
+            setEndDate(formatDate(groupDataFromFetch.proposedDays[groupDataFromFetch.proposedDays.length - 1].toDate()));
+            setStartTime(groupDataFromFetch.proposedStart);
+            setEndTime(groupDataFromFetch.proposedEnd);
+        };
+             
+        getGroupData();
 
-    }, []);
+    }, [userId, meetingId]);
+
+    // debugging
+    // useEffect(() => {
+    //     console.log('States updated:', {
+    //         startDate,
+    //         endDate,
+    //         startTime,
+    //         endTime
+    //     });
+    // }, [startDate, endDate, startTime, endTime]);
+
+    // Push availability data to Firestore
 
     const handleGoogleAuth = async () => {
         try {
-        const user = await googleHandleAuth(setIsAuthenticated);
-        setUserId(user.uid);
-        localStorage.setItem('user-id', user.uid);
+            const user = await googleHandleAuth(setIsAuthenticated);
+            setUserId(user.uid);
+            localStorage.setItem('user-id', user.uid);
         } catch (error) {
-        console.error('Error during authentication:', error);
+            console.error('Error during authentication:', error);
         }
     };
 
     const handleSignOut = async () => {
         await signOut(setIsAuthenticated, setUserId);
-    };
+    }
+
+    // console.log('set up startTime', startTime);
+    // console.log('set up endTime', endTime);
+    // console.log('set up groupData', groupData);
+    // console.log('set up groupAvailabilityData', groupAvailabilityData);
+    // console.log('set up participantsData', participantsData);
+    // console.log('set up isAuthenticated', isAuthenticated);
+    // console.log('set up userId', userId);
+    // console.log('set up startDate', startDate);
+    // console.log('set up endDate', endDate);
+    // console.log('set up event', event);
 
     return (
         <div className="w-screen h-screen px-4 pb-4 bg-background relative">
             <div className="w-full h-full flex gap-4">
                 <div className='w-full h-full flex flex-col gap-4'>
-                <Calendar
-                    isAuthenticated={isAuthenticated}
-                    handleAuth={handleGoogleAuth}
-                    startDate={StartDate}
-                    endDate={EndDate}
-                    startTime={StartTime}
-                    endTime={EndTime}
-                    userId={userId}
-                />
+                    {startDate && endDate && startTime && endTime ? (
+                        <Calendar
+                            isAuthenticated={isAuthenticated}
+                            handleAuth={handleGoogleAuth}
+                            startDate={startDate}
+                            endDate={endDate}
+                            startTime={startTime}
+                            endTime={endTime}
+                            userId={userId}
+                        />
+                    ) : (
+                        <div className='w-full h-full flex justify-center items-center'>
+                            <p className='text-2xl font-bold'>Loading...</p>
+                        </div>
+                    )
+                }
+                    
                 </div>
                 <div className='w-[30%] h-full flex flex-col gap-4'>
-                <Legend 
-                    meetingID={groupId}
-                    eventName={eventTitle}
-                    participantData={participantsData}
-                />
-                <GroupAvailability
-                    groupData={groupData}
-                    groupAvailabilityData={groupAvailabilityData}
-                    startDate={StartDate}
-                    endDate={EndDate}
-                    startTime={StartTime}
-                    endTime={EndTime}
+                    <Legend 
+                        meetingID={meetingId}
+                        eventName={event}
+                        participantData={participantsData}
                     />
+                    <GroupAvailability
+                        groupData={groupData}
+                        groupAvailabilityData={groupAvailabilityData}
+                        startDate={startDate}
+                        endDate={endDate}
+                        startTime={startTime}
+                        endTime={endTime}
+                        />
                 </div>
-                
-            </div>
 
-            {/* Sign out button in bottom left corner */}
-            {isAuthenticated && (
-                <div className="absolute bottom-4 right-4">
-                <ThemeProvider theme={buttonTheme}>
-                    <IconButton
-                    onClick={handleSignOut}
-                    color="secondary"
-                    size="small"
-                    title="Sign Out"
-                    >
-                    <LogoutIcon />
-                    </IconButton>
-                </ThemeProvider>
-                </div>
-            )}
+                {/* Sign out button in bottom left corner */}
+                {isAuthenticated && (
+                    <div className="absolute bottom-4 right-4">
+                    <ThemeProvider theme={buttonTheme}>
+                        <IconButton
+                            onClick={handleSignOut}
+                            color="secondary"
+                            size="small"
+                            title="Sign Out"
+                        >
+                            <LogoutIcon />
+                        </IconButton>
+                    </ThemeProvider>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
