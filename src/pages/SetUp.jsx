@@ -119,8 +119,8 @@ const SetUp = () => {
     const [meetingName, setMeetingName] = useState("");
     const [selectedDate, setSelectedDate] = useState([]);
     const [userName, setUserName] = useState("");
-    const [selectedStartTime, setSelectedStartTime] = useState(null);
-    const [selectedEndTime, setSelectedEndTime] = useState(null);
+    const [selectedStartTime, setSelectedStartTime] = useState(moment().set({ hour: 9, minute: 0 }).toDate());
+    const [selectedEndTime, setSelectedEndTime] = useState(moment().set({ hour: 18, minute: 0 }).toDate());
     const [timeError, setTimeError] = useState('');
     const [groupLink, setGroupLink] = useState("");
     const outerTheme = useTheme();
@@ -236,7 +236,7 @@ const SetUp = () => {
                         </div>
 
                         <div className="bg-white rounded-lg shadow-md p-8">
-                            <h3 className="text-xl font-semibold mb-8 text-center">What days would you like to meet?</h3>
+                            <h3 className="text-xl font-semibold mb-8 text-center">What days might work for you?</h3>
                             <div className="flex justify-center py-8">
                                 <Calendar 
                                     multiple
@@ -271,7 +271,7 @@ const SetUp = () => {
                         </div>
 
                         <div className="bg-white rounded-lg shadow-md p-8 pb-12 pt-8">
-                            <h3 className="text-xl font-semibold mb-6 text-center">What times would you like to meet?</h3>
+                            <h3 className="text-xl font-semibold mb-6 text-center">What times might work for you?</h3>
                             <div className="flex flex-col sm:flex-row justify-center items-end gap-8 text-lg">
                                 <ThemeProvider theme={customTheme(outerTheme)}>
                                     <LocalizationProvider dateAdapter={AdapterMoment}>
@@ -279,6 +279,7 @@ const SetUp = () => {
                                             label="Start Time" 
                                             views={['hours', 'minutes']} 
                                             format="hh:mm A" 
+                                            value={moment(selectedStartTime)}
                                             viewRenderers={{
                                                 hours: renderTimeViewClock,
                                                 minutes: renderTimeViewClock,
@@ -299,6 +300,7 @@ const SetUp = () => {
                                             label="End Time" 
                                             views={['hours', 'minutes']} 
                                             format="hh:mm A" 
+                                            value={moment(selectedEndTime)}
                                             viewRenderers={{
                                                 hours: renderTimeViewClock,
                                                 minutes: renderTimeViewClock,

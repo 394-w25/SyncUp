@@ -1,6 +1,5 @@
 import { GoogleAuthProvider, signInWithPopup, getAuth , signOut as firebaseSignOut} from "firebase/auth";
 import { setDoc, doc, updateDoc } from "firebase/firestore";
-import { gapi } from "gapi-script";
 import { db } from '../firebase'; // Assuming you have a firebase.js file for Firestore
 
 const auth = getAuth();

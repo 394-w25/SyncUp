@@ -3,7 +3,7 @@ export const initializeGAPIClient = async () => {
       await gapi.client.init({
         apiKey: "AIzaSyALwmIcPkkZnfIXKwbMQa0DBtQ-iqv6bho", // Replace with your actual API key
         clientId: "308692654908-c3sb5qvhs1nhc8t3lju2n1lqsem6123q.apps.googleusercontent.com", // Replace with your actual client ID
-        scope: "https://www.googleapis.com/auth/calendar",
+        scope: "https://www.googleapis.com/auth/calendar.events.readonly",
         discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
       });
   
