@@ -2,6 +2,7 @@ import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 
 export async function fetchGroupData(groupId) {
+    if (!groupId) return;
     const docRef = doc(db, "groups", groupId);
     const docSnap = await getDoc(docRef);
     
@@ -55,13 +56,11 @@ export async function fetchUserDataInGroup(participants) {
   const data = {};
   const querySnapshot = await getDocs(collection(db, "users"));
 
-  for (const userId of participants) {
-    querySnapshot.forEach((doc) => {
-      if (doc.id === userId) {
-        data[userId] = doc.data();
-      }
-    });
-  }
+  querySnapshot.forEach((doc) => {
+    if (participants.includes(doc.id)) {
+      data[doc.id] = doc.data();
+    }
+  });
 
   return data;
 }

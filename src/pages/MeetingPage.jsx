@@ -2,20 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { gapi } from 'gapi-script';
 import { handleAuth as googleHandleAuth, signOut } from '../services/googleAuth';
 import { initializeGAPIClient } from '../services/googleCalender';
-import { importEvents } from '../utils/importEvents';
-import { calculateAvailability } from '../utils/availability';
-import { fetchParticipants } from '../firebase.config';
 import GroupAvailability from '../components/GroupAvailability';
 import Legend from '../components/Legend';
 import Calendar from '../components/Calendar';
 import LogoutIcon from '@mui/icons-material/Logout';
-import { Button, ThemeProvider, createTheme, IconButton } from '@mui/material';
+import { ThemeProvider, createTheme, IconButton } from '@mui/material';
 import { useLocation } from 'react-router-dom';
 
 import { fetchGroupData, fetchGroupAvailability, fetchUserDataInGroup } from '../utils/fetchGroupData';
 import { addParticipantToGroup } from '../utils/addUserToGroup';
-import { db } from '../firebase.config';
-import { doc, getDoc } from 'firebase/firestore';
 
 const buttonTheme = createTheme({
   palette: {
@@ -72,74 +67,49 @@ const MeetingPage = () => {
 
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userId, setUserId] = useState(null);
-    const [isLoading, setIsLoading] = useState(false);
 
-    useEffect(() => {                
-        const initializePage = async () => {
-            setIsLoading(true);
-            const pathParts = location.pathname.split('/');
-            const groupId = pathParts[pathParts.length - 1];
-            setGroupId(groupId);
-
-            try {
-                const docRef = doc(db, 'groups', groupId);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists) {
-                    const data = docSnap.data();
-
-                    const formattedStart = formatDate(data.proposedDays[0].toDate());
-                    const formattedEnd = formatDate(data.proposedDays[data.proposedDays.length - 1].toDate());
-                    
-                    setEvent(data.title);
-                    setStartDate(formattedStart);
-                    setEndDate(formattedEnd);
-                    setStartTime(data.proposedStart);
-                    setEndTime(data.proposedEnd);
-                    // console.log('Event title', data.title, 'Start Date', formatDate(data.proposedDays[0].toDate()), 'End Date',formatDate(data.proposedDays[data.proposedDays.length - 1].toDate()), 'Start Time', data.proposedStart, 'End Time', data.proposedEnd, 'created At', data.createdAt.toDate());
-                }
-            } catch (error) {
-                console.error('Error fetching meeting data:', error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        initializePage();
-
+    // Fetches group data, group availability data, and participants data
+    useEffect(() => {   
         const initClient = async () => {
-        try {
             await initializeGAPIClient();
             const storedAuth = localStorage.getItem('google-auth');
             const storedUserId = localStorage.getItem('user-id');
             if (storedAuth === 'true' && storedUserId) {
-            setIsAuthenticated(true);
-            setUserId(storedUserId);
-            // console.log('Stored user ID:', storedUserId);
-            // add userid to the groupid
-            addParticipantToGroup(groupId, storedUserId);
-            // console.log('Stored user ID:', storedUserId);
+                setIsAuthenticated(true);
+                setUserId(storedUserId);
+                addParticipantToGroup(groupId, storedUserId);
+                // console.log('Stored user ID:', storedUserId);
             }
-        } catch (error) {
-            console.error('Error initializing GAPI client:', error);
-        }
         };
-
         gapi.load('client:auth2', initClient);
-    }, []);
 
-    // Fetches group data, group availability data, and participants data
-    useEffect(() => {
         const getGroupData = async () => {
-            const groupDataFromFetch = await fetchGroupData(groupId);
+            const groupIdFromPath = location.pathname.split('/').pop();
+            const groupDataFromFetch = await fetchGroupData(groupIdFromPath);
             const groupParticipantsData = await fetchUserDataInGroup(groupDataFromFetch.participants);
             const availabilityData = await fetchGroupAvailability(groupDataFromFetch, groupParticipantsData);
+            
+            // console.log('groupIdFromPath', groupIdFromPath);
+            console.log('groupDataFromFetch', groupDataFromFetch);
+            console.log('groupParticipantsData', groupParticipantsData);
+            console.log('availabilityData', availabilityData);
             
             setParticipantsData(groupParticipantsData);
             setGroupAvailabilityData(availabilityData);
             setGroupData(groupDataFromFetch);
+            setGroupId(groupIdFromPath);
+            
+            // junk code but its necessary
+            setEvent(groupDataFromFetch.title);
+            setStartDate(formatDate(groupDataFromFetch.proposedDays[0].toDate()));
+            setEndDate(formatDate(groupDataFromFetch.proposedDays[groupDataFromFetch.proposedDays.length - 1].toDate()));
+            setStartTime(groupDataFromFetch.proposedStart);
+            setEndTime(groupDataFromFetch.proposedEnd);
         };
+             
         getGroupData();
-    }, [userId, meetingId, event]);
+
+    }, [userId, meetingId]);
 
     // debugging
     // useEffect(() => {
@@ -155,11 +125,11 @@ const MeetingPage = () => {
 
     const handleGoogleAuth = async () => {
         try {
-        const user = await googleHandleAuth(setIsAuthenticated);
-        setUserId(user.uid);
-        localStorage.setItem('user-id', user.uid);
+            const user = await googleHandleAuth(setIsAuthenticated);
+            setUserId(user.uid);
+            localStorage.setItem('user-id', user.uid);
         } catch (error) {
-        console.error('Error during authentication:', error);
+            console.error('Error during authentication:', error);
         }
     };
 

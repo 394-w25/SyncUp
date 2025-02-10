@@ -13,7 +13,6 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DoneIcon from '@mui/icons-material/Done';
 import AddLinkRoundedIcon from '@mui/icons-material/AddLinkRounded';
-import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
 
 import { Calendar } from "react-multi-date-picker";
 import DatePanel from "react-multi-date-picker/plugins/date_panel";
@@ -131,30 +130,16 @@ const SetUp = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userId, setUserId] = useState(null);
 
-    // const handleGoogleSignIn = async () => {
-    //     try {
-    //         const user = await signInWithGoogle();
-    //         localStorage.setItem('google-auth', 'true');
-    //         localStorage.setItem('user-id', user.uid); // Add this line
-    //         return user;
-    //       } catch (error) {
-    //         console.error('Error during authentication:', error);
-    //         throw error;
-    //       }
-    // };
-
     const handleGoogleAuth = async () => {
         try {
-        const user = await handleAuth(setIsAuthenticated);
-        setUserId(user.uid);
-        setUserName(user.displayName);
-        localStorage.setItem('user-id', user.uid);
-        // console.log('User ID set:', user.uid); // Debugging log
+            const user = await handleAuth(setIsAuthenticated);
+            setUserId(user.uid);
+            setUserName(user.displayName);
+            localStorage.setItem('user-id', user.uid);
         } catch (error) {
-        console.error('Error during authentication:', error);
+            console.error('Error during authentication:', error);
         }
     };
-
 
     const validateTimeRange = (start, end) => {
         if (!start || !end) return false;
@@ -182,8 +167,8 @@ const SetUp = () => {
     };
 
     const handleStart = async () => {
-        if (!meetingName || selectedDate.length === 0 || !selectedStartTime || !selectedEndTime) {
-            alert("Please fill in all fields");
+        if (!meetingName || selectedDate.length === 0 || !selectedStartTime || !selectedEndTime || !isAuthenticated) {
+            alert("Please sign in with Google and fill in all fields.");
             return;
         }
 
@@ -200,10 +185,11 @@ const SetUp = () => {
             proposedStart: startHour,
             proposedEnd: endHour,
             creator: userId,
-            participants: []
+            participants: [userId]
         };
 
         try {
+            console.log('Creating group with data:', groupData);
             const result = await createGroup(groupData);
             setGroupLink(result.link);
         } catch (error) {
