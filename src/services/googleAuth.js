@@ -1,23 +1,29 @@
-import { GoogleAuthProvider, signInWithPopup, getAuth , signOut as firebaseSignOut} from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, getAuth, signOut as firebaseSignOut } from "firebase/auth";
 import { setDoc, doc, updateDoc } from "firebase/firestore";
-import { db } from '../firebase'; // Assuming you have a firebase.js file for Firestore
+import { db } from '../firebase';
+import { gapi } from "gapi-script";
 
 const auth = getAuth();
+const CLIENT_ID = "308692654908-c3sb5qvhs1nhc8t3lju2n1lqsem6123q.apps.googleusercontent.com";
+const SCOPES = "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events";
+const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"];
+
 
 const initializeGAPI = async () => {
+  if (gapi.auth2?.getAuthInstance()) {
+    console.log("✅ GAPI already initialized.");
+    return;
+  }
+  
   return new Promise((resolve, reject) => {
-    console.log("🔄 Loading GAPI...");
     gapi.load("client:auth2", async () => {
       try {
-        console.log("🚀 Initializing GAPI Client...");
-        await gapi.client.init({
-          clientId: "308692654908-c3sb5qvhs1nhc8t3lju2n1lqsem6123q.apps.googleusercontent.com",
-          apiKey: "AIzaSyALwmIcPkkZnfIXKwbMQa0DBtQ-iqv6bho",
-          scope: "https://www.googleapis.com/auth/calendar",
-          discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"],
+        await gapi.auth2.init({
+          client_id: CLIENT_ID,
+          scope: SCOPES,
+          discoveryDocs: DISCOVERY_DOCS,
         });
-
-        console.log("✅ GAPI Initialized!");
+        console.log("🚀 GAPI Initialized Successfully!");
         resolve();
       } catch (error) {
         console.error("❌ GAPI Initialization Error:", error);
@@ -29,7 +35,8 @@ const initializeGAPI = async () => {
 
 const signInWithGoogle = async () => {
   try {
-    await initializeGAPI(); 
+    await initializeGAPI();
+    
     const provider = new GoogleAuthProvider();
     provider.addScope("https://www.googleapis.com/auth/calendar");
     provider.addScope("https://www.googleapis.com/auth/calendar.events");
@@ -39,9 +46,12 @@ const signInWithGoogle = async () => {
     const credential = GoogleAuthProvider.credentialFromResult(result);
     const accessToken = credential.accessToken;
 
+    console.log("🔑 User authenticated with Firebase:", user);
+
+    // Set token for gapi client
     gapi.client.setToken({ access_token: accessToken });
     localStorage.setItem("google-email", user.email);
-    
+
     await setDoc(doc(db, "users", user.uid), {
       uid: user.uid,
       name: user.displayName,
@@ -49,14 +59,13 @@ const signInWithGoogle = async () => {
       isSynced: false,
     });
 
-    console.log('User signed in and authenticated');
+    console.log("✅ User data saved to Firestore");
     return user;
   } catch (error) {
-    console.error('Error signing in with Google:', error);
+    console.error("❌ Error signing in with Google:", error);
     throw error;
   }
 };
-
 
 const checkGoogleSignInStatus = async () => {
   try {
@@ -98,29 +107,24 @@ const isUserAuthenticated = () => {
   return authInstance?.isSignedIn.get() || false;
 };
 
-// add setUserId and setUserId
 const handleAuth = async (setIsAuthenticated, setUserId) => {
-    try {
-      const user = await signInWithGoogle();
-      setIsAuthenticated(true);
-      // setUserId(user.uid);
-      if (setUserId) setUserId(user.uid); 
-      localStorage.setItem('google-auth', 'true');
-      localStorage.setItem('user-id', user.uid); // Add this line
-      return user;
-    } catch (error) {
-      console.error('Error during authentication:', error);
-      throw error;
-    }
+  try {
+    const user = await signInWithGoogle();
+    setIsAuthenticated(true);
+    if (setUserId) setUserId(user.uid);
+    localStorage.setItem('google-auth', 'true');
+    localStorage.setItem('user-id', user.uid);
+    return user;
+  } catch (error) {
+    console.error('Error during authentication:', error);
+    throw error;
+  }
 };
-
 
 const updateIsSynced = async (userId) => {
   try {
     const userDoc = doc(db, "users", userId);
-    await updateDoc(userDoc, {
-      isSynced: true
-    });
+    await updateDoc(userDoc, { isSynced: true });
     console.log('User calendar sync status updated to true');
   } catch (error) {
     console.error('Error updating sync status:', error);
@@ -140,13 +144,12 @@ const signOut = async (setIsAuthenticated, setUserId) => {
   }
 };
 
-// export { signInWithGoogle, handleAuth, updateIsSynced, signOut };
-export { 
-  signInWithGoogle, 
-  checkGoogleSignInStatus, 
-  refreshGoogleToken, 
-  initializeGAPI, 
-  signOut, 
-  updateIsSynced, 
-  handleAuth 
+export {
+  signInWithGoogle,
+  checkGoogleSignInStatus,
+  refreshGoogleToken,
+  initializeGAPI,
+  signOut,
+  updateIsSynced,
+  handleAuth
 };

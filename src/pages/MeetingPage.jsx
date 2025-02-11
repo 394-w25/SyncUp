@@ -8,6 +8,7 @@ import Calendar from '../components/Calendar';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { ThemeProvider, createTheme, IconButton } from '@mui/material';
 import { useLocation } from 'react-router-dom';
+import { Button } from '@mui/material';
 
 import { fetchGroupData, fetchGroupAvailability, fetchUserDataInGroup } from '../utils/fetchGroupData';
 import { addParticipantToGroup } from '../utils/addUserToGroup';
@@ -186,14 +187,16 @@ const MeetingPage = () => {
                 {isAuthenticated && (
                     <div className="absolute bottom-4 right-4">
                     <ThemeProvider theme={buttonTheme}>
-                        <IconButton
+                        <Button
                             onClick={handleSignOut}
                             color="secondary"
                             size="small"
                             title="Sign Out"
+                            startIcon={<LogoutIcon />}
                         >
-                            <LogoutIcon />
-                        </IconButton>
+                            {/* <LogoutIcon />  */}
+                            Sign Out   
+                        </Button>
                     </ThemeProvider>
                     </div>
                 )}

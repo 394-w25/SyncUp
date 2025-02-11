@@ -154,6 +154,10 @@ const Calendar = ({
     setWeekEnd(newEnd);
     setActiveWeekEnd(newEnd);
   };
+  
+  useEffect(() => {
+    handleImportEvents();
+  }, []);
 
   if (!startDate || !endDate || startTime === undefined || endTime === undefined) {
     return null;
