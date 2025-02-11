@@ -49,6 +49,10 @@ const Calendar = ({
   endDate,
   startTime = 9,
   endTime = 17,
+  startMin,
+  endMin,
+  setActiveWeekStart,
+  setActiveWeekEnd,
   userId,
   meetingID
 }) => {
@@ -112,17 +116,22 @@ const Calendar = ({
     const newStart = new Date(weekStart);
     newStart.setDate(newStart.getDate() - 7);
 
-    if (newStart < weekStart) {
+    if (newStart < startDateISO) {
       setWeekStart(startDateISO);
+      setActiveWeekStart(startDateISO);
       const newEnd = new Date(startDateISO);
       newEnd.setDate(newEnd.getDate() + 6);
       setWeekEnd(newEnd);
+      setActiveWeekEnd(newEnd);
       return;
     }
+
     setWeekStart(newStart);
+    setActiveWeekStart(newStart);
     const newEnd = new Date(newStart);
     newEnd.setDate(newEnd.getDate() + 6);
     setWeekEnd(newEnd);
+    setActiveWeekEnd(newEnd);
   };
 
   const handleNextWeek = () => {
@@ -132,15 +141,20 @@ const Calendar = ({
     const newEnd = new Date(newStart);
     newEnd.setDate(newEnd.getDate() + 6);
 
-    if (newEnd > weekEnd) {
+    if (newEnd > endDateISO) {
       setWeekStart(newStart);
+      setActiveWeekStart(newStart);
       setWeekEnd(endDateISO);
+      setActiveWeekEnd(endDateISO);
       return;
     }
-    setWeekStart(newStart);
-    setWeekEnd(newEnd);
-  };
 
+    setWeekStart(newStart);
+    setActiveWeekStart(newStart);
+    setWeekEnd(newEnd);
+    setActiveWeekEnd(newEnd);
+  };
+  
   useEffect(() => {
     handleImportEvents();
   }, []);
@@ -157,12 +171,12 @@ const Calendar = ({
       }
 
       // console.log('Import dates: ', convertToISO(startDate), convertToISO(endDate));
-      const events = await importEvents(
+      const importedEvents = await importEvents(
         userId, 
         convertToISO(startDate), 
         convertToISO(endDate)
       );
-      setEvents(events);
+      setEvents(importedEvents);
     } catch (error) {
       console.error('Error importing events:', error);
     } finally {
@@ -288,6 +302,8 @@ const Calendar = ({
         <CalendarEvents 
           startTime={startTime} 
           endTime={endTime} 
+          startMin={startMin}
+          endMin={endMin}
           startDate={weekStart} 
           endDate={weekEnd}
           events={events}
