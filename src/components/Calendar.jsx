@@ -51,9 +51,6 @@ const Calendar = ({
   endTime = 17,
   startMin,
   endMin,
-  userId,
-  activeWeekStart,
-  activeWeekEnd,
   setActiveWeekStart,
   setActiveWeekEnd,
   userId,
@@ -170,12 +167,12 @@ const Calendar = ({
       }
 
       // console.log('Import dates: ', convertToISO(startDate), convertToISO(endDate));
-      const events = await importEvents(
+      const importedEvents = await importEvents(
         userId, 
         convertToISO(startDate), 
         convertToISO(endDate)
       );
-      setEvents(events);
+      setEvents(importedEvents);
     } catch (error) {
       console.error('Error importing events:', error);
     } finally {

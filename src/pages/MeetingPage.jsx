@@ -152,8 +152,6 @@ const MeetingPage = () => {
                             startMin={startMin}
                             endMin={endMin}
                             userId={userId}
-                            activeWeekStart={activeWeekStart}
-                            activeWeekEnd={activeWeekEnd}
                             setActiveWeekStart={setActiveWeekStart}
                             setActiveWeekEnd={setActiveWeekEnd}
                             meetingID={meetingId}

@@ -476,18 +476,27 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
   // Structures block data to report group availability for selected time range
   const firstBlock = blocks[0];
   const lastBlock = blocks[blocks.length - 1];
+  // console.log('firstBlock: ', firstBlock);
+  // console.log('lastBlock: ', lastBlock);
+
   const dateString = firstBlock.date.toISOString().split('T')[0];
-  const selectedStartTime = Number(firstBlock['hour']) + (Number(firstBlock['minutes']) / 60) + ((firstBlock['ampm'] === 'PM' && firstBlock['hour'] != 12) ? 12 : 0);
-  const selectedEndTime = endHour + (endMinutes / 60) + ((lastBlock['ampm'] === 'PM' && ![12, 13].includes(endHour)) ? 12 : 0);
+  const selectedStartTime = Number(firstBlock['hour'].split(':')[0]) + (Number(firstBlock['minutes']) / 60) + ((firstBlock['ampm'] === 'PM' && firstBlock['hour'].split(':')[0] != 12) ? 12 : 0);
+  const selectedEndTime = Number(lastBlock['hour'].split(':')[0]) + (Number(lastBlock['minutes']) / 60) + ((lastBlock['ampm'] === 'PM' && ![12, 13].includes(endHour)) ? 12 : 0) + 0.5;
   // console.log('selected from: ', selectedStartTime, ' to: ', selectedEndTime);
   
   const availabilityArrayOnDate = groupAvailabilityData['data'][dateString];
   const availabilityStartTime = groupAvailabilityData['startTime'];
   const availabilityIntervalMins = groupAvailabilityData['intervalMins'];
+  // console.log('availabilityArrayOnDate: ', availabilityArrayOnDate);
+  // console.log('availabilityStartTime: ', availabilityStartTime);
+  // console.log('availabilityIntervalMins: ', availabilityIntervalMins);
 
   const startIndex = Math.floor((selectedStartTime - availabilityStartTime) * 60 / availabilityIntervalMins);
   const endIndex = Math.floor((selectedEndTime - availabilityStartTime) * 60 / availabilityIntervalMins);
+  // console.log('startIndex: ', startIndex, ' endIndex: ', endIndex);
+
   const selectedAvailability = availabilityArrayOnDate ? availabilityArrayOnDate.slice(startIndex, endIndex) : [];
+  // console.log('selectedAvailability: ', selectedAvailability);
   
   // Find participants available in all selected blocks
   let commonElements = new Set(selectedAvailability[0]);
