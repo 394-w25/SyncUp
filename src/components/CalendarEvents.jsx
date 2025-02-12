@@ -224,57 +224,97 @@ export default function CalendarEvents({
   // MOUSE HANDLERS
   function handleMouseDown(e, dayIndex) {
     e.preventDefault();
-    const containerTop = e.currentTarget.getBoundingClientRect().top;
+    const container = e.currentTarget;
+    const containerTop = container.getBoundingClientRect().top;
     const yPos = e.clientY - containerTop;
     setDragData({
       isDragging: true,
       startY: yPos,
       endY: yPos,
       dayIndex,
+      container,
     });
+    // Global listeners, capture mouse movements and mouseup even if the cursor leaves the container
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    window.addEventListener('mousemove', handleGlobalMouseMove);
   }
 
-  function handleMouseMove(e, dayIndex) {
-    if (!dragData.isDragging || dragData.dayIndex !== dayIndex) return;
-    const containerTop = e.currentTarget.getBoundingClientRect().top;
+  // Global mousemove handler to update dragData when cursor leaves the container
+  function handleGlobalMouseMove(e) {
+    if (!dragData.isDragging || !dragData.container) return;
+    const container = dragData.container;
+    const containerTop = container.getBoundingClientRect().top;
     const yPos = e.clientY - containerTop;
-    setDragData((prev) => ({ ...prev, endY: yPos }));
+    setDragData(prev => ({ ...prev, endY: yPos }));
   }
 
+  // Global mouseup handler to process the drag end
+  function handleGlobalMouseUp(e) {
+    if (!dragData.isDragging || !dragData.container) return;
+    const container = dragData.container;
+    const containerRect = container.getBoundingClientRect();
+    const containerTop = containerRect.top;
+    let yPos = e.clientY - containerTop;
+    // Clamp the y position to the container’s height if the mouse was released below (or above) it
+    if (yPos > containerRect.height) {
+      yPos = containerRect.height;
+    } else if (yPos < 0) {
+      yPos = 0;
+    }
+    // Update the dragData with the clamped value and process the drag end
+    setDragData(prev => ({ ...prev, endY: yPos }));
+    processDragEnd(dragData.dayIndex, container);
+    // Remove global listeners
+    window.removeEventListener('mouseup', handleGlobalMouseUp);
+    window.removeEventListener('mousemove', handleGlobalMouseMove);
+  }
+
+  // Normal mouseup handler
   function handleMouseUp(e, dayIndex) {
     if (!dragData.isDragging || dragData.dayIndex !== dayIndex) {
       resetDrag();
       return;
     }
+    processDragEnd(dayIndex, e.currentTarget);
+    window.removeEventListener('mouseup', handleGlobalMouseUp);
+    window.removeEventListener('mousemove', handleGlobalMouseMove);
+  }
 
+  // Process drag and create time block
+  function processDragEnd(dayIndex, container) {
+    if (!dragData.isDragging || dragData.dayIndex !== dayIndex) {
+      resetDrag();
+      return;
+    }
+    const containerRect = container.getBoundingClientRect();
+    const maxY = containerRect.height;
     const { startY, endY } = dragData;
     const rawTop = Math.min(startY, endY);
     const rawBottom = Math.max(startY, endY);
 
+    const clampedBottom = Math.min(rawBottom, maxY);
     const top = snapTo30Min(rawTop);
-    const bottom = snapTo30Min(rawBottom);
+    const bottom = snapTo30Min(clampedBottom);
     const height = bottom - top;
 
-    // If user dragged a tiny amount, ignore
+    // If the drag is too small, ignore it
     if (height < 5) {
       resetDrag();
-      // if user dragged a tiny amount on highlighted block, remove it
       const clickedBlock = highlightBlocks.find((block) => {
         return block.dayIndex === dayIndex && top >= block.top && top <= block.top + block.height;
       });
       if (clickedBlock) {
-        handleBlockClick(e, clickedBlock.id);
+        handleBlockClick({ stopPropagation: () => {} }, clickedBlock.id);
       }
       return;
     }
 
-    // Check overlap with existing highlight blocks
+    // Check for overlap with existing blocks and Google events
     const hasOverlapWithUserBlocks = highlightBlocks
       .filter((b) => b.dayIndex === dayIndex)
       .some((b) => {
         const bTop = b.top;
         const bBottom = b.top + b.height;
-        // Overlap if there's any intersection
         return top < bBottom && bottom > bTop;
       });
 
@@ -283,7 +323,7 @@ export default function CalendarEvents({
       return;
     }
 
-    // Otherwise, add the new block
+    // Save new block
     const newBlock = {
       id: Date.now(),
       dayIndex,
@@ -293,6 +333,14 @@ export default function CalendarEvents({
     setHighlightBlocks((prev) => [...prev, newBlock]);
     setHasUnsavedChanges(true);
     resetDrag();
+  }
+
+  function handleMouseMove(e) {
+    if (!dragData.isDragging || !dragData.container) return;
+    const container = dragData.container;
+    const containerTop = container.getBoundingClientRect().top;
+    const yPos = e.clientY - containerTop;
+    setDragData(prev => ({ ...prev, endY: yPos }));
   }
 
   function resetDrag() {
@@ -307,7 +355,7 @@ export default function CalendarEvents({
     setHasUnsavedChanges(true);
     setIsSaving(false);
   };
-
+  
   const pixelsToTime = (pixels) => {
     const totalMinutes = (pixels / pixelsPerHour) * 60;
     const hour = Math.floor(totalMinutes / 60) + startTime;
