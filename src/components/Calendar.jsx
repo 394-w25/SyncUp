@@ -16,6 +16,7 @@ const buttonTheme = createTheme({
       main: '#116b3c',
       light: '#23da7a',
       dark: '#0c4f2c',
+      contrastText: '#ffffff',
     },
     secondary: {
       main: '#4a4a4a',
@@ -24,6 +25,18 @@ const buttonTheme = createTheme({
     background: {
       default: '#fafafa',
       paper: '#ffffff',
+    },
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        contained: {
+          backgroundColor: '#116b3c',
+          '&:hover': {
+            backgroundColor: '#0c4f2c',
+          },
+        },
+      },
     },
   },
   typography: {
@@ -182,8 +195,8 @@ const Calendar = ({
             <ThemeProvider theme={buttonTheme}>
               <Button 
                 fullWidth
-                variant='outlined' 
-                color='secondary'
+                variant='contained' 
+                color='primary'
                 onClick={handleAuth}
                 style={{textTransform: 'none'}}
                 startIcon={<SystemUpdateAltIcon />}>
