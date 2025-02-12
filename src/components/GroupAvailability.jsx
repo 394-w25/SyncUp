@@ -580,51 +580,91 @@ function formatYyyyMmDd(date) {
 
 export default function GroupAvailability({ groupData, groupAvailabilityData }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userId, setUserId] = useState(null); 
+  const [userId, setUserId] = useState(null);
 
-  const [weekStart, setWeekStart] = useState(groupData.proposedDays[0].toDate());
-  const [weekEnd, setWeekEnd] = useState(groupData.proposedDays[groupData.proposedDays.length - 1].toDate());
+  const [weekStart, setWeekStart] = useState(() => {
+    const firstDay = groupData.proposedDays[0].toDate();
+    return new Date(firstDay.getFullYear(), firstDay.getMonth(), firstDay.getDate());
+  });
+
+  const [weekEnd, setWeekEnd] = useState(() => {
+    const firstDay = groupData.proposedDays[0].toDate();
+    const lastProposedDay = groupData.proposedDays[groupData.proposedDays.length - 1].toDate();
+    const oneWeekFromStart = new Date(firstDay);
+    oneWeekFromStart.setDate(oneWeekFromStart.getDate() + 6);
+    
+    return oneWeekFromStart <= lastProposedDay ? oneWeekFromStart : lastProposedDay;
+  });
 
   const handlePreviousWeek = () => {
-    setWeekStart(prev => {
-      const d = new Date(prev);
-      d.setDate(d.getDate() - 7);
-      return d;
-    });
-    setWeekEnd(prev => {
-      const d = new Date(prev);
-      d.setDate(d.getDate() - 7);
-      return d;
-    });
-  };
-  
-  const handleNextWeek = () => {
-    setWeekStart(prev => {
-      const d = new Date(prev);
-      d.setDate(d.getDate() + 7);
-      return d;
-    });
-    setWeekEnd(prev => {
-      const d = new Date(prev);
-      d.setDate(d.getDate() + 7);
-      return d;
-    });
+    const firstProposedDay = groupData.proposedDays[0].toDate();
+    const newStart = new Date(weekStart);
+    newStart.setDate(newStart.getDate() - 7);
+    
+    if (newStart < firstProposedDay) {
+      setWeekStart(firstProposedDay);
+      const newEnd = new Date(firstProposedDay);
+      newEnd.setDate(newEnd.getDate() + 6);
+      setWeekEnd(newEnd);
+      return;
+    }
+    
+    setWeekStart(newStart);
+    const newEnd = new Date(newStart);
+    newEnd.setDate(newEnd.getDate() + 6);
+    setWeekEnd(newEnd);
   };
 
+  const handleNextWeek = () => {
+    const lastProposedDay = groupData.proposedDays[groupData.proposedDays.length - 1].toDate();
+    const newStart = new Date(weekStart);
+    newStart.setDate(newStart.getDate() + 7);
+    
+    if (newStart > lastProposedDay) {
+      return;
+    }
+    
+    setWeekStart(newStart);
+    const newEnd = new Date(newStart);
+    newEnd.setDate(newEnd.getDate() + 6);
+    
+    if (newEnd > lastProposedDay) {
+      setWeekEnd(lastProposedDay);
+    } else {
+      setWeekEnd(newEnd);
+    }
+  };
+
+  const formatYyyyMmDd = (date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
 
   return (
     <div className="flex flex-col bg-white px-8 py-8 gap-2 rounded-[20px] shadow-[0px_7px_15.699999809265137px_0px_rgba(17,107,60,0.06)]">
-      <div className="mb-4 flex items-center justify-between mb-2 -mt-4">
-      <button 
+      <div className="mb-4 flex items-center justify-between -mt-4">
+        <button 
           onClick={handlePreviousWeek} 
-          className="px-3 py-1 border rounded text-sm"
+          className={`px-3 py-1 border rounded text-sm ${
+            weekStart <= groupData.proposedDays[0].toDate() 
+              ? 'text-gray-400 cursor-not-allowed' 
+              : 'text-black hover:bg-gray-100'
+          }`}
+          disabled={weekStart <= groupData.proposedDays[0].toDate()}
         >
           &lt; 
         </button>
         <h2 className="text-xl">Group Availability</h2>
         <button 
           onClick={handleNextWeek} 
-          className="px-3 py-1 border rounded text-sm"
+          className={`px-3 py-1 border rounded text-sm ${
+            weekEnd >= groupData.proposedDays[groupData.proposedDays.length - 1].toDate() 
+              ? 'text-gray-400 cursor-not-allowed' 
+              : 'text-black hover:bg-gray-100'
+          }`}
+          disabled={weekEnd >= groupData.proposedDays[groupData.proposedDays.length - 1].toDate()}
         >
           &gt;
         </button>
