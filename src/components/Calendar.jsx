@@ -169,129 +169,107 @@ const Calendar = ({
   };
   
   return (
-    <div className="w-full h-full">
-      <div className="w-full h-full flex flex-col bg-white px-8 py-8 gap-2 rounded-bl-[20px] rounded-br-[20px] shadow-[0px_7px_15.699999809265137px_0px_rgba(17,107,60,0.06)]">
-        
-        <div className='month-header flex items-center gap-4'>
-          <span className='text-green-800 font-nunito font-bold text-[32pt]'>{weekStart.toLocaleString('default', { month: 'long' })}</span>
-          <p className='text-green-800 font-nunito text-[32pt]'>{weekStart.getFullYear()}</p>
-        </div>
+    <div className="w-full h-full flex flex-col bg-white px-8 pt-12 pb-4 gap-2 rounded-[20px] lg:rounded-b-[20px] lg:rounded-t-none shadow-[0px_7px_15.699999809265137px_0px_rgba(17,107,60,0.06)]">
+      
+      <div className='month-header flex items-center gap-2 sm:gap-4 mb-4'>
+        <span className='text-green-800 font-nunito font-bold text-2xl sm:text-[32pt]'>{weekStart.toLocaleString('default', { month: 'long' })}</span>
+        <p className='text-green-800 font-nunito text-2xl sm:text-[32pt]'>{weekStart.getFullYear()}</p>
+      </div>
 
-        <div className='row-button flex justify-between'>
+      <div className='row-button flex flex-col sm:flex-row justify-between gap-4 sm:gap-0'>
+        <div className="w-full sm:w-auto">
           {!isAuthenticated ? (
             <ThemeProvider theme={buttonTheme}>
               <Button 
-              variant='outlined' 
-              color='secondary'
-              onClick={handleAuth}
-              style={{textTransform: 'none'}}
-              startIcon={<SystemUpdateAltIcon />}>
+                fullWidth
+                variant='outlined' 
+                color='secondary'
+                onClick={handleAuth}
+                style={{textTransform: 'none'}}
+                startIcon={<SystemUpdateAltIcon />}>
                 Sign in with Google
               </Button>
             </ThemeProvider>
           ) : (
             <ThemeProvider theme={buttonTheme}>
               <Button 
-              variant='outlined' 
-              color='secondary'
-              onClick={handleImportEvents}
-              disabled={isLoading}
-              style={{textTransform: 'none'}}
-              startIcon={<SystemUpdateAltIcon />}>
+                fullWidth
+                variant='outlined' 
+                color='secondary'
+                onClick={handleImportEvents}
+                disabled={isLoading}
+                style={{textTransform: 'none'}}
+                startIcon={<SystemUpdateAltIcon />}>
                 {isLoading ? 'Importing...' : 'Import Events'}
               </Button>
             </ThemeProvider>
           )}
+        </div>
 
-          {/* {isCopied ? (
-              <ThemeProvider theme={buttonTheme}>
-                  <Button 
-                      variant='outlined' 
-                      color='primary' 
-                      style={{textTransform: 'none'}}
-                      endIcon={<TaskAltRoundedIcon />}
-                      disabled={true}
-                  >
-                      Copied to clipboard
-                  </Button>
-              </ThemeProvider>
-          ) : (
-              <ThemeProvider theme={buttonTheme}>
-                  <Button 
-                      variant='outlined' 
-              color='primary'
-              style={{textTransform: 'none'}}
-              onClick={handleCopyLink}
-              endIcon={<ContentCopyIcon />}>
-                  Copy Share Link
-              </Button>
-          </ThemeProvider>
-          )} */}
-
-          <div className='flex gap-8'>
-            <div className='flex gap-2 items-center'>
-              <CustomShape fillColor="#E8E8E8" outsideColor="#333333"/>
-              <p>Your events</p>
-            </div>
-            <div className='flex gap-2 items-center'>
-              <CustomShape fillColor="#B1CCFA" outsideColor="#083684"/>
-              <p>Your availability</p>
-            </div>
+        <div className='flex flex-wrap gap-4 sm:gap-8 justify-center sm:justify-end'>
+          <div className='flex gap-2 items-center'>
+            <CustomShape fillColor="#E8E8E8" outsideColor="#333333"/>
+            <p className="text-sm sm:text-base">Your events</p>
+          </div>
+          <div className='flex gap-2 items-center'>
+            <CustomShape fillColor="#B1CCFA" outsideColor="#083684"/>
+            <p className="text-sm sm:text-base">Your availability</p>
           </div>
         </div>
-        {/* WEEK-NAVIGATION BUTTONS */}
-        {showNavigation && (
-          <div className='flex justify-between gap-4'>
-            <ThemeProvider theme={buttonTheme}>
-              {showPrevious 
-              ? (
-                <Button 
-                  variant='outlined' 
-                  onClick={handlePreviousWeek}
-                  startIcon={<ArrowBackIosNewRoundedIcon />}>
-                    Previous Week
-                </Button>
-              )
-              : (
-                <Button 
-                  variant='outlined' 
-                  // onClick={handlePreviousWeek}
-                  disabled
-                  startIcon={<ArrowBackIosNewRoundedIcon />}>
-                    Previous Week
-                </Button>
-              )
-            }
-              {showNext 
-              ? (
-                <Button 
-                  variant='outlined' 
-                  onClick={handleNextWeek}
-                  endIcon={<ArrowForwardIosRoundedIcon />}>
-                  Next Week
-              </Button>
-              )
-              : (
-                <Button 
-                  variant='outlined' 
-                  // onClick={handleNextWeek}
-                  disabled
-                  endIcon={<ArrowForwardIosRoundedIcon />}>
-                  Next Week
-              </Button>
-              )}
-            </ThemeProvider>
-          </div>
-        )}
-        <CalendarEvents 
-          startTime={startTime} 
-          endTime={endTime} 
-          startDate={weekStart} 
-          endDate={weekEnd}
-          events={events}
-        />
-
       </div>
+
+      {showNavigation && (
+        <div className='flex justify-between gap-2 sm:gap-4 mt-2'>
+          <ThemeProvider theme={buttonTheme}>
+            {showPrevious ? (
+              <Button 
+                variant='outlined' 
+                onClick={handlePreviousWeek}
+                startIcon={<ArrowBackIosNewRoundedIcon />}
+                className="text-xs sm:text-base">
+                <span className="hidden sm:inline">Previous Week</span>
+                <span className="sm:hidden">Prev</span>
+              </Button>
+            ) : (
+              <Button 
+                variant='outlined' 
+                disabled
+                startIcon={<ArrowBackIosNewRoundedIcon />}
+                className="text-xs sm:text-base">
+                <span className="hidden sm:inline">Previous Week</span>
+                <span className="sm:hidden">Prev</span>
+              </Button>
+            )}
+            {showNext ? (
+              <Button 
+                variant='outlined' 
+                onClick={handleNextWeek}
+                endIcon={<ArrowForwardIosRoundedIcon />}
+                className="text-xs sm:text-base">
+                <span className="hidden sm:inline">Next Week</span>
+                <span className="sm:hidden">Next</span>
+              </Button>
+            ) : (
+              <Button 
+                variant='outlined' 
+                disabled
+                endIcon={<ArrowForwardIosRoundedIcon />}
+                className="text-xs sm:text-base">
+                <span className="hidden sm:inline">Next Week</span>
+                <span className="sm:hidden">Next</span>
+              </Button>
+            )}
+          </ThemeProvider>
+        </div>
+      )}
+      <CalendarEvents 
+        startTime={startTime} 
+        endTime={endTime} 
+        startDate={weekStart} 
+        endDate={weekEnd}
+        events={events}
+      />
+
     </div>
   )
 };

@@ -405,11 +405,10 @@ export default function CalendarEvents({
   }
 
   return (
-    <div className="flex flex-col">
-
-      {/* HEADER ROW */}
-      <div className="w-full flex">
-        <div className="w-16 mr-1 py-4 text-center border-neutral-400" />
+    <div className="flex flex-col overflow-x-auto">
+      {/* Header row */}
+      <div className="w-full flex min-w-[640px]">
+        <div className="w-16 mr-1 py-2 sm:py-4 text-center border-neutral-400" />
         {dates.map((date, idx) => {
           const dayShort = new Intl.DateTimeFormat("en-US", {
             weekday: "short",
@@ -423,17 +422,17 @@ export default function CalendarEvents({
               style={{
                 width: `calc((100% - 4rem) / ${dates.length})`,
               }}
-              className="py-4 text-center bg-neutral-100 border-r border-neutral-300 last:border-r-0"
+              className="py-2 sm:py-4 text-center bg-neutral-100 border-r border-neutral-300 last:border-r-0"
             >
-              <h2 className="text-lg text-neutral-800">{dayShort}</h2>
-              <p className="text-sm text-neutral-800">{dayNum}</p>
+              <h2 className="text-sm sm:text-lg text-neutral-800">{dayShort}</h2>
+              <p className="text-xs sm:text-sm text-neutral-800">{dayNum}</p>
             </div>
           );
         })}
       </div>
 
-      {/* BODY ROWS */}
-      <div className="w-full flex">
+      {/* Body rows with minimum width to prevent squishing */}
+      <div className="w-full flex min-w-[640px]">
         {/* TIME COLUMN */}
         <div className="w-16 bg-neutral-100 mr-1 relative">
           {times.map((time, i) => (

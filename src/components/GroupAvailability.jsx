@@ -643,7 +643,7 @@ export default function GroupAvailability({ groupData, groupAvailabilityData }) 
   };
 
   return (
-    <div className="flex flex-col bg-white px-8 py-8 gap-2 rounded-[20px] shadow-[0px_7px_15.699999809265137px_0px_rgba(17,107,60,0.06)]">
+    <div className="flex flex-col bg-white px-8 py-8 gap-2 rounded-[20px] shadow-[0px_7px_15.699999809265137px_0px_rgba(17,107,60,0.06)] h-full overflow-auto">
       <div className="mb-4 flex items-center justify-between -mt-4">
         <button 
           onClick={handlePreviousWeek} 

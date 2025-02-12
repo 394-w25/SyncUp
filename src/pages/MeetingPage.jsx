@@ -150,59 +150,86 @@ const MeetingPage = () => {
     // console.log('set up event', event);
 
     return (
-        <div className="w-screen h-screen px-4 pb-4 bg-background relative">
-            <div className="w-full h-full flex gap-4">
-                <div className='w-full h-full flex flex-col gap-4'>
-                    {startDate && endDate && startTime && endTime ? (
-                        <Calendar
-                            isAuthenticated={isAuthenticated}
-                            handleAuth={handleGoogleAuth}
-                            startDate={startDate}
-                            endDate={endDate}
-                            startTime={startTime}
-                            endTime={endTime}
-                            userId={userId}
-                            meetingID={meetingId}
-                        />
-                    ) : (
-                        <div className='w-full h-full flex justify-center items-center'>
-                            <p className='text-2xl font-bold'>Loading...</p>
-                        </div>
-                    )}                    
-                </div>
-                <div className='w-[30%] h-full flex flex-col gap-4'>
+        <div className="w-screen min-h-screen bg-background px-4">
+            <div className="w-full h-full flex flex-col gap-4 max-w-[1920px] mx-auto">
+                {/* Meeting Info - Shows at top on mobile, moves to right on desktop */}
+                <div className='lg:hidden w-full'>
                     <Legend 
                         meetingID={meetingId}
                         eventName={event}
                         participantData={participantsData}
                     />
-                    {groupData ? (
-                        <GroupAvailability
-                            groupData={groupData}
-                            groupAvailabilityData={groupAvailabilityData}
-                        />
-                    ) : (
-                        <div className='w-full h-full flex justify-center items-center'>
-                            <p className='text-2xl font-bold'>Loading...</p>
-                        </div>
-                    )}
                 </div>
 
-                {/* Sign out button in bottom left corner */}
+                {/* Main content wrapper */}
+                <div className="w-full h-full flex flex-col lg:flex-row gap-4">
+                    <div className='w-full lg:w-[70%] h-full flex flex-col gap-4'>
+                        {startDate && endDate && startTime && endTime ? (
+                            <Calendar
+                                isAuthenticated={isAuthenticated}
+                                handleAuth={handleGoogleAuth}
+                                startDate={startDate}
+                                endDate={endDate}
+                                startTime={startTime}
+                                endTime={endTime}
+                                userId={userId}
+                                meetingID={meetingId}
+                            />
+                        ) : (
+                            <div className='w-full h-full flex justify-center items-center'>
+                                <p className='text-2xl font-bold'>Loading...</p>
+                            </div>
+                        )}                    
+                    </div>
+                    
+                    {/* Right column - hidden on mobile */}
+                    <div className='w-full lg:w-[30%] h-full hidden lg:flex flex-col gap-4'>
+                        <Legend 
+                            meetingID={meetingId}
+                            eventName={event}
+                            participantData={participantsData}
+                        />
+                        {groupData ? (
+                            <GroupAvailability
+                                groupData={groupData}
+                                groupAvailabilityData={groupAvailabilityData}
+                            />
+                        ) : (
+                            <div className='w-full h-full flex justify-center items-center'>
+                                <p className='text-2xl font-bold'>Loading...</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Group Availability - Shows below calendar on mobile */}
+                    <div className='lg:hidden w-full'>
+                        {groupData ? (
+                            <GroupAvailability
+                                groupData={groupData}
+                                groupAvailabilityData={groupAvailabilityData}
+                            />
+                        ) : (
+                            <div className='w-full h-full flex justify-center items-center'>
+                                <p className='text-2xl font-bold'>Loading...</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Sign out button */}
                 {isAuthenticated && (
-                    <div className="absolute bottom-4 right-4">
-                    <ThemeProvider theme={buttonTheme}>
-                        <Button
-                            onClick={handleSignOut}
-                            color="secondary"
-                            size="small"
-                            title="Sign Out"
-                            startIcon={<LogoutIcon />}
-                        >
-                            {/* <LogoutIcon />  */}
-                            Sign Out   
-                        </Button>
-                    </ThemeProvider>
+                    <div className="lg:absolute bottom-0 left-4">
+                        <ThemeProvider theme={buttonTheme}>
+                            <Button
+                                onClick={handleSignOut}
+                                color="secondary"
+                                size="small"
+                                title="Sign Out"
+                                startIcon={<LogoutIcon />}
+                            >
+                                Sign Out   
+                            </Button>
+                        </ThemeProvider>
                     </div>
                 )}
             </div>
