@@ -8,8 +8,6 @@ import { importEvents } from '../utils/importEvents';
 
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
 
 const buttonTheme = createTheme({
   palette: {
@@ -58,18 +56,18 @@ const Calendar = ({
 }) => {
   const [events, setEvents] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
+  // const [isCopied, setIsCopied] = useState(false);
 
-  const handleCopyLink = () => {
-      const meetingLink = `syncup-5bc71.web.app/group/${meetingID}`; 
-      // TODO: fix meetingLink 
-      navigator.clipboard.writeText(meetingLink);
-      setIsCopied(true);
+  // const handleCopyLink = () => {
+  //     const meetingLink = `syncup-5bc71.web.app/group/${meetingID}`; 
+  //     // TODO: fix meetingLink 
+  //     navigator.clipboard.writeText(meetingLink);
+  //     setIsCopied(true);
 
-      setTimeout(() => {
-          setIsCopied(false);
-      }, 2000);
-  }
+  //     setTimeout(() => {
+  //         setIsCopied(false);
+  //     }, 2000);
+  // }
 
   // for week toggler, store active week range
   const [weekStart, setWeekStart] = useState(() => {
@@ -219,7 +217,7 @@ const Calendar = ({
             </ThemeProvider>
           )}
 
-          {isCopied ? (
+          {/* {isCopied ? (
               <ThemeProvider theme={buttonTheme}>
                   <Button 
                       variant='outlined' 
@@ -242,7 +240,7 @@ const Calendar = ({
                   Copy Share Link
               </Button>
           </ThemeProvider>
-          )}
+          )} */}
 
           <div className='flex gap-8'>
             <div className='flex gap-2 items-center'>
