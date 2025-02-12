@@ -405,7 +405,7 @@ export default function CalendarEvents({
   }
 
   return (
-    <div className="flex flex-col overflow-x-auto">
+    <div className="flex flex-col overflow-x-auto scrollbar-visible">
       {/* Header row */}
       <div className="w-full flex min-w-[640px]">
         <div className="w-16 mr-1 py-2 sm:py-4 text-center border-neutral-400" />

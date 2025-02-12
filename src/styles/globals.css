@@ -120,3 +120,17 @@ h4 {
         color: white;
     }
 } */
+
+@layer base {
+  html, body {
+    @apply h-full overflow-x-hidden;
+  }
+  
+  #root {
+    @apply h-full;
+  }
+  
+  .app-container {
+    @apply min-h-full w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8;
+  }
+}

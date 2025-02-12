@@ -219,7 +219,7 @@ const Calendar = ({
       </div>
 
       {showNavigation && (
-        <div className='flex justify-between gap-2 sm:gap-4 mt-2'>
+        <div className='flex justify-between gap-2 sm:gap-4 my-2 mb-4'>
           <ThemeProvider theme={buttonTheme}>
             {showPrevious ? (
               <Button 

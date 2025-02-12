@@ -525,7 +525,7 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
       handle="#draggable-header"
       defaultPosition={window.innerWidth >= 768 ? {x: -50, y: 0} : {x: -100, y: 200}}
     >
-      <div className="flex flex-col w-fit bg-white rounded-[20px] fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 shadow-2xl z-50 border border-gray-200 min-w-[300px] max-w-[95vw] md:min-w-[400px] scale-100 md:scale-100 sm:scale-90 xs:scale-75">
+      <div className="flex flex-col w-fit bg-white rounded-[20px] fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 shadow-2xl z-[1000] border border-gray-200 min-w-[300px] max-w-[95vw] md:min-w-[400px] scale-100 md:scale-100 sm:scale-90 xs:scale-75">
         <div id="draggable-header" className="pt-2 pr-2 pb-4 bg-green-600 rounded-t-[20px] cursor-move">
           <div className="flex justify-end">
             <ThemeProvider theme={buttonTheme}>
