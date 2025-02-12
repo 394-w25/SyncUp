@@ -205,64 +205,76 @@ const SetUp = () => {
     };
 
     return (
-        <div className="flex flex-col justify-center items-center min-h-screen p-6 bg-background">
+        <div className="flex flex-col justify-center items-center min-h-screen py-12 px-4 lg:p-8 sm:p-6 bg-background">
             <div className="w-full max-w-6xl">
-                <h1 className="text-5xl font-bold mb-16 text-center">Hi 👋 Let's set up your meeting</h1>
+                <h1 className="text-4xl sm:text-5xl font-bold mb-8 text-center">Hi 👋 Let's set up your meeting</h1>
                 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
                     {/* Left Column */}
-                    <div className="flex flex-col gap-9">
-                        <div className="bg-white rounded-lg shadow-md p-8">
+                    <div className="flex flex-col gap-4">
+                        {/* Sign In */}
+                        <div className="bg-white rounded-lg shadow-md p-4 sm:p-8">
                             <div className="flex flex-col sm:flex-row items-center gap-4">
-                                
-                            <ThemeProvider theme={buttonTheme}>
-                                {!userName ? (
-                                    <>
-                                        <h3 className="text-xl font-semibold">First,</h3>
-                                        <Button 
-                                            variant='outlined' 
-                                            color='secondary'
-                                            onClick={handleGoogleAuth}
-                                            style={{textTransform: 'none', fontSize: '16px'}}
-                                            startIcon={<GoogleIcon />}
-                                        >
-                                            Sign in with Google
-                                        </Button>
-                                    </>
-                                ) : (
-                                    <h3 className="text-xl font-semibold">Welcome, {userName}!</h3>
-                                )}
-                            </ThemeProvider>
+                                <ThemeProvider theme={buttonTheme}>
+                                    {!userName ? (
+                                        <div className="w-full flex flex-col sm:flex-row items-center gap-4">
+                                            <h3 className="text-lg sm:text-xl font-semibold text-nowrap">To get started,</h3>
+                                            <Button 
+                                                variant='outlined' 
+                                                color='secondary'
+                                                onClick={handleGoogleAuth}
+                                                style={{textTransform: 'none'}}
+                                                startIcon={<GoogleIcon />}
+                                                fullWidth
+                                                className="sm:w-auto"
+                                            >
+                                                Sign in with Google
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <h3 className="text-lg sm:text-xl font-semibold">Welcome, {userName}!</h3>
+                                    )}
+                                </ThemeProvider>
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-lg shadow-md p-8">
-                            <h3 className="text-xl font-semibold mb-8 text-center">What days might work for you?</h3>
-                            <div className="flex justify-center py-8">
-                                <Calendar 
-                                    multiple
-                                    value={selectedDate}
-                                    onChange={setSelectedDate}
-                                    sort 
-                                    minDate={new Date()}
-                                    plugins={[<DatePanel />]}
-                                    weekDays={["S", "M", "T", "W", "T", "F", "S"]}
-                                    style={{
-                                        backgroundColor: "#fff",
-                                        borderRadius: "8px",
-                                    }}
-                                />
+                        {/* Date Selection */}
+                        <div className="bg-white rounded-lg shadow-md py-8 sm:p-8">
+                            <h3 className="text-xl font-semibold mb-4 text-center">What days might work?</h3>
+                            <div className="flex justify-center py-4 overflow-hidden">
+                                <div className="min-w-[280px] sm:min-w-0">
+                                    <Calendar 
+                                        multiple
+                                        value={selectedDate}
+                                        onChange={setSelectedDate}
+                                        sort 
+                                        minDate={new Date()}
+                                        plugins={[<DatePanel />]}
+                                        weekDays={["S", "M", "T", "W", "T", "F", "S"]}
+                                        className="w-full"
+                                        style={{
+                                            backgroundColor: "#fff",
+                                            borderRadius: "8px",
+                                            maxWidth: "100%",
+                                            transform: "scale(0.5)",
+                                            transformOrigin: "center",
+                                            "@media (minWidth: 640px)": {
+                                                transform: "scale(1)"
+                                            }
+                                        }}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     {/* Right Column */}
                     <div className="flex flex-col gap-4">
-                        <div className="bg-white rounded-lg shadow-md p-8 pb-12 pt-8">
+                        <div className="bg-white rounded-lg shadow-md p-4 sm:p-8 order-first lg:order-none">
                             <ThemeProvider theme={customTheme(outerTheme)}>
                                 <TextField
                                     required
-                                    label="Name your meeting"
+                                    label="Meeting name"
                                     variant="standard"
                                     fullWidth
                                     value={meetingName}
@@ -273,7 +285,7 @@ const SetUp = () => {
 
                         <div className="bg-white rounded-lg shadow-md p-8 pb-12 pt-8">
                             <h3 className="text-xl font-semibold mb-6 text-center">What times might work for you?</h3>
-                            <div className="flex flex-col sm:flex-row justify-center items-end gap-8 text-lg">
+                            <div className="flex flex-col sm:flex-row justify-center items-center lg:items-end gap-8 text-lg">
                                 <ThemeProvider theme={customTheme(outerTheme)}>
                                     <LocalizationProvider dateAdapter={AdapterMoment}>
                                         <TimePicker 
@@ -326,7 +338,7 @@ const SetUp = () => {
                         </div>
 
                         <div className="flex flex-col bg-white rounded-lg shadow-md p-8 pb-12 pt-8 items-center">
-                            <h3 className="text-xl font-semibold mb-6 w-full ">Share the link with your team:</h3>
+                            <h3 className="text-xl font-semibold mb-6 w-full text-center lg:text-left">Share the link with your team:</h3>
                             {!groupLink && (<ThemeProvider theme={buttonTheme}>
                                 <Button 
                                 variant='outlined' 

@@ -229,7 +229,6 @@ function GroupSchedule({ groupData, groupAvailabilityData, startTime, endTime, s
     <div 
       className="relative"
       onMouseLeave={() => {
-        // If user drags out of the table, treat as mouse up
         if (isMouseDown) handleMouseUp();
       }}
       onMouseUp={() => {
@@ -316,26 +315,49 @@ function GroupSchedule({ groupData, groupAvailabilityData, startTime, endTime, s
         ))}
       </div>
 
-      {/* Pop-up in bottom-right (or wherever you like) */}
+      {/* Popup card - show as modal on md+ screens, show below calendar on smaller screens */}
       {showPopup && selectedBlocks.size > 0 && (
-        <PopupCard 
-          selectedBlocks={[...selectedBlocks]} 
-          onClose={() => setShowPopup(false)}
-          groupAvailabilityData={groupAvailabilityData}
-          numMembers={numMembers}
-          eventName={eventName}
-          meetingId={meetingId}
-          isAuthenticated={isAuthenticated}
-          setIsAuthenticated={setIsAuthenticated}
-          userId={userId}
-          setUserId={setUserId}
-        />
+        <>
+          {/* Modal version for md+ screens */}
+          <div className="hidden md:block">
+            <PopupCard 
+              selectedBlocks={[...selectedBlocks]} 
+              onClose={() => setShowPopup(false)}
+              groupAvailabilityData={groupAvailabilityData}
+              numMembers={numMembers}
+              eventName={eventName}
+              meetingId={meetingId}
+              isAuthenticated={isAuthenticated}
+              setIsAuthenticated={setIsAuthenticated}
+              userId={userId}
+              setUserId={setUserId}
+              isModal={true}
+            />
+          </div>
+
+          {/* Inline version for small screens */}
+          <div className="md:hidden mt-8 bg-white rounded-[20px] border border-gray-200 shadow-md">
+            <PopupCard 
+              selectedBlocks={[...selectedBlocks]} 
+              onClose={() => setShowPopup(false)}
+              groupAvailabilityData={groupAvailabilityData}
+              numMembers={numMembers}
+              eventName={eventName}
+              meetingId={meetingId}
+              isAuthenticated={isAuthenticated}
+              setIsAuthenticated={setIsAuthenticated}
+              userId={userId}
+              setUserId={setUserId}
+              isModal={false}
+            />
+          </div>
+        </>
       )}
     </div>
   );
 }
 
-function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers, eventName, meetingId, isAuthenticated, setIsAuthenticated, userId, setUserId}) {
+function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers, eventName, meetingId, isAuthenticated, setIsAuthenticated, userId, setUserId, isModal }) {
   const [users, setUsers] = useState([]);
   const [memberData, setMemberData] = useState([]);
   const [availabilityCounts, setAvailabilityCounts] = useState({});
@@ -385,8 +407,6 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
   
     scheduleEventDeepLink(startBlock, durationMinutes, eventDetails, meetingId, attendeeEmails);
   };
-  
-
 
   useEffect(() => {
     // console.log("Selected Blocks:", selectedBlocks);
@@ -470,18 +490,27 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
   // Structures block data to report group availability for selected time range
   const firstBlock = blocks[0];
   const lastBlock = blocks[blocks.length - 1];
+  // console.log('firstBlock: ', firstBlock);
+  // console.log('lastBlock: ', lastBlock);
+
   const dateString = firstBlock.date.toISOString().split('T')[0];
-  const selectedStartTime = Number(firstBlock['hour']) + (Number(firstBlock['minutes']) / 60) + ((firstBlock['ampm'] === 'PM' && firstBlock['hour'] != 12) ? 12 : 0);
-  const selectedEndTime = endHour + (endMinutes / 60) + ((lastBlock['ampm'] === 'PM' && ![12, 13].includes(endHour)) ? 12 : 0);
+  const selectedStartTime = Number(firstBlock['hour'].split(':')[0]) + (Number(firstBlock['minutes']) / 60) + ((firstBlock['ampm'] === 'PM' && firstBlock['hour'].split(':')[0] != 12) ? 12 : 0);
+  const selectedEndTime = Number(lastBlock['hour'].split(':')[0]) + (Number(lastBlock['minutes']) / 60) + ((lastBlock['ampm'] === 'PM' && ![12, 13].includes(endHour)) ? 12 : 0) + 0.5;
   // console.log('selected from: ', selectedStartTime, ' to: ', selectedEndTime);
   
   const availabilityArrayOnDate = groupAvailabilityData['data'][dateString];
   const availabilityStartTime = groupAvailabilityData['startTime'];
   const availabilityIntervalMins = groupAvailabilityData['intervalMins'];
+  // console.log('availabilityArrayOnDate: ', availabilityArrayOnDate);
+  // console.log('availabilityStartTime: ', availabilityStartTime);
+  // console.log('availabilityIntervalMins: ', availabilityIntervalMins);
 
   const startIndex = Math.floor((selectedStartTime - availabilityStartTime) * 60 / availabilityIntervalMins);
   const endIndex = Math.floor((selectedEndTime - availabilityStartTime) * 60 / availabilityIntervalMins);
+  // console.log('startIndex: ', startIndex, ' endIndex: ', endIndex);
+
   const selectedAvailability = availabilityArrayOnDate ? availabilityArrayOnDate.slice(startIndex, endIndex) : [];
+  // console.log('selectedAvailability: ', selectedAvailability);
   
   // Find participants available in all selected blocks
   let commonElements = new Set(selectedAvailability[0]);
@@ -491,12 +520,12 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
   const availableParticipants = Array.from(commonElements);
   const minAvailabilityCount = availableParticipants.length;
 
-  return (
+  return isModal ? (
     <Draggable 
       handle="#draggable-header"
-      defaultPosition={{x: 0, y: 0}}
+      defaultPosition={window.innerWidth >= 768 ? {x: -50, y: 0} : {x: -100, y: 200}}
     >
-      <div className="flex flex-col w-fit bg-white rounded-[20px] absolute bottom-5 right-5 shadow-2xl z-50 border border-gray-200 min-w-[400px]">
+      <div className="flex flex-col w-fit bg-white rounded-[20px] fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 shadow-2xl z-50 border border-gray-200 min-w-[300px] max-w-[95vw] md:min-w-[400px] scale-100 md:scale-100 sm:scale-90 xs:scale-75">
         <div id="draggable-header" className="pt-2 pr-2 pb-4 bg-green-600 rounded-t-[20px] cursor-move">
           <div className="flex justify-end">
             <ThemeProvider theme={buttonTheme}>
@@ -515,23 +544,23 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
           </div>
         </div>
 
-        <div className="flex items-center p-8 flex-col gap-4 text-neutral-1000">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center p-4 md:p-8 flex-col gap-4 text-neutral-1000">
+          <div className="flex items-center gap-3 text-sm md:text-base">
             <EventRoundedIcon className="text-neutral-1000" />
             <span>{dateDisplay}</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 text-sm md:text-base">
             <AccessTimeRoundedIcon className="text-neutral-1000" />
             <span>{timeDisplay}</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 text-sm md:text-base">
             <GroupsRoundedIcon className="text-neutral-1000" />
             <span>{minAvailabilityCount} / {numMembers} teammates available</span>
           </div>
           {/* Add count for each member */}
           <div className="flex flex-col w-full">
-            <h3 className="text-lg font-bold mb-2">Available Members</h3>
-            <ul className="text-sm text-neutral-800">
+            <h3 className="text-base md:text-lg font-bold mb-2">Available Members</h3>
+            <ul className="text-xs md:text-sm text-neutral-800">
               {availableParticipants.map((name, index) => (
                 <li key={index} className="flex justify-between">
                   <span>{name}</span>
@@ -541,8 +570,7 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
           </div>
 
           {/* SCHEDULE BUTTON */}
-          <div className="flex flex-col items-center gap-3 text-[18px]">
-            {/* <span className="text-neutral-1000">Schedule now?</span> */}
+          <div className="flex flex-col items-center gap-3 text-base md:text-[18px]">
             <ThemeProvider theme={buttonTheme}>
               <Button 
                 variant="contained" 
@@ -552,8 +580,12 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
                   borderRadius: 50,
                   color: 'white',
                   fontWeight: 'bold',
-                  padding: '8px 32px',
-                  fontSize: '16px'
+                  padding: '6px 24px',
+                  fontSize: '14px',
+                  '@media (min-width: 768px)': {
+                    padding: '8px 32px',
+                    fontSize: '16px',
+                  },
                 }}
                 onClick={handleConfirmSelection}
                 endIcon={<ArrowForwardIcon />}
@@ -563,10 +595,77 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
               </Button>
             </ThemeProvider>
           </div>
-
         </div>
       </div>
     </Draggable>
+  ) : (
+    <div>
+      {/* Simplified header for inline version */}
+      <div className="pt-4 px-4 pb-2 bg-green-600 rounded-t-[20px] flex justify-between items-center">
+        <Logo color='text-white' size='20pt'/>
+        <ThemeProvider theme={buttonTheme}>
+          <IconButton 
+            color="primary" 
+            aria-label="close" 
+            onClick={onClose}
+            className="text-white hover:bg-green-500"
+          >
+            <CloseIcon />
+          </IconButton>
+        </ThemeProvider>
+      </div>
+
+      {/* Reuse the same content */}
+      <div className="flex items-center p-4 md:p-8 flex-col gap-4 text-neutral-1000">
+        <div className="flex items-center gap-3 text-sm md:text-base">
+          <EventRoundedIcon className="text-neutral-1000" />
+          <span>{dateDisplay}</span>
+        </div>
+        <div className="flex items-center gap-3 text-sm md:text-base">
+          <AccessTimeRoundedIcon className="text-neutral-1000" />
+          <span>{timeDisplay}</span>
+        </div>
+        <div className="flex items-center gap-3 text-sm md:text-base">
+          <GroupsRoundedIcon className="text-neutral-1000" />
+          <span>{minAvailabilityCount} / {numMembers} teammates available</span>
+        </div>
+        <div className="flex flex-col w-full">
+          <h3 className="text-base md:text-lg font-bold mb-2">Available Members</h3>
+          <ul className="text-xs md:text-sm text-neutral-800">
+            {availableParticipants.map((name, index) => (
+              <li key={index} className="flex justify-between">
+                <span>{name}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="flex flex-col items-center gap-3 text-base md:text-[18px]">
+          <ThemeProvider theme={buttonTheme}>
+            <Button 
+              variant="contained" 
+              color="secondary"
+              style={{
+                textTransform: 'none',
+                borderRadius: 50,
+                color: 'white',
+                fontWeight: 'bold',
+                padding: '6px 24px',
+                fontSize: '14px',
+                '@media (min-width: 768px)': {
+                  padding: '8px 32px',
+                  fontSize: '16px',
+                },
+              }}
+              onClick={handleConfirmSelection}
+              endIcon={<ArrowForwardIcon />}
+              disableElevation
+            >
+              Schedule now
+            </Button>
+          </ThemeProvider>
+        </div>
+      </div>
+    </div>
   );
 }
 
