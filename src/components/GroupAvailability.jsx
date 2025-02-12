@@ -177,13 +177,21 @@ function GroupSchedule({ groupData, groupAvailabilityData, startTime, endTime, s
   };
   const dates = getDatesInRange(startDate, endDate);
 
+  function formatTime(timeValue) {
+    const hour = Math.floor(timeValue);
+    const minutes = (timeValue % 1) * 60;
+    const period = hour >= 12 ? "PM" : "AM";
+    const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+    const displayMinutes = minutes === 0 ? "00" : "30";
+    return `${displayHour}:${displayMinutes} ${period}`;
+  }
+
   // Generate hour labels
   const hourLabels = [];
-  for (let hour = startTime; hour <= endTime; hour++) {
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const displayHour = hour % 12 === 0 ? 12 : hour % 12;
-    hourLabels.push(`${displayHour} ${ampm}`);
+  for (let t = startTime; t < endTime; t += 1) {
+    hourLabels.push(formatTime(t));
   }
+  hourLabels.push(formatTime(endTime))
 
   // Mouse Handlers updated for 30-min increments
   const handleMouseDown = (date, hourLabel, isHalfHour) => {
@@ -237,7 +245,7 @@ function GroupSchedule({ groupData, groupAvailabilityData, startTime, endTime, s
     >
       {/* The main grid */}
       <div
-        className="w-full select-none" 
+        className="w-full select-none overflow-y-auto max-h-[500px]" 
         style={{
           display: 'grid',
           gridTemplateColumns: `15% repeat(${dates.length}, 1fr)`,
