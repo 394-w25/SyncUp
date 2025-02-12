@@ -40,25 +40,64 @@ h4 {
     user-select: none;
 }
 
-.rmdp-wrapper{
+.rmdp-wrapper {
+    box-shadow: none !important;
+    transform: scale(1.2) !important;
+}
+
+.rmdp-panel-body li,
+.rmdp-panel-body li .b-deselect {
+    background-color: #116b3c !important;
+}
+
+.rmdp-day.rmdp-today span {
+    background-color: #1db566 !important;
+}
+
+.rmdp-day.rmdp-selected span:not(.highlight) {
+    background-color: #116b3c !important;
+}
+
+.rmdp-day:not(.rmdp-day-hidden) span:hover {
+    background-color: #179051 !important;
+}
+
+.rmdp-week-day {
+    color: #116b3c !important;
+}
+
+.rmdp-arrow {
+    border: solid #116b3c !important;
+    border-width: 0 2px 2px 0 !important;
+}
+
+.rmdp-arrow-container:hover {
+    background-color: #116b3c !important;
+}
+
+.rmdp-arrow-container:hover .rmdp-arrow {
+    border-color: white !important;
+}
+
+/* .rmdp-wrapper{
     box-shadow: none;
     transform: scale(1.2);
 }
 
 .rmdp-panel-body li{
-    background-color: #116B3C;
+    background-color: #116b3c;
     .b-deselect{
-        background-color: #116B3C;
+        background-color: #116b3c;
     }
 }
 
 .rmdp-day.rmdp-today span{
-    background-color: #1DB566;
+    background-color: #1db566;
 }
 
 
 .rmdp-day.rmdp-selected span:not(.highlight){
-    background-color: #116B3C;
+    background-color: #116b3c;
 }
 
 .rmdp-day:not(.rmdp-day-hidden) span:hover{
@@ -66,18 +105,18 @@ h4 {
 }
 
 .rmdp-week-day {
-    color: #116B3C;
+    color: #116b3c;
 }
 
 .rmdp-arrow{
-    border: solid #116B3C;
+    border: solid #116b3c;
     border-width: 0 2px 2px 0;
 }
 
 .rmdp-arrow-container:hover{
-    background-color: #116B3C;
+    background-color: #116b3c;
 
     .rmdp-arrow{
         color: white;
     }
-}
+} */
