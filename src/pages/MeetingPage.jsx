@@ -9,6 +9,8 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import { ThemeProvider, createTheme, IconButton } from '@mui/material';
 import { useLocation } from 'react-router-dom';
 import { Button } from '@mui/material';
+import GoogleIcon from '@mui/icons-material/Google';
+
 
 import { fetchGroupData, fetchGroupAvailability, fetchUserDataInGroup } from '../utils/fetchGroupData';
 import { addParticipantToGroup } from '../utils/addUserToGroup';
@@ -56,18 +58,22 @@ const MeetingPage = () => {
     const [EndDate, setEndDate] = useState('');
     const [StartTime, setStartTime] = useState('');
     const [EndTime, setEndTime] = useState('');
+    const [IsAuthenticated, setIsAuthenticated] = useState(false);
+    const [UserId, setUserId] = useState(null);
 
-    const { startDate, endDate, startTime, endTime, meetingId, event } = location.state || {
+    const { startDate, endDate, startTime, endTime, meetingId, event, isAuthenticated, userId } = location.state || {
         startDate: StartDate,
         endDate:  EndDate,
         startTime: StartTime,
         endTime: EndTime,
         meetingId: groupId,
-        event: eventTitle
+        event: eventTitle,
+        isAuthenticated: IsAuthenticated,
+        userId: UserId
     };
 
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [userId, setUserId] = useState(null);
+    // const [isAuthenticated, setIsAuthenticated] = useState(false);
+    // const [userId, setUserId] = useState(null);
 
     // Fetches group data, group availability data, and participants data
     useEffect(() => {   
@@ -112,16 +118,6 @@ const MeetingPage = () => {
 
     }, [userId, meetingId]);
 
-    // debugging
-    // useEffect(() => {
-    //     console.log('States updated:', {
-    //         startDate,
-    //         endDate,
-    //         startTime,
-    //         endTime
-    //     });
-    // }, [startDate, endDate, startTime, endTime]);
-
     // Push availability data to Firestore
 
     const handleGoogleAuth = async () => {
@@ -164,22 +160,54 @@ const MeetingPage = () => {
                 {/* Main content wrapper */}
                 <div className="w-full h-full flex flex-col lg:flex-row gap-4">
                     <div className='w-full lg:w-[70%] h-full flex flex-col gap-4'>
-                        {startDate && endDate && startTime && endTime ? (
-                            <Calendar
-                                isAuthenticated={isAuthenticated}
-                                handleAuth={handleGoogleAuth}
-                                startDate={startDate}
-                                endDate={endDate}
-                                startTime={startTime}
-                                endTime={endTime}
-                                userId={userId}
-                                meetingID={meetingId}
-                            />
-                        ) : (
-                            <div className='w-full h-full flex justify-center items-center'>
-                                <p className='text-2xl font-bold'>Loading...</p>
+                        {!isAuthenticated ? (
+                            <div className="flex flex-col justify-center items-center min-h-screen gap-4">
+                                <div className="text-center mb-4">
+                                    <h2 className="text-2xl font-bold text-gray-800 mb-2">Welcome to <span className="text-green-800">SyncUp</span>!</h2>
+                                    <p className="text-gray-600">Please sign in with Google to view and manage your availability</p>
+                                </div>
+                                <ThemeProvider theme={buttonTheme}>
+                                    <Button
+                                        variant="contained"
+                                        onClick={handleGoogleAuth}
+                                        startIcon={<GoogleIcon />}
+                                        sx={{
+                                            padding: '12px 24px',
+                                            fontSize: '1.1rem',
+                                            fontWeight: 'bold',
+                                            textTransform: 'none',
+                                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                                            '&:hover': {
+                                                boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+                                                transform: 'translateY(-1px)',
+                                            },
+                                            transition: 'all 0.2s ease-in-out',
+                                        }}
+                                    >
+                                        Sign in with Google
+                                    </Button>
+                                </ThemeProvider>
                             </div>
-                        )}                    
+                        ) : (
+                            <>
+                                {startDate && endDate && startTime && endTime ? (
+                                    <Calendar
+                                        isAuthenticated={isAuthenticated}
+                                        handleAuth={handleGoogleAuth}
+                                        startDate={startDate}
+                                        endDate={endDate}
+                                        startTime={startTime}
+                                        endTime={endTime}
+                                        userId={userId}
+                                        meetingID={meetingId}
+                                    />
+                                ) : (
+                                    <div className='w-full h-full flex justify-center items-center'>
+                                        <p className='text-2xl font-bold'>Loading...</p>
+                                    </div>
+                                )}                    
+                            </>
+                        )}
                     </div>
                     
                     {/* Right column - hidden on mobile */}

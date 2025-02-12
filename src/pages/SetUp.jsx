@@ -50,7 +50,7 @@ const customTheme = (outerTheme) =>
       mode: outerTheme.palette.mode,
     },
     typography: {
-        fontFamily: 'Nunito',
+      fontFamily: 'Nunito',
     },
     components: {
       MuiTextField: {
@@ -80,35 +80,43 @@ const customTheme = (outerTheme) =>
           },
         },
       },
-      MuiTimeClock: {
+      MuiClock: {
         styleOverrides: {
           root: {
             backgroundColor: "white",
-            "& .css-umzx0k-MuiClock-pin": {
-                backgroundColor: "green",
-            },
-            "& .css-1tci2yf-MuiButtonBase-root-MuiIconButton-root-MuiClock-amButton": {
-                backgroundColor: "green",
-            },
-            "& .css-1dq2mpt-MuiButtonBase-root-MuiIconButton-root-MuiClock-pmButton": {
-                backgroundColor: "green",
-            },
-            "& .css-pncb2q-MuiClockPointer-root": {
-                backgroundColor: "green",
-            },
-            "& .css-1h2qg9i-MuiClockPointer-root": {
-                backgroundColor: "green",
-            },
-            ".css-f53ilk-MuiClockPointer-thumb": {
-                border: "16px solid green",
+          },
+          pin: {
+            backgroundColor: "#116b3c",
+          },
+          clock: {
+            backgroundColor: "white",
+          },
+        }
+      },
+      MuiClockPointer: {
+        styleOverrides: {
+          root: {
+            backgroundColor: "#116b3c",
+          },
+          thumb: {
+            backgroundColor: "#116b3c",
+            border: "16px solid #116b3c",
+          },
+        }
+      },
+      MuiClockNumber: {
+        styleOverrides: {
+          root: {
+            '&.Mui-selected': {
+              backgroundColor: "#116b3c",
             },
           },
-        },
+        }
       },
       MuiDialogActions: {
         styleOverrides: {
           root: {
-            color: "green",
+            color: "#116b3c",
           },
         },
       },
@@ -394,7 +402,9 @@ const SetUp = () => {
                                                     startTime: startHour,
                                                     endTime: endHour,
                                                     meetingId: groupLink.split('/').pop(),
-                                                    event: meetingName
+                                                    event: meetingName,
+                                                    isAuthenticated: isAuthenticated,
+                                                    userId: userId
                                                 }
                                             });
                                         }}

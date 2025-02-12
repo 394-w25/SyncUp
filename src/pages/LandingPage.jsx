@@ -77,14 +77,14 @@ const LandingPage = () => {
         <div className="landing-cta flex bg-background flex-col items-center justify-center min-h-screen px-4 md:px-8">
             <div className="max-w-4xl w-full flex flex-wrap justify-center items-center mb-8">
                 <h1 className="text-3xl md:text-4xl lg:text-5xl text-center md:text-left font-bold text-neutral-1000">
-                    Hi 👋 Let's set up your
+                    Hi 👋 Let's set up your <span className="text-green-800">meeting</span>!
                 </h1>
-                <h1 className="text-3xl md:text-4xl lg:text-5xl ml-3 font-bold text-green-800">
+                {/* <h1 className="text-3xl md:text-4xl lg:text-5xl ml-3 font-bold text-green-800">
                     meeting
                 </h1>
                 <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-neutral-1000">
                     !
-                </h1>
+                </h1> */}
             </div>
             <div className="landing-button-container border-2 border-green-800 rounded-full p-2 hover:scale-105 transition-transform">
                 <IconButton aria-label="Get Started arrow" color="primary" size="large"
