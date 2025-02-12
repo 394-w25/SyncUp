@@ -116,8 +116,10 @@ const MeetingPage = () => {
             setEvent(groupDataFromFetch.title);
             setStartDate(formatDate(groupDataFromFetch.proposedDays[0].toDate()));
             setEndDate(formatDate(new Date(groupDataFromFetch.proposedDays[0].toDate().getDate() + 6)));
-            setStartTime(groupDataFromFetch.proposedStart);
-            setEndTime(groupDataFromFetch.proposedEnd);
+            setStartTime(Math.floor(groupDataFromFetch.proposedStart));
+            setEndTime(Math.floor(groupDataFromFetch.proposedEnd));
+            setStartMin(groupDataFromFetch.proposedStart % 1 === 0.5 ? 30 : 0);
+            setEndMin(groupDataFromFetch.proposedEnd % 1 === 0.5 ? 30 : 0);
         };
              
         getGroupData();

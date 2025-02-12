@@ -189,9 +189,11 @@ function GroupSchedule({ groupData, groupAvailabilityData, startTime, endTime, s
   
   // Generate hour labels
   const hourLabels = [];
-  for (let t = startVal; t <= endVal; t += 1) {
+  for (let t = startVal; t < endVal; t += 1) {
     hourLabels.push(formatTime(t));
   }
+  hourLabels.push(formatTime(endVal))
+
 
   // Mouse Handlers updated for 30-min increments
   const handleMouseDown = (date, hourLabel, isHalfHour) => {
@@ -246,7 +248,7 @@ function GroupSchedule({ groupData, groupAvailabilityData, startTime, endTime, s
     >
       {/* The main grid */}
       <div
-        className="w-full select-none" 
+        className="w-full select-none overflow-y-auto max-h-[500px]" 
         style={{
           display: 'grid',
           gridTemplateColumns: `15% repeat(${dates.length}, 1fr)`,
@@ -279,7 +281,7 @@ function GroupSchedule({ groupData, groupAvailabilityData, startTime, endTime, s
         {hourLabels.map((hourLabel, hourIndex) => (
           <React.Fragment key={hourIndex}>
             {/* Hour label column */}
-            <div className="flex items-center justify-center bg-neutral-100 border-t border-gray-200 row-span-2">
+            <div className="flex items-center text-center justify-center bg-neutral-100 border-t border-gray-200 row-span-2">
               {hourLabel}
             </div>
             
@@ -443,11 +445,32 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
   }, [selectedBlocks, groupAvailabilityData]);
 
   const blocks = selectedBlocks.map(block => {
-    const [dateStr, hour, ampmMinutes] = block.split(' ');
-    const [ampm, minutes] = ampmMinutes.split(':');
-    const formattedTime = `${hour}:${minutes}`;
-    const date = new Date(dateStr + 'T12:00:00');
-    return { date, time: formattedTime, block, ampm, hour, minutes };
+    const [dateStr, hourStr, ampmMinutes] = block.split(' '); 
+    const [ampm, minutesStr] = ampmMinutes.split(':'); // Correctly split "AM:30" into "AM" and "30"
+  
+    let hour = parseInt(hourStr, 10);
+    const minutes = parseInt(minutesStr, 10);
+
+    if (ampm === "PM" && hour !== 12) {
+      hour += 12;
+    } else if (ampm === "AM" && hour === 12) {
+      hour = 0;
+    }
+    const period = hour >= 12 ? "PM" : "AM";
+    let formattedHour = hour % 12;
+    formattedHour = formattedHour === 0 ? 12 : formattedHour; // Convert 0 to 12
+    const formattedMinutes = minutes.toString().padStart(2, '0');
+  
+    const formattedTime = `${formattedHour}:${formattedMinutes} ${period}`;
+  
+    return { 
+      date: new Date(`${dateStr}T12:00:00`), // Ensure a valid Date object
+      time: formattedTime, 
+      block, 
+      ampm, 
+      hour, 
+      minutes
+    };
   });
 
   const uniqueDates = [...new Set(blocks.map(b => b.date.toLocaleDateString('en-US', {
@@ -461,16 +484,26 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
 
   const times = blocks.map(b => b.time);
   const lastTime = times[times.length - 1];
-  const [lastHour, lastMinutes] = lastTime.split(':').map(Number);
-  let endHour = lastHour;
-  let endMinutes = lastMinutes + 30;
+  const [timeStr, ampm] = lastTime.split(' ');
+  const [hourStr, minutesStr] = timeStr.split(':').map(Number);
+  
+  let hour = hourStr;
+  let minutes = minutesStr + 30;
+  let ampmMin = ampm;
 
-  if (endMinutes >= 60) {
-    endHour += 1;
-    endMinutes -= 60;
+  if (minutes >= 60) {
+    hour += 1;
+    minutes -= 60;
+    if (hour == 12) {
+      ampmMin = ampmMin === "AM" ? "PM" : "AM";
+    }
   }
 
-  const endTime = `${endHour}:${endMinutes === 0 ? '00' : endMinutes}`;
+  let formattedHour = hour % 12;
+  formattedHour = formattedHour === 0 ? 12 : formattedHour; // Convert 0 to 12
+  const formattedMinutes = minutes.toString().padStart(2, '0');
+
+  const endTime = `${formattedHour}:${formattedMinutes} ${ampmMin}`;
   const timeDisplay = `${times[0]} - ${endTime}`;
 
   // Structures block data to report group availability for selected time range
@@ -480,8 +513,8 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
   // console.log('lastBlock: ', lastBlock);
 
   const dateString = firstBlock.date.toISOString().split('T')[0];
-  const selectedStartTime = Number(firstBlock['hour'].split(':')[0]) + (Number(firstBlock['minutes']) / 60) + ((firstBlock['ampm'] === 'PM' && firstBlock['hour'].split(':')[0] != 12) ? 12 : 0);
-  const selectedEndTime = Number(lastBlock['hour'].split(':')[0]) + (Number(lastBlock['minutes']) / 60) + ((lastBlock['ampm'] === 'PM' && ![12, 13].includes(endHour)) ? 12 : 0) + 0.5;
+  const selectedStartTime = firstBlock.hour + (firstBlock.minutes / 60);
+  const selectedEndTime = lastBlock.hour + (lastBlock.minutes / 60) + 0.5;
   // console.log('selected from: ', selectedStartTime, ' to: ', selectedEndTime);
   
   const availabilityArrayOnDate = groupAvailabilityData['data'][dateString];
@@ -626,6 +659,6 @@ function formatTime(timeValue) {
   const minutes = (timeValue % 1) * 60;
   const period = hour >= 12 ? "PM" : "AM";
   const displayHour = hour % 12 === 0 ? 12 : hour % 12;
-  const displayMinutes = minutes === 0 ? "00" : minutes.toString().padStart(2, "0");
+  const displayMinutes = minutes === 0 ? "00" : "30";
   return `${displayHour}:${displayMinutes} ${period}`;
 }

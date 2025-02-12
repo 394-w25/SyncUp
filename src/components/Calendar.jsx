@@ -62,7 +62,6 @@ const Calendar = ({
 
   const handleCopyLink = () => {
       const meetingLink = `syncup-5bc71.web.app/group/${meetingID}`; 
-      // TODO: fix meetingLink 
       navigator.clipboard.writeText(meetingLink);
       setIsCopied(true);
 
@@ -98,7 +97,7 @@ const Calendar = ({
   });
 
   const totalDays = Math.floor(Math.abs(new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 *24));
-  const showNavigation = totalDays > 7;
+  const showNavigation = totalDays >= 7;
 
   const convertToISO = (date) => {
     return new Date(new Date(date).toISOString().replace(/T/, ' ').replace(/\..+/, ''));

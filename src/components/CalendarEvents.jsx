@@ -437,14 +437,14 @@ export default function CalendarEvents({
 
   const topMargin = startMin === 30 ? pixelsPer30Min : 0;
   const bottomMargin = endMin === 30 ? pixelsPer30Min : 0;
-  const calHeight = times.length * pixelsPerHour;
+  const calHeight = times.length * pixelsPerHour - bottomMargin;
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col overflow-y-auto">
 
       {/* HEADER ROW */}
       <div className="w-full flex">
-        <div className="w-16 mr-1 py-4 text-center border-neutral-400" />
+        <div className="w-20 mr-1 py-4 text-center border-neutral-400" />
         {dates.map((date, idx) => {
           const dayShort = new Intl.DateTimeFormat("en-US", {
             weekday: "short",
@@ -470,7 +470,7 @@ export default function CalendarEvents({
       {/* BODY ROWS */}
       <div className="w-full flex">
         {/* TIME COLUMN */}
-        <div className="w-16 bg-neutral-100 mr-1 relative">
+        <div className="w-20 bg-neutral-100 mr-1 relative">
           {times.map((time, i) => (
             <div
               key={i}
@@ -480,7 +480,7 @@ export default function CalendarEvents({
                 transform: "translateY(-50%)",
               }}
             >
-              <p className="text-sm text-right">{time}</p>
+              <p className="text-[14px] text-right">{time}</p>
             </div>
           ))}
         </div>
