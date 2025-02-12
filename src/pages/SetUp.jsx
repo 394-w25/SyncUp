@@ -371,8 +371,6 @@ const SetUp = () => {
                                         onClick={() => {
                                             const startHour = moment(selectedStartTime).hour();
                                             const endHour = moment(selectedEndTime).hour();
-                                            const startMin = moment(selectedStartTime).minute();
-                                            const endMin = moment(selectedEndTime).minute();
                                             const firstDate = moment(selectedDate[0].toDate()).format('YYYY-MM-DD');
                                             const lastDate = moment(selectedDate[selectedDate.length - 1].toDate()).format('YYYY-MM-DD');
                                             
@@ -383,8 +381,6 @@ const SetUp = () => {
                                                     endDate: lastDate,
                                                     startTime: startHour,
                                                     endTime: endHour,
-                                                    startMin: startMin,
-                                                    endMin: endMin,
                                                     meetingId: groupLink.split('/').pop(),
                                                     event: meetingName
                                                 }
