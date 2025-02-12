@@ -42,6 +42,11 @@ function formatDate(input) {
     return localDate.toISOString().split('T')[0];
 }
 
+function parseLocalDate(dateString) {
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+
 const MeetingPage = () => {
     const location = useLocation();
 
@@ -56,15 +61,22 @@ const MeetingPage = () => {
     const [EndDate, setEndDate] = useState('');
     const [StartTime, setStartTime] = useState('');
     const [EndTime, setEndTime] = useState('');
+    const [StartMin, setStartMin] = useState('');
+    const [EndMin, setEndMin] = useState('');
 
-    const { startDate, endDate, startTime, endTime, meetingId, event } = location.state || {
+    const { startDate, endDate, startTime, endTime, startMin, endMin, meetingId, event } = location.state || {
         startDate: StartDate,
         endDate:  EndDate,
         startTime: StartTime,
         endTime: EndTime,
+        startMin: StartMin,
+        endMin: EndMin,
         meetingId: groupId,
         event: eventTitle
     };
+
+    const [activeWeekStart, setActiveWeekStart] = useState(() => parseLocalDate(startDate));
+    const [activeWeekEnd, setActiveWeekEnd] = useState(() => parseLocalDate(endDate));
 
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userId, setUserId] = useState(null);
@@ -114,18 +126,6 @@ const MeetingPage = () => {
 
     }, [userId, meetingId]);
 
-    // debugging
-    // useEffect(() => {
-    //     console.log('States updated:', {
-    //         startDate,
-    //         endDate,
-    //         startTime,
-    //         endTime
-    //     });
-    // }, [startDate, endDate, startTime, endTime]);
-
-    // Push availability data to Firestore
-
     const handleGoogleAuth = async () => {
         try {
             const user = await googleHandleAuth(setIsAuthenticated);
@@ -140,17 +140,6 @@ const MeetingPage = () => {
         await signOut(setIsAuthenticated, setUserId);
     }
 
-    // console.log('set up startTime', startTime);
-    // console.log('set up endTime', endTime);
-    // console.log('set up groupData', groupData);
-    // console.log('set up groupAvailabilityData', groupAvailabilityData);
-    // console.log('set up participantsData', participantsData);
-    // console.log('set up isAuthenticated', isAuthenticated);
-    // console.log('set up userId', userId);
-    // console.log('set up startDate', startDate);
-    // console.log('set up endDate', endDate);
-    // console.log('set up event', event);
-
     return (
         <div className="w-screen h-screen px-4 pb-4 bg-background relative">
             <div className="w-full h-full flex gap-4">
@@ -163,7 +152,11 @@ const MeetingPage = () => {
                             endDate={endDate}
                             startTime={startTime}
                             endTime={endTime}
+                            startMin={startMin}
+                            endMin={endMin}
                             userId={userId}
+                            setActiveWeekStart={setActiveWeekStart}
+                            setActiveWeekEnd={setActiveWeekEnd}
                             meetingID={meetingId}
                         />
                     ) : (
@@ -182,6 +175,8 @@ const MeetingPage = () => {
                         <GroupAvailability
                             groupData={groupData}
                             groupAvailabilityData={groupAvailabilityData}
+                            activeWeekStart={activeWeekStart}
+                            activeWeekEnd={activeWeekEnd}
                         />
                     ) : (
                         <div className='w-full h-full flex justify-center items-center'>
