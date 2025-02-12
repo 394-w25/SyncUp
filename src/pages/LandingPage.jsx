@@ -71,16 +71,22 @@ const LandingPage = () => {
   return (
     <MuiThemeProvider theme={appTheme}>
         <CssBaseline />
-        <div className="absolute top-5 left-10">
+        <div className="absolute top-4 md:top-5 left-4 md:left-10">
             <Logo />
         </div>
-        <div className="landing-cta flex bg-background flex-col items-center justify-center h-screen gap-10">
-            <div className="flex items-center">
-                <h1 className="text-5xl font-bold text-neutral-1000">Hi 👋 Let's set up your </h1>
-                <h1 className="text-5xl font-bold text-green-800 ml-3">meeting</h1>
-                <h1 className="text-5xl font-bold text-neutral-1000">!</h1>
+        <div className="landing-cta flex bg-background flex-col items-center justify-center min-h-screen px-4 md:px-8">
+            <div className="max-w-4xl w-full flex flex-wrap justify-center items-center mb-8">
+                <h1 className="text-3xl md:text-4xl lg:text-5xl text-center md:text-left font-bold text-neutral-1000">
+                    Hi 👋 Let's set up your
+                </h1>
+                <h1 className="text-3xl md:text-4xl lg:text-5xl ml-3 font-bold text-green-800">
+                    meeting
+                </h1>
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-neutral-1000">
+                    !
+                </h1>
             </div>
-            <div className="landing-button-container border border-green-800 rounded-full">
+            <div className="landing-button-container border-2 border-green-800 rounded-full p-2 hover:scale-105 transition-transform">
                 <IconButton aria-label="Get Started arrow" color="primary" size="large"
                     onClick={() => {
                         navigate("/setup-meeting");
