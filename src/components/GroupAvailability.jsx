@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, act } from 'react';
 import Logo from './Logo';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
@@ -11,7 +11,6 @@ import Button from '@mui/material/Button';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 // import { createGoogleCalendarEvent } from '../services/googleCalender';
-
 
 import { collection, getDocs } from "firebase/firestore";
 import { doc, getDoc } from "firebase/firestore";
@@ -169,21 +168,32 @@ function GroupSchedule({ groupData, groupAvailabilityData, startTime, endTime, s
     const dates = [];
     const curr = dateParse(start);
     const last = dateParse(end);
-    while (curr <= last) {
+
+    let count = 0;
+    while (count < 7 && curr <= last) {
       dates.push(new Date(curr));
       curr.setDate(curr.getDate() + 1);
+      count++;
     }
     return dates;
   };
+
   const dates = getDatesInRange(startDate, endDate);
 
+  const startMin = groupData.proposedStartMin || 0; 
+  const endMin = groupData.proposedEndMin || 0; 
+
+  // Compute numeric start and end values
+  const startVal = groupData.proposedStart + (startMin === 30 ? 0.5 : 0);
+  const endVal = groupData.proposedEnd + (endMin === 30 ? 0.5 : 0);
+  
   // Generate hour labels
   const hourLabels = [];
-  for (let hour = startTime; hour <= endTime; hour++) {
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const displayHour = hour % 12 === 0 ? 12 : hour % 12;
-    hourLabels.push(`${displayHour} ${ampm}`);
+  for (let t = startVal; t < endVal; t += 1) {
+    hourLabels.push(formatTime(t));
   }
+  hourLabels.push(formatTime(endVal))
+
 
   // Mouse Handlers updated for 30-min increments
   const handleMouseDown = (date, hourLabel, isHalfHour) => {
@@ -238,7 +248,7 @@ function GroupSchedule({ groupData, groupAvailabilityData, startTime, endTime, s
     >
       {/* The main grid */}
       <div
-        className="w-full select-none" 
+        className="w-full select-none overflow-y-auto max-h-[500px]" 
         style={{
           display: 'grid',
           gridTemplateColumns: `15% repeat(${dates.length}, 1fr)`,
@@ -271,7 +281,7 @@ function GroupSchedule({ groupData, groupAvailabilityData, startTime, endTime, s
         {hourLabels.map((hourLabel, hourIndex) => (
           <React.Fragment key={hourIndex}>
             {/* Hour label column */}
-            <div className="flex items-center justify-center bg-neutral-100 border-t border-gray-200 row-span-2">
+            <div className="flex items-center text-center justify-center bg-neutral-100 border-t border-gray-200 row-span-2">
               {hourLabel}
             </div>
             
@@ -385,8 +395,6 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
   
     scheduleEventDeepLink(startBlock, durationMinutes, eventDetails, meetingId, attendeeEmails);
   };
-  
-
 
   useEffect(() => {
     // console.log("Selected Blocks:", selectedBlocks);
@@ -437,11 +445,32 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
   }, [selectedBlocks, groupAvailabilityData]);
 
   const blocks = selectedBlocks.map(block => {
-    const [dateStr, hour, ampmMinutes] = block.split(' ');
-    const [ampm, minutes] = ampmMinutes.split(':');
-    const formattedTime = `${hour}:${minutes}`;
-    const date = new Date(dateStr + 'T12:00:00');
-    return { date, time: formattedTime, block, ampm, hour, minutes };
+    const [dateStr, hourStr, ampmMinutes] = block.split(' '); 
+    const [ampm, minutesStr] = ampmMinutes.split(':'); // Correctly split "AM:30" into "AM" and "30"
+  
+    let hour = parseInt(hourStr, 10);
+    const minutes = parseInt(minutesStr, 10);
+
+    if (ampm === "PM" && hour !== 12) {
+      hour += 12;
+    } else if (ampm === "AM" && hour === 12) {
+      hour = 0;
+    }
+    const period = hour >= 12 ? "PM" : "AM";
+    let formattedHour = hour % 12;
+    formattedHour = formattedHour === 0 ? 12 : formattedHour; // Convert 0 to 12
+    const formattedMinutes = minutes.toString().padStart(2, '0');
+  
+    const formattedTime = `${formattedHour}:${formattedMinutes} ${period}`;
+  
+    return { 
+      date: new Date(`${dateStr}T12:00:00`), // Ensure a valid Date object
+      time: formattedTime, 
+      block, 
+      ampm, 
+      hour, 
+      minutes
+    };
   });
 
   const uniqueDates = [...new Set(blocks.map(b => b.date.toLocaleDateString('en-US', {
@@ -455,33 +484,52 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
 
   const times = blocks.map(b => b.time);
   const lastTime = times[times.length - 1];
-  const [lastHour, lastMinutes] = lastTime.split(':').map(Number);
-  let endHour = lastHour;
-  let endMinutes = lastMinutes + 30;
+  const [timeStr, ampm] = lastTime.split(' ');
+  const [hourStr, minutesStr] = timeStr.split(':').map(Number);
+  
+  let hour = hourStr;
+  let minutes = minutesStr + 30;
+  let ampmMin = ampm;
 
-  if (endMinutes >= 60) {
-    endHour += 1;
-    endMinutes -= 60;
+  if (minutes >= 60) {
+    hour += 1;
+    minutes -= 60;
+    if (hour == 12) {
+      ampmMin = ampmMin === "AM" ? "PM" : "AM";
+    }
   }
 
-  const endTime = `${endHour}:${endMinutes === 0 ? '00' : endMinutes}`;
+  let formattedHour = hour % 12;
+  formattedHour = formattedHour === 0 ? 12 : formattedHour; // Convert 0 to 12
+  const formattedMinutes = minutes.toString().padStart(2, '0');
+
+  const endTime = `${formattedHour}:${formattedMinutes} ${ampmMin}`;
   const timeDisplay = `${times[0]} - ${endTime}`;
 
   // Structures block data to report group availability for selected time range
   const firstBlock = blocks[0];
   const lastBlock = blocks[blocks.length - 1];
+  // console.log('firstBlock: ', firstBlock);
+  // console.log('lastBlock: ', lastBlock);
+
   const dateString = firstBlock.date.toISOString().split('T')[0];
-  const selectedStartTime = Number(firstBlock['hour']) + (Number(firstBlock['minutes']) / 60) + ((firstBlock['ampm'] === 'PM' && firstBlock['hour'] != 12) ? 12 : 0);
-  const selectedEndTime = endHour + (endMinutes / 60) + ((lastBlock['ampm'] === 'PM' && ![12, 13].includes(endHour)) ? 12 : 0);
+  const selectedStartTime = firstBlock.hour + (firstBlock.minutes / 60);
+  const selectedEndTime = lastBlock.hour + (lastBlock.minutes / 60) + 0.5;
   // console.log('selected from: ', selectedStartTime, ' to: ', selectedEndTime);
   
   const availabilityArrayOnDate = groupAvailabilityData['data'][dateString];
   const availabilityStartTime = groupAvailabilityData['startTime'];
   const availabilityIntervalMins = groupAvailabilityData['intervalMins'];
+  // console.log('availabilityArrayOnDate: ', availabilityArrayOnDate);
+  // console.log('availabilityStartTime: ', availabilityStartTime);
+  // console.log('availabilityIntervalMins: ', availabilityIntervalMins);
 
   const startIndex = Math.floor((selectedStartTime - availabilityStartTime) * 60 / availabilityIntervalMins);
   const endIndex = Math.floor((selectedEndTime - availabilityStartTime) * 60 / availabilityIntervalMins);
+  // console.log('startIndex: ', startIndex, ' endIndex: ', endIndex);
+
   const selectedAvailability = availabilityArrayOnDate ? availabilityArrayOnDate.slice(startIndex, endIndex) : [];
+  // console.log('selectedAvailability: ', selectedAvailability);
   
   // Find participants available in all selected blocks
   let commonElements = new Set(selectedAvailability[0]);
@@ -578,96 +626,14 @@ function formatYyyyMmDd(date) {
   return `${y}-${m}-${d}`;
 }
 
-export default function GroupAvailability({ groupData, groupAvailabilityData }) {
+export default function GroupAvailability({ groupData, groupAvailabilityData, activeWeekStart, activeWeekEnd }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userId, setUserId] = useState(null);
-
-  const [weekStart, setWeekStart] = useState(() => {
-    const firstDay = groupData.proposedDays[0].toDate();
-    return new Date(firstDay.getFullYear(), firstDay.getMonth(), firstDay.getDate());
-  });
-
-  const [weekEnd, setWeekEnd] = useState(() => {
-    const firstDay = groupData.proposedDays[0].toDate();
-    const lastProposedDay = groupData.proposedDays[groupData.proposedDays.length - 1].toDate();
-    const oneWeekFromStart = new Date(firstDay);
-    oneWeekFromStart.setDate(oneWeekFromStart.getDate() + 6);
-    
-    return oneWeekFromStart <= lastProposedDay ? oneWeekFromStart : lastProposedDay;
-  });
-
-  const handlePreviousWeek = () => {
-    const firstProposedDay = groupData.proposedDays[0].toDate();
-    const newStart = new Date(weekStart);
-    newStart.setDate(newStart.getDate() - 7);
-    
-    if (newStart < firstProposedDay) {
-      setWeekStart(firstProposedDay);
-      const newEnd = new Date(firstProposedDay);
-      newEnd.setDate(newEnd.getDate() + 6);
-      setWeekEnd(newEnd);
-      return;
-    }
-    
-    setWeekStart(newStart);
-    const newEnd = new Date(newStart);
-    newEnd.setDate(newEnd.getDate() + 6);
-    setWeekEnd(newEnd);
-  };
-
-  const handleNextWeek = () => {
-    const lastProposedDay = groupData.proposedDays[groupData.proposedDays.length - 1].toDate();
-    const newStart = new Date(weekStart);
-    newStart.setDate(newStart.getDate() + 7);
-    
-    if (newStart > lastProposedDay) {
-      return;
-    }
-    
-    setWeekStart(newStart);
-    const newEnd = new Date(newStart);
-    newEnd.setDate(newEnd.getDate() + 6);
-    
-    if (newEnd > lastProposedDay) {
-      setWeekEnd(lastProposedDay);
-    } else {
-      setWeekEnd(newEnd);
-    }
-  };
-
-  const formatYyyyMmDd = (date) => {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-  };
+  const [userId, setUserId] = useState(null); 
 
   return (
     <div className="flex flex-col bg-white px-8 py-8 gap-2 rounded-[20px] shadow-[0px_7px_15.699999809265137px_0px_rgba(17,107,60,0.06)]">
-      <div className="mb-4 flex items-center justify-between -mt-4">
-        <button 
-          onClick={handlePreviousWeek} 
-          className={`px-3 py-1 border rounded text-sm ${
-            weekStart <= groupData.proposedDays[0].toDate() 
-              ? 'text-gray-400 cursor-not-allowed' 
-              : 'text-black hover:bg-gray-100'
-          }`}
-          disabled={weekStart <= groupData.proposedDays[0].toDate()}
-        >
-          &lt; 
-        </button>
+      <div className="mb-4 flex items-center justify-between mb-2 -mt-4">
         <h2 className="text-xl">Group Availability</h2>
-        <button 
-          onClick={handleNextWeek} 
-          className={`px-3 py-1 border rounded text-sm ${
-            weekEnd >= groupData.proposedDays[groupData.proposedDays.length - 1].toDate() 
-              ? 'text-gray-400 cursor-not-allowed' 
-              : 'text-black hover:bg-gray-100'
-          }`}
-          disabled={weekEnd >= groupData.proposedDays[groupData.proposedDays.length - 1].toDate()}
-        >
-          &gt;
-        </button>
       </div>
 
       <GroupSchedule
@@ -675,8 +641,8 @@ export default function GroupAvailability({ groupData, groupAvailabilityData }) 
         groupAvailabilityData={groupAvailabilityData}
         startTime={groupData.proposedStart}
         endTime={groupData.proposedEnd}
-        startDate={formatYyyyMmDd(weekStart)}
-        endDate={formatYyyyMmDd(weekEnd)}
+        startDate={formatYyyyMmDd(activeWeekStart)}
+        endDate={formatYyyyMmDd(activeWeekEnd)}
         eventName={groupData.title}
         meetingId={groupData.groupId}
         isAuthenticated={isAuthenticated}
@@ -686,4 +652,13 @@ export default function GroupAvailability({ groupData, groupAvailabilityData }) 
       />
     </div>
   );
+}
+
+function formatTime(timeValue) {
+  const hour = Math.floor(timeValue);
+  const minutes = (timeValue % 1) * 60;
+  const period = hour >= 12 ? "PM" : "AM";
+  const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+  const displayMinutes = minutes === 0 ? "00" : "30";
+  return `${displayHour}:${displayMinutes} ${period}`;
 }
