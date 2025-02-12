@@ -1,4 +1,4 @@
-import React, { useState, useEffect, act } from 'react';
+import React, { useState, useEffect } from 'react';
 import Logo from './Logo';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
@@ -11,6 +11,7 @@ import Button from '@mui/material/Button';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 // import { createGoogleCalendarEvent } from '../services/googleCalender';
+
 
 import { collection, getDocs } from "firebase/firestore";
 import { doc, getDoc } from "firebase/firestore";
@@ -168,29 +169,20 @@ function GroupSchedule({ groupData, groupAvailabilityData, startTime, endTime, s
     const dates = [];
     const curr = dateParse(start);
     const last = dateParse(end);
-
-    let count = 0;
-    while (count < 7 && curr <= last) {
+    while (curr <= last) {
       dates.push(new Date(curr));
       curr.setDate(curr.getDate() + 1);
-      count++;
     }
     return dates;
   };
-
   const dates = getDatesInRange(startDate, endDate);
 
-  const startMin = groupData.proposedStartMin || 0; 
-  const endMin = groupData.proposedEndMin || 0; 
-
-  // Compute numeric start and end values
-  const startVal = groupData.proposedStart + (startMin === 30 ? 0.5 : 0);
-  const endVal = groupData.proposedEnd + (endMin === 30 ? 0.5 : 0);
-  
   // Generate hour labels
   const hourLabels = [];
-  for (let t = startVal; t <= endVal; t += 1) {
-    hourLabels.push(formatTime(t));
+  for (let hour = startTime; hour <= endTime; hour++) {
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+    hourLabels.push(`${displayHour} ${ampm}`);
   }
 
   // Mouse Handlers updated for 30-min increments
@@ -393,6 +385,8 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
   
     scheduleEventDeepLink(startBlock, durationMinutes, eventDetails, meetingId, attendeeEmails);
   };
+  
+
 
   useEffect(() => {
     // console.log("Selected Blocks:", selectedBlocks);
@@ -476,27 +470,18 @@ function PopupCard({ selectedBlocks, onClose, groupAvailabilityData, numMembers,
   // Structures block data to report group availability for selected time range
   const firstBlock = blocks[0];
   const lastBlock = blocks[blocks.length - 1];
-  // console.log('firstBlock: ', firstBlock);
-  // console.log('lastBlock: ', lastBlock);
-
   const dateString = firstBlock.date.toISOString().split('T')[0];
-  const selectedStartTime = Number(firstBlock['hour'].split(':')[0]) + (Number(firstBlock['minutes']) / 60) + ((firstBlock['ampm'] === 'PM' && firstBlock['hour'].split(':')[0] != 12) ? 12 : 0);
-  const selectedEndTime = Number(lastBlock['hour'].split(':')[0]) + (Number(lastBlock['minutes']) / 60) + ((lastBlock['ampm'] === 'PM' && ![12, 13].includes(endHour)) ? 12 : 0) + 0.5;
+  const selectedStartTime = Number(firstBlock['hour']) + (Number(firstBlock['minutes']) / 60) + ((firstBlock['ampm'] === 'PM' && firstBlock['hour'] != 12) ? 12 : 0);
+  const selectedEndTime = endHour + (endMinutes / 60) + ((lastBlock['ampm'] === 'PM' && ![12, 13].includes(endHour)) ? 12 : 0);
   // console.log('selected from: ', selectedStartTime, ' to: ', selectedEndTime);
   
   const availabilityArrayOnDate = groupAvailabilityData['data'][dateString];
   const availabilityStartTime = groupAvailabilityData['startTime'];
   const availabilityIntervalMins = groupAvailabilityData['intervalMins'];
-  // console.log('availabilityArrayOnDate: ', availabilityArrayOnDate);
-  // console.log('availabilityStartTime: ', availabilityStartTime);
-  // console.log('availabilityIntervalMins: ', availabilityIntervalMins);
 
   const startIndex = Math.floor((selectedStartTime - availabilityStartTime) * 60 / availabilityIntervalMins);
   const endIndex = Math.floor((selectedEndTime - availabilityStartTime) * 60 / availabilityIntervalMins);
-  // console.log('startIndex: ', startIndex, ' endIndex: ', endIndex);
-
   const selectedAvailability = availabilityArrayOnDate ? availabilityArrayOnDate.slice(startIndex, endIndex) : [];
-  // console.log('selectedAvailability: ', selectedAvailability);
   
   // Find participants available in all selected blocks
   let commonElements = new Set(selectedAvailability[0]);
@@ -593,14 +578,56 @@ function formatYyyyMmDd(date) {
   return `${y}-${m}-${d}`;
 }
 
-export default function GroupAvailability({ groupData, groupAvailabilityData, activeWeekStart, activeWeekEnd }) {
+export default function GroupAvailability({ groupData, groupAvailabilityData }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userId, setUserId] = useState(null); 
+
+  const [weekStart, setWeekStart] = useState(groupData.proposedDays[0].toDate());
+  const [weekEnd, setWeekEnd] = useState(groupData.proposedDays[groupData.proposedDays.length - 1].toDate());
+
+  const handlePreviousWeek = () => {
+    setWeekStart(prev => {
+      const d = new Date(prev);
+      d.setDate(d.getDate() - 7);
+      return d;
+    });
+    setWeekEnd(prev => {
+      const d = new Date(prev);
+      d.setDate(d.getDate() - 7);
+      return d;
+    });
+  };
+  
+  const handleNextWeek = () => {
+    setWeekStart(prev => {
+      const d = new Date(prev);
+      d.setDate(d.getDate() + 7);
+      return d;
+    });
+    setWeekEnd(prev => {
+      const d = new Date(prev);
+      d.setDate(d.getDate() + 7);
+      return d;
+    });
+  };
+
 
   return (
     <div className="flex flex-col bg-white px-8 py-8 gap-2 rounded-[20px] shadow-[0px_7px_15.699999809265137px_0px_rgba(17,107,60,0.06)]">
       <div className="mb-4 flex items-center justify-between mb-2 -mt-4">
+      <button 
+          onClick={handlePreviousWeek} 
+          className="px-3 py-1 border rounded text-sm"
+        >
+          &lt; 
+        </button>
         <h2 className="text-xl">Group Availability</h2>
+        <button 
+          onClick={handleNextWeek} 
+          className="px-3 py-1 border rounded text-sm"
+        >
+          &gt;
+        </button>
       </div>
 
       <GroupSchedule
@@ -608,8 +635,8 @@ export default function GroupAvailability({ groupData, groupAvailabilityData, ac
         groupAvailabilityData={groupAvailabilityData}
         startTime={groupData.proposedStart}
         endTime={groupData.proposedEnd}
-        startDate={formatYyyyMmDd(activeWeekStart)}
-        endDate={formatYyyyMmDd(activeWeekEnd)}
+        startDate={formatYyyyMmDd(weekStart)}
+        endDate={formatYyyyMmDd(weekEnd)}
         eventName={groupData.title}
         meetingId={groupData.groupId}
         isAuthenticated={isAuthenticated}
@@ -619,13 +646,4 @@ export default function GroupAvailability({ groupData, groupAvailabilityData, ac
       />
     </div>
   );
-}
-
-function formatTime(timeValue) {
-  const hour = Math.floor(timeValue);
-  const minutes = (timeValue % 1) * 60;
-  const period = hour >= 12 ? "PM" : "AM";
-  const displayHour = hour % 12 === 0 ? 12 : hour % 12;
-  const displayMinutes = minutes === 0 ? "00" : minutes.toString().padStart(2, "0");
-  return `${displayHour}:${displayMinutes} ${period}`;
 }

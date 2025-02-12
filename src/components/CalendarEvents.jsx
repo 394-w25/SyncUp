@@ -8,8 +8,6 @@ const pixelsPer30Min = 24;
 export default function CalendarEvents({
   startTime = 8,
   endTime = 18,
-  startMin,
-  endMin,
   startDate,
   endDate,
   events = [],
@@ -29,13 +27,23 @@ export default function CalendarEvents({
 
   const { dates } = generateDateRange(startDate, endDate);
 
-  // calc numeric values for start and end
-  const startVal = startTime + (startMin === 30 ? 0.5 : 0);
-  const endVal = endTime + (endMin === 30 ? 0.5 : 0);
-  // generate the times array
+  // useEffect(() => {
+  //   if (startDate && endDate && startTime && endTime) {
+  //     console.log('CalendarEvents: Received props', {
+  //       startDate,
+  //       endDate,
+  //       startTime,
+  //       endTime,
+  //       dates,
+  //       events
+  //     });
+  //   }
+  // }, [startDate, endDate, startTime, endTime, dates, events]);
+
+  // Create an array of label times (8 AM, 9 AM, etc.)
   const times = [];
-  for (let t = startVal; t <= endVal; t += 1) {
-    times.push(formatTime(t));
+  for (let hour = startTime; hour <= endTime; hour++) {
+    times.push(formatTime(hour));
   }
 
   const googleBlocksByDay = useMemo(() => {
@@ -216,97 +224,57 @@ export default function CalendarEvents({
   // MOUSE HANDLERS
   function handleMouseDown(e, dayIndex) {
     e.preventDefault();
-    const container = e.currentTarget;
-    const containerTop = container.getBoundingClientRect().top;
+    const containerTop = e.currentTarget.getBoundingClientRect().top;
     const yPos = e.clientY - containerTop;
     setDragData({
       isDragging: true,
       startY: yPos,
       endY: yPos,
       dayIndex,
-      container,
     });
-    // Global listeners, capture mouse movements and mouseup even if the cursor leaves the container
-    window.addEventListener('mouseup', handleGlobalMouseUp);
-    window.addEventListener('mousemove', handleGlobalMouseMove);
   }
 
-  // Global mousemove handler to update dragData when cursor leaves the container
-  function handleGlobalMouseMove(e) {
-    if (!dragData.isDragging || !dragData.container) return;
-    const container = dragData.container;
-    const containerTop = container.getBoundingClientRect().top;
+  function handleMouseMove(e, dayIndex) {
+    if (!dragData.isDragging || dragData.dayIndex !== dayIndex) return;
+    const containerTop = e.currentTarget.getBoundingClientRect().top;
     const yPos = e.clientY - containerTop;
-    setDragData(prev => ({ ...prev, endY: yPos }));
+    setDragData((prev) => ({ ...prev, endY: yPos }));
   }
 
-  // Global mouseup handler to process the drag end
-  function handleGlobalMouseUp(e) {
-    if (!dragData.isDragging || !dragData.container) return;
-    const container = dragData.container;
-    const containerRect = container.getBoundingClientRect();
-    const containerTop = containerRect.top;
-    let yPos = e.clientY - containerTop;
-    // Clamp the y position to the container’s height if the mouse was released below (or above) it
-    if (yPos > containerRect.height) {
-      yPos = containerRect.height;
-    } else if (yPos < 0) {
-      yPos = 0;
-    }
-    // Update the dragData with the clamped value and process the drag end
-    setDragData(prev => ({ ...prev, endY: yPos }));
-    processDragEnd(dragData.dayIndex, container);
-    // Remove global listeners
-    window.removeEventListener('mouseup', handleGlobalMouseUp);
-    window.removeEventListener('mousemove', handleGlobalMouseMove);
-  }
-
-  // Normal mouseup handler
   function handleMouseUp(e, dayIndex) {
     if (!dragData.isDragging || dragData.dayIndex !== dayIndex) {
       resetDrag();
       return;
     }
-    processDragEnd(dayIndex, e.currentTarget);
-    window.removeEventListener('mouseup', handleGlobalMouseUp);
-    window.removeEventListener('mousemove', handleGlobalMouseMove);
-  }
 
-  // Process drag and create time block
-  function processDragEnd(dayIndex, container) {
-    if (!dragData.isDragging || dragData.dayIndex !== dayIndex) {
-      resetDrag();
-      return;
-    }
-    const containerRect = container.getBoundingClientRect();
-    const maxY = containerRect.height;
     const { startY, endY } = dragData;
     const rawTop = Math.min(startY, endY);
     const rawBottom = Math.max(startY, endY);
 
-    const clampedBottom = Math.min(rawBottom, maxY);
     const top = snapTo30Min(rawTop);
-    const bottom = snapTo30Min(clampedBottom);
+    const bottom = snapTo30Min(rawBottom);
     const height = bottom - top;
 
-    // If the drag is too small, ignore it
+    // If user dragged a tiny amount, ignore
     if (height < 5) {
       resetDrag();
+      // if user dragged a tiny amount on highlighted block, remove it
       const clickedBlock = highlightBlocks.find((block) => {
         return block.dayIndex === dayIndex && top >= block.top && top <= block.top + block.height;
       });
       if (clickedBlock) {
-        handleBlockClick({ stopPropagation: () => {} }, clickedBlock.id);
+        handleBlockClick(e, clickedBlock.id);
       }
       return;
     }
 
-    // Check for overlap with existing blocks and Google events
+    // Check overlap with existing highlight blocks
     const hasOverlapWithUserBlocks = highlightBlocks
       .filter((b) => b.dayIndex === dayIndex)
       .some((b) => {
         const bTop = b.top;
         const bBottom = b.top + b.height;
+        // Overlap if there's any intersection
         return top < bBottom && bottom > bTop;
       });
 
@@ -315,7 +283,7 @@ export default function CalendarEvents({
       return;
     }
 
-    // Save new block
+    // Otherwise, add the new block
     const newBlock = {
       id: Date.now(),
       dayIndex,
@@ -325,14 +293,6 @@ export default function CalendarEvents({
     setHighlightBlocks((prev) => [...prev, newBlock]);
     setHasUnsavedChanges(true);
     resetDrag();
-  }
-
-  function handleMouseMove(e) {
-    if (!dragData.isDragging || !dragData.container) return;
-    const container = dragData.container;
-    const containerTop = container.getBoundingClientRect().top;
-    const yPos = e.clientY - containerTop;
-    setDragData(prev => ({ ...prev, endY: yPos }));
   }
 
   function resetDrag() {
@@ -346,6 +306,13 @@ export default function CalendarEvents({
     setHighlightBlocks(updatedBlocks);
     setHasUnsavedChanges(true);
     setIsSaving(false);
+  };
+
+  const pixelsToTime = (pixels) => {
+    const totalMinutes = (pixels / pixelsPerHour) * 60;
+    const hour = Math.floor(totalMinutes / 60) + startTime;
+    const minutes = Math.floor(totalMinutes % 60);
+    return `${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   };
 
   const isEventVisible = (event, startTime, endTime) => {
@@ -431,13 +398,11 @@ export default function CalendarEvents({
     });
   };
 
+  
+
   if (!startDate || !endDate || startTime === undefined || endTime === undefined) {
     return null;
   }
-
-  const topMargin = startMin === 30 ? pixelsPer30Min : 0;
-  const bottomMargin = endMin === 30 ? pixelsPer30Min : 0;
-  const calHeight = times.length * pixelsPerHour;
 
   return (
     <div className="flex flex-col">
@@ -476,7 +441,7 @@ export default function CalendarEvents({
               key={i}
               className="absolute w-full pr-2"
               style={{
-                top: `${i * pixelsPerHour + topMargin}px`,
+                top: `${i * pixelsPerHour}px`,
                 transform: "translateY(-50%)",
               }}
             >
@@ -492,9 +457,7 @@ export default function CalendarEvents({
             className="relative bg-white border-r border-neutral-300 last:border-r-0"
             style={{
               width: `calc((100% - 4rem) / ${dates.length})`,
-              height: `${calHeight}px`,
-              paddingTop: `${topMargin}px`,
-              paddingBottom: `${bottomMargin}px`,
+              height: `${(endTime - startTime) * pixelsPerHour}px`,
             }}
             onMouseDown={(e) => handleMouseDown(e, dayIndex)}
             onMouseMove={(e) => handleMouseMove(e, dayIndex)}
@@ -588,6 +551,7 @@ function snapTo30Min(yPos) {
 
 function generateDateRange(start, end) {
   // Create dates at midnight in local timezone
+  
   const startDate = new Date(start);
   const endDate = new Date(end);
   const dates = [];
@@ -600,13 +564,10 @@ function generateDateRange(start, end) {
   return { dates };
 }
 
-function formatTime(timeValue) {
-  const hour = Math.floor(timeValue);
-  const minutes = (timeValue % 1) * 60;
+function formatTime(hour) {
   const period = hour >= 12 ? "PM" : "AM";
-  const displayHour = hour % 12 === 0 ? 12 : hour % 12;
-  const displayMinutes = minutes === 0 ? "00" : minutes.toString().padStart(2, "0");
-  return `${displayHour}:${displayMinutes} ${period}`;
+  const displayHour = hour % 12 || 12;
+  return `${displayHour} ${period}`;
 }
 
 function formatDisplayTime(pixels, startTime, pixelsPerHour) {
