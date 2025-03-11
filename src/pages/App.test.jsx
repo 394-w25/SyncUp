@@ -1,5 +1,8 @@
 import { describe, expect, test, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import {describe, test} from 'vitest';
+import {fireEvent, render, screen} from '@testing-library/react';
+import { server } from './mocks/server';
 import App from './App';
 import { mockAuth } from '../tests/mockAuth';
 import 'src/pages/setupTests.jsx'; // Import the setup file
@@ -31,11 +34,24 @@ describe('mocking firebase call', () => {
   });
 });
 
-describe('counter tests', () => {
+// Mock the import events module
+beforeAll(() => server.listen());
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
+
+describe('gcal events requested', () => {
     
-  test("Login button", () => {
+  test("no gcal events", () => {
     render(<App />);
-    expect(screen.getByText('Login')).toBeDefined();
+    screen.getByText(/loading/i);
+  });
+  
+  test("gcal events appeared", async () => {
+    render(<App />);
+    const counter = screen.getByRole('import events button clicked');
+    fireEvent.click(counter);
+    currDate = new Date().getDate();
+    await screen.findByText(/currDate/i);
   });
 });
 

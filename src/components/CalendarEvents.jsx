@@ -42,9 +42,10 @@ export default function CalendarEvents({
 
   // Create an array of label times (8 AM, 9 AM, etc.)
   const times = [];
-  for (let hour = startTime; hour <= endTime; hour++) {
-    times.push(formatTime(hour));
+  for (let t = startTime; t < endTime; t += 1) {
+    times.push(formatTime(t));
   }
+  times.push(formatTime(endTime))
 
   const googleBlocksByDay = useMemo(() => {
     const map = {};
@@ -611,10 +612,13 @@ function generateDateRange(start, end) {
   return { dates };
 }
 
-function formatTime(hour) {
+function formatTime(timeValue) {
+  const hour = Math.floor(timeValue);
+  const minutes = (timeValue % 1) * 60;
   const period = hour >= 12 ? "PM" : "AM";
-  const displayHour = hour % 12 || 12;
-  return `${displayHour} ${period}`;
+  const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+  const displayMinutes = minutes === 0 ? "00" : "30";
+  return `${displayHour}:${displayMinutes} ${period}`;
 }
 
 function formatDisplayTime(pixels, startTime, pixelsPerHour) {
